@@ -1485,7 +1485,7 @@ scan_ag(
 	int		status;
 	char		*objname = NULL;
 
-	sb = (struct xfs_sb *)calloc(BBSIZE, 1);
+	sb = (struct xfs_sb *)calloc(BBTOB(XFS_FSS_TO_BB(mp, 1)), 1);
 	if (!sb) {
 		do_error(_("can't allocate memory for superblock\n"));
 		return;
