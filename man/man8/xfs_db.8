@@ -711,7 +711,7 @@ and
 bits respectively, and their string equivalent reported
 (but no modifications are made).
 .TP
-.BI "write [" "field value" "] ..."
+.BI "write [\-c] [" "field value" "] ..."
 Write a value to disk.
 Specific fields can be set in structures (struct mode),
 or a block can be set to data values (data mode),
@@ -729,6 +729,12 @@ contents of the block can be shifted or rotated left or right, or filled
 with a sequence, a constant value, or a random value. In this mode
 .B write
 with no arguments gives more information on the allowed commands.
+.RS 1.0i
+.TP 0.4i
+.B \-c
+Skip write verifiers and CRC recalculation; allows invalid data to be written
+to disk.
+.RE
 .SH TYPES
 This section gives the fields in each structure type and their meanings.
 Note that some types of block cover multiple actual structures,

@@ -38,7 +38,7 @@ static int	write_f(int argc, char **argv);
 static void     write_help(void);
 
 static const cmdinfo_t	write_cmd =
-	{ "write", NULL, write_f, 0, -1, 0, N_("[field or value]..."),
+	{ "write", NULL, write_f, 0, -1, 0, N_("[-c] [field or value]..."),
 	  N_("write value to disk"), write_help };
 
 void
@@ -79,6 +79,7 @@ write_help(void)
 "  String mode: 'write \"This_is_a_filename\" - write null terminated string.\n"
 "\n"
 " In data mode type 'write' by itself for a list of specific commands.\n\n"
+" Specifying the -c option will allow writes of invalid (corrupt) data.\n\n"
 ));
 
 }
@@ -90,6 +91,10 @@ write_f(
 {
 	pfunc_t	pf;
 	extern char *progname;
+	int c;
+	int corrupt = 0;		/* Allow write of corrupt data; skip verification */
+	struct xfs_buf_ops nowrite_ops;
+	const struct xfs_buf_ops *stashed_ops = NULL;
 
 	if (x.isreadonly & LIBXFS_ISREADONLY) {
 		dbprintf(_("%s started in read only mode, writing disabled\n"),
@@ -109,11 +114,33 @@ write_f(
 		return 0;
 	}
 
-	/* move past the "write" command */
-	argc--;
-	argv++;
+	while ((c = getopt(argc, argv, "c")) != EOF) {
+		switch (c) {
+		case 'c':
+			corrupt = 1;
+			break;
+		default:
+			dbprintf(_("bad option for write command\n"));
+			return 0;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (iocur_top->bp->b_ops && corrupt) {
+		/* Temporarily remove write verifier to write bad data */
+		stashed_ops = iocur_top->bp->b_ops;
+		nowrite_ops.verify_read = stashed_ops->verify_read;
+		nowrite_ops.verify_write = xfs_dummy_verify;
+		iocur_top->bp->b_ops = &nowrite_ops;
+		dbprintf(_("Allowing write of corrupted data\n"));
+	}
 
 	(*pf)(DB_WRITE, cur_typ->fields, argc, argv);
+
+	if (stashed_ops)
+		iocur_top->bp->b_ops = stashed_ops;
 
 	return 0;
 }

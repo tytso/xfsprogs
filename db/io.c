@@ -457,6 +457,13 @@ write_cur_bbs(void)
 }
 
 void
+xfs_dummy_verify(
+	struct xfs_buf *bp)
+{
+	return;
+}
+
+void
 write_cur(void)
 {
 	if (iocur_sp < 0) {
