@@ -874,43 +874,20 @@ _("entry \"%*.*s\" in shortform directory %" PRIu64 " references %s inode %" PRI
 		}
 
 		if (bad_sfnamelen) {
-			/*
-			 * if we're really lucky, this is the last entry in
-			 * case we can use the dir size to set the namelen
-			 * value.  otherwise, forget it because we're not going
-			 * to be able to find the next entry.
-			 */
-			if (i == num_entries - 1)  {
-				namelen = ino_dir_size -
-					((__psint_t) &sfep->name[0] -
-					 (__psint_t) sfp);
-				if (!no_modify)  {
-					do_warn(
-_("entry #%d %s in shortform dir %" PRIu64 ", resetting to %d\n"),
-						i, junkreason, ino, namelen);
-					sfep->namelen = namelen;
-					*dino_dirty = 1;
-				} else  {
-					do_warn(
-_("entry #%d %s in shortform dir %" PRIu64 ", would set to %d\n"),
-						i, junkreason, ino, namelen);
-				}
-			} else  {
-				do_warn(
+			do_warn(
 _("entry #%d %s in shortform dir %" PRIu64),
-					i, junkreason, ino);
-				if (!no_modify)
-					do_warn(_(", junking %d entries\n"),
-						num_entries - i);
-				else
-					do_warn(_(", would junk %d entries\n"),
-						num_entries - i);
-				/*
-				 * don't process the rest of the directory,
-				 * break out of processing looop
-				 */
-				break;
-			}
+				i, junkreason, ino);
+			if (!no_modify)
+				do_warn(_(", junking %d entries\n"),
+					num_entries - i);
+			else
+				do_warn(_(", would junk %d entries\n"),
+					num_entries - i);
+			/*
+			 * don't process the rest of the directory,
+			 * break out of processing loop
+			 */
+			break;
 		}
 
 		/*
