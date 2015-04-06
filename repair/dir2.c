@@ -928,26 +928,12 @@ _("size of last entry overflows space left in in shortform dir %" PRIu64 ", "),
 				do_warn(
 _("size of entry #%d overflows space left in in shortform dir %" PRIu64 "\n"),
 					i, ino);
-				if (!no_modify)  {
-					if (i == num_entries - 1)
-						do_warn(
-						_("junking entry #%d\n"),
-							i);
-					else
-						do_warn(
-						_("junking %d entries\n"),
-							num_entries - i);
-				} else  {
-					if (i == num_entries - 1)
-						do_warn(
-						_("would junk entry #%d\n"),
-							i);
-					else
-						do_warn(
-						_("would junk %d entries\n"),
-							num_entries - i);
-				}
-
+				if (!no_modify)
+					do_warn(_("junking %d entries\n"),
+						num_entries - i);
+				else
+					do_warn(_("would junk %d entries\n"),
+						num_entries - i);
 				break;
 			}
 		}
