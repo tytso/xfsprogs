@@ -861,36 +861,44 @@ process_sf_dir2(
 _("entry \"%*.*s\" in shortform directory %" PRIu64 " references %s inode %" PRIu64 "\n"),
 				namelen, namelen, sfep->name, ino, junkreason,
 				lino);
-		if (namelen == 0)  {
-			/*
-			 * if we're really lucky, this is
-			 * the last entry in which case we
-			 * can use the dir size to set the
-			 * namelen value.  otherwise, forget
-			 * it because we're not going to be
-			 * able to find the next entry.
-			 */
-			bad_sfnamelen = 1;
 
+		/* is dir namelen 0 or does this entry extend past dir size? */
+		if (namelen == 0) {
+			junkreason = _("is zero length");
+			bad_sfnamelen = 1;
+		} else if ((__psint_t) sfep - (__psint_t) sfp +
+				xfs_dir3_sf_entsize(mp, sfp, sfep->namelen)
+							> ino_dir_size)  {
+			junkreason = _("extends past end of dir");
+			bad_sfnamelen = 1;
+		}
+
+		if (bad_sfnamelen) {
+			/*
+			 * if we're really lucky, this is the last entry in
+			 * case we can use the dir size to set the namelen
+			 * value.  otherwise, forget it because we're not going
+			 * to be able to find the next entry.
+			 */
 			if (i == num_entries - 1)  {
 				namelen = ino_dir_size -
 					((__psint_t) &sfep->name[0] -
 					 (__psint_t) sfp);
 				if (!no_modify)  {
 					do_warn(
-_("zero length entry in shortform dir %" PRIu64 ", resetting to %d\n"),
-						ino, namelen);
+_("entry #%d %s in shortform dir %" PRIu64 ", resetting to %d\n"),
+						i, junkreason, ino, namelen);
 					sfep->namelen = namelen;
 					*dino_dirty = 1;
 				} else  {
 					do_warn(
-_("zero length entry in shortform dir %" PRIu64 ", would set to %d\n"),
-						ino, namelen);
+_("entry #%d %s in shortform dir %" PRIu64 ", would set to %d\n"),
+						i, junkreason, ino, namelen);
 				}
 			} else  {
 				do_warn(
-_("zero length entry in shortform dir %" PRIu64 ""),
-					ino);
+_("entry #%d %s in shortform dir %" PRIu64),
+					i, junkreason, ino);
 				if (!no_modify)
 					do_warn(_(", junking %d entries\n"),
 						num_entries - i);
@@ -901,39 +909,6 @@ _("zero length entry in shortform dir %" PRIu64 ""),
 				 * don't process the rest of the directory,
 				 * break out of processing looop
 				 */
-				break;
-			}
-		} else if ((__psint_t) sfep - (__psint_t) sfp +
-				xfs_dir3_sf_entsize(mp, sfp, sfep->namelen)
-							> ino_dir_size)  {
-			bad_sfnamelen = 1;
-
-			if (i == num_entries - 1)  {
-				namelen = ino_dir_size -
-					((__psint_t) &sfep->name[0] -
-					 (__psint_t) sfp);
-				do_warn(
-_("size of last entry overflows space left in in shortform dir %" PRIu64 ", "),
-					ino);
-				if (!no_modify)  {
-					do_warn(_("resetting to %d\n"),
-						namelen);
-					sfep->namelen = namelen;
-					*dino_dirty = 1;
-				} else  {
-					do_warn(_("would reset to %d\n"),
-						namelen);
-				}
-			} else  {
-				do_warn(
-_("size of entry #%d overflows space left in in shortform dir %" PRIu64 "\n"),
-					i, ino);
-				if (!no_modify)
-					do_warn(_("junking %d entries\n"),
-						num_entries - i);
-				else
-					do_warn(_("would junk %d entries\n"),
-						num_entries - i);
 				break;
 			}
 		}
