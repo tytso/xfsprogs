@@ -369,7 +369,7 @@ inode_core_nlinkv2_count(
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
 	dic = obj;
-	return dic->di_version == 2;
+	return dic->di_version >= 2;
 }
 
 static int
@@ -382,7 +382,7 @@ inode_core_onlink_count(
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
 	dic = obj;
-	return dic->di_version == 2;
+	return dic->di_version >= 2;
 }
 
 static int
@@ -395,7 +395,7 @@ inode_core_projid_count(
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
 	dic = obj;
-	return dic->di_version == 2;
+	return dic->di_version >= 2;
 }
 
 static int
