@@ -881,6 +881,7 @@ _("entry \"%*.*s\" in shortform directory %" PRIu64 " references %s inode %" PRI
 _("zero length entry in shortform dir %" PRIu64 ", resetting to %d\n"),
 						ino, namelen);
 					sfep->namelen = namelen;
+					*dino_dirty = 1;
 				} else  {
 					do_warn(
 _("zero length entry in shortform dir %" PRIu64 ", would set to %d\n"),
