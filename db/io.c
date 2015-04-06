@@ -471,8 +471,10 @@ write_cur(void)
 		return;
 	}
 
-	if (iocur_top->ino_buf)
+	if (xfs_sb_version_hascrc(&mp->m_sb) && iocur_top->ino_buf) {
 		libxfs_dinode_calc_crc(mp, iocur_top->data);
+		iocur_top->ino_crc_ok = 1;
+	}
 	if (iocur_top->dquot_buf)
 		xfs_update_cksum(iocur_top->data, sizeof(struct xfs_dqblk),
 				 XFS_DQUOT_CRC_OFF);

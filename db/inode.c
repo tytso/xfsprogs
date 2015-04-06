@@ -684,12 +684,21 @@ set_cur_inode(
 		numblks, DB_RING_IGN, NULL);
 	off_cur(offset << mp->m_sb.sb_inodelog, mp->m_sb.sb_inodesize);
 	dip = iocur_top->data;
-	iocur_top->ino_crc_ok = libxfs_dinode_verify(mp, ino, dip);
 	iocur_top->ino_buf = 1;
 	iocur_top->ino = ino;
 	iocur_top->mode = be16_to_cpu(dip->di_mode);
 	if ((iocur_top->mode & S_IFMT) == S_IFDIR)
 		iocur_top->dirino = ino;
+
+	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		iocur_top->ino_crc_ok = libxfs_verify_cksum((char *)dip,
+						    mp->m_sb.sb_inodesize,
+						    XFS_DINODE_CRC_OFF);
+		if (!iocur_top->ino_crc_ok)
+			dbprintf(
+_("Metadata CRC error detected for ino %lld\n"),
+				ino);
+	}
 
 	/* track updated info in ring */
 	ring_add();
