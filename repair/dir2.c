@@ -1318,6 +1318,18 @@ _("entry \"%*.*s\" at block %d offset %" PRIdPTR " in directory inode %" PRIu64
 				dep->namelen, dep->namelen, dep->name,
 				da_bno, (intptr_t)ptr - (intptr_t)d, ino,
 				clearreason, ent_ino);
+
+		/*
+		 * We have a special dot & dotdot fixer-upper below which can
+		 * sort out the proper inode number, so don't clear it.
+		 */
+		if ((dep->namelen == 1 && dep->name[0] == '.') ||
+		    (dep->namelen == 2 &&
+		     dep->name[0] == '.' && dep->name[1] == '.')) {
+			clearino = 0;
+			clearreason = NULL;
+		}
+
 		/*
 		 * If the name length is 0 (illegal) make it 1 and blast
 		 * the entry.
