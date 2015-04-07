@@ -817,6 +817,13 @@ zero_old_xfs_structures(
 	__uint32_t		bsize;
 	int			i;
 	xfs_off_t		off;
+	int			tmp;
+
+	/*
+	 * We open regular files with O_TRUNC|O_CREAT. Nothing to do here...
+	 */
+	if (xi->disfile && xi->dcreat)
+		return;
 
 	/*
 	 * read in existing filesystem superblock, use its geometry
@@ -830,11 +837,16 @@ zero_old_xfs_structures(
 	}
 	memset(buf, 0, new_sb->sb_sectsize);
 
-	if (pread(xi->dfd, buf, new_sb->sb_sectsize, 0) != new_sb->sb_sectsize) {
+	tmp = pread(xi->dfd, buf, new_sb->sb_sectsize, 0);
+	if (tmp < 0) {
 		fprintf(stderr, _("existing superblock read failed: %s\n"),
 			strerror(errno));
-		free(buf);
-		return;
+		goto done;
+	}
+	if (tmp != new_sb->sb_sectsize) {
+		fprintf(stderr,
+	_("warning: could not read existing superblock, skip zeroing\n"));
+		goto done;
 	}
 	libxfs_sb_from_disk(&sb, buf);
 
