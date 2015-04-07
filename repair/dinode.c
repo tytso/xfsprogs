@@ -2291,6 +2291,30 @@ process_dinode_int(xfs_mount_t *mp,
 	 */
 	ASSERT(uncertain == 0 || verify_mode != 0);
 
+	/*
+	 * This is the only valid point to check the CRC; after this we may have
+	 * made changes which invalidate it, and the CRC is only updated again
+	 * when it gets written out.
+	 *
+	 * Of course if we make any modifications after this, the inode gets
+	 * rewritten, and the CRC is updated automagically.
+	 */
+	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    !xfs_verify_cksum((char *)dino, mp->m_sb.sb_inodesize,
+				XFS_DINODE_CRC_OFF)) {
+		retval = 1;
+		if (!uncertain)
+			do_warn(_("bad CRC for inode %" PRIu64 "%c"),
+				lino, verify_mode ? '\n' : ',');
+		if (!verify_mode) {
+			if (!no_modify) {
+				do_warn(_(" will rewrite\n"));
+				*dirty = 1;
+			} else
+				do_warn(_(" would rewrite\n"));
+		}
+	}
+
 	if (be16_to_cpu(dino->di_magic) != XFS_DINODE_MAGIC)  {
 		retval = 1;
 		if (!uncertain)
