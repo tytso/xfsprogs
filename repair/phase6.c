@@ -1951,7 +1951,12 @@ longform_dir2_check_leaf(
 	da_bno = mp->m_dirleafblk;
 	error = dir_read_buf(ip, da_bno, -1, &bp, &xfs_dir3_leaf1_buf_ops,
 			     &fixit);
-	if (error) {
+	if (error == EFSBADCRC || error == EFSCORRUPTED || fixit) {
+		do_warn(
+	_("leaf block %u for directory inode %" PRIu64 " bad CRC\n"),
+			da_bno, ip->i_ino);
+		return 1;
+	} else if (error) {
 		do_error(
 	_("can't read block %u for directory inode %" PRIu64 ", error %d\n"),
 			da_bno, ip->i_ino, error);
