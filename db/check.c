@@ -1832,7 +1832,13 @@ init(
 	error = sbver_err = serious_error = 0;
 	fdblocks = frextents = icount = ifree = 0;
 	sbversion = XFS_SB_VERSION_4;
-	if (mp->m_sb.sb_inoalignmt)
+	/*
+	 * Note that inoalignmt == 0 is valid when fsb size is large enough for
+	 * at least one full inode record per block. Check this case explicitly.
+	 */
+	if (mp->m_sb.sb_inoalignmt ||
+	    (xfs_sb_version_hasalign(&mp->m_sb) &&
+	     mp->m_sb.sb_inopblock >= XFS_INODES_PER_CHUNK))
 		sbversion |= XFS_SB_VERSION_ALIGNBIT;
 	if ((mp->m_sb.sb_uquotino && mp->m_sb.sb_uquotino != NULLFSINO) ||
 	    (mp->m_sb.sb_gquotino && mp->m_sb.sb_gquotino != NULLFSINO) ||
