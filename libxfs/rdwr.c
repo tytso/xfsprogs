@@ -411,6 +411,7 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 			strerror(errno));
 		exit(1);
 	}
+	memset(bp->b_addr, 0, bytes);
 #ifdef XFS_BUF_TRACING
 	list_head_init(&bp->b_lock_list);
 #endif
