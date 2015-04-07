@@ -1407,6 +1407,7 @@ _("bad .. entry in root directory inode %" PRIu64 ", was %" PRIu64 ": "),
 					} else {
 						do_warn(_("would correct\n"));
 					}
+					*parent = ino;
 				}
 			}
 			/*
