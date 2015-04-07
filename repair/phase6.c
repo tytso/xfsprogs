@@ -1354,6 +1354,9 @@ longform_dir2_rebuild(
 
 	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
 
+	if (ino == mp->m_sb.sb_rootino)
+		need_root_dotdot = 0;
+
 	/* go through the hash list and re-add the inodes */
 
 	for (p = hashtab->first; p; p = p->nextbyorder) {
