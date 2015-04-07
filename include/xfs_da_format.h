@@ -561,7 +561,6 @@ xfs_dir3_dirent_get_ftype(
 	if (xfs_sb_version_hasftype(&mp->m_sb)) {
 		__uint8_t	type = dep->name[dep->namelen];
 
-		ASSERT(type < XFS_DIR3_FT_MAX);
 		if (type < XFS_DIR3_FT_MAX)
 			return type;
 
