@@ -700,8 +700,6 @@ libxfs_inode_alloc(
 		if (error)
 			return error;
 	}
-	if (!ip)
-		error = ENOSPC;
 
 	*ipp = ip;
 	return error;
