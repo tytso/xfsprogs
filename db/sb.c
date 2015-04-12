@@ -363,6 +363,18 @@ uuid_f(
 			return 0;
 		}
 
+		/*
+		 * For now, changing the UUID of V5 superblock filesystems is
+		 * not supported; we do not have the infrastructure to fix all
+		 * other metadata when a new superblock UUID is generated.
+		 */
+		if (xfs_sb_version_hascrc(&mp->m_sb) &&
+		    strcasecmp(argv[1], "rewrite")) {
+			dbprintf(_("%s: only 'rewrite' supported on V5 fs\n"),
+				progname);
+			return 0;
+		}
+
 		if (!strcasecmp(argv[1], "generate")) {
 			platform_uuid_generate(&uu);
 		} else if (!strcasecmp(argv[1], "nil")) {
