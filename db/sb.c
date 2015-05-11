@@ -658,6 +658,8 @@ version_string(
 		strcat(s, ",CRC");
 	if (xfs_sb_version_hasftype(sbp))
 		strcat(s, ",FTYPE");
+	if (xfs_sb_version_hasfinobt(sbp))
+		strcat(s, ",FINOBT");
 	return s;
 }
 
