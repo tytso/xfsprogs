@@ -1,3 +1,31 @@
+xfsprogs-3.2.3-rc1 (11 May 2015)
+	- mkfs.xfs: enable metadata CRCs by default
+	- mkfs.xfs: enable free inode btrees by default
+	- build: glibc support updates (Jan Tulak)
+	- man page updates (Sage Weil, Namjae Jeon, Eric Sandeen)
+	- xfs_admin: Changing UUIDs disable for CRC enabled filesystems
+	  (Eric Sandeen)
+	- xfs_repair: Separate pquota inode fixes (Brian Foster)
+	- xfs_db: inode alignment fixes (Brian Foster)
+	- mkfs.xfs: fix failures creating file images (Brian Foster)
+	- libxfs: zero new buffers before use (Darrick J. Wong)
+	- xfs_repair: handle directory leaf CRC errors gracefully
+	  (Darrick J.  Wong)
+	- xfs_repair: validate and repair inode CRCs (Eric Sandeen)
+	- xfs_repair: lots of broken directory repair fixes (Eric Sandeen)
+	- xfs_db: handle v3 inodes properly (Eric Sandeen)
+	- xfs_db: allow writing corrupted metadata on CRC enabled filesystems
+	  (Eric Sandeen)
+	- xfs_repair: gracefully handle > 512 byte sector superblocks
+	- mkfs.xfs: take into acocunt log stripe unit when sizing log
+	- xfs_metadump: inode alignment and null inode fixes (Brian Foster)
+	- xfs_io: FALLOC_FL_INSERT_RANGE support (Namjae Jeon)
+	- build: libtool static library build fixes (Romain Naour)
+	- mkfs.xfs: large block size inode alignment fixes (Brian Foster)
+	- xfs_repair: secondary superblock scan fixes (Brian Foster)
+	- xfs_repair: don't care about symlink compenent lengths
+	  (Eric Sandeen)
+
 xfsprogs-3.2.2 (4 December 2014)
 	- Debian packaging updates (Nathan Scott)
 	- xfs_repair, mkfs.xfs stripe geometry fixes (Eric Sandeen)
