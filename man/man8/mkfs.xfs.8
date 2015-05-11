@@ -150,7 +150,7 @@ of calculating and checking the CRCs is not noticable in normal operation.
 .IP
 By default,
 .B mkfs.xfs
-will not enable metadata CRCs.
+will enable metadata CRCs.
 .TP
 .BI finobt= value
 This option enables the use of a separate free inode btree index in each
@@ -164,10 +164,11 @@ filesystems age.
 .IP
 By default,
 .B mkfs.xfs
-will not create free inode btrees. This feature is also currently only available
-for filesystems created with the
+will create free inode btrees for filesystems created with the (default)
 .B \-m crc=1
-option set.
+option set. When the option
+.B \-m crc=0
+is used, the free inode btree feature is not supported and is disabled.
 .RE
 .TP
 .BI \-d " data_section_options"

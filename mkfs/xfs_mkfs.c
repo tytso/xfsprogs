@@ -1004,6 +1004,7 @@ main(
 	int			lazy_sb_counters;
 	int			crcs_enabled;
 	int			finobt;
+	bool			finobtflag;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -1036,8 +1037,9 @@ main(
 	force_overwrite = 0;
 	worst_freelist = 0;
 	lazy_sb_counters = 1;
-	crcs_enabled = 0;
-	finobt = 0;
+	crcs_enabled = 1;
+	finobt = 1;
+	finobtflag = false;
 	memset(&fsx, 0, sizeof(fsx));
 
 	memset(&xi, 0, sizeof(xi));
@@ -1538,6 +1540,7 @@ _("cannot specify both crc and ftype\n"));
 					if (c < 0 || c > 1)
 						illegal(value, "m finobt");
 					finobt = c;
+					finobtflag = true;
 					break;
 				default:
 					unknown('m', value);
@@ -1878,15 +1881,19 @@ _("V2 attribute format always enabled on CRC enabled filesytems\n"));
 _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 			usage();
 		}
-	}
-
-	/*
-	 * The kernel doesn't currently support crc=0,finobt=1 filesystems.
-	 * Catch it here, disable finobt and warn the user.
-	 */
-	if (finobt && !crcs_enabled) {
-		fprintf(stderr,
+	} else {
+		/*
+		 * The kernel doesn't currently support crc=0,finobt=1
+		 * filesystems. If crcs are not enabled and the user has
+		 * explicitly turned them off then silently turn them off
+		 * to avoid an unnecessary warning. If the user explicitly
+		 * tried to use crc=0,finobt=1, then issue a warning before
+		 * turning them off.
+		 */
+		if (finobt && finobtflag) {
+			fprintf(stderr,
 _("warning: finobt not supported without CRC support, disabled.\n"));
+		}
 		finobt = 0;
 	}
 
