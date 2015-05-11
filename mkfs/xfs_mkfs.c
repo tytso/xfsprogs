@@ -1758,6 +1758,12 @@ _("cannot specify both crc and ftype\n"));
 		fprintf(stderr, _("illegal block size %d\n"), blocksize);
 		usage();
 	}
+	if (crcs_enabled && blocksize < XFS_MIN_CRC_BLOCKSIZE) {
+		fprintf(stderr,
+_("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
+			XFS_MIN_CRC_BLOCKSIZE);
+		usage();
+	}
 
 	memset(&ft, 0, sizeof(ft));
 	get_topology(&xi, &ft, force_overwrite);
