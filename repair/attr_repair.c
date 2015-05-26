@@ -746,9 +746,10 @@ valuecheck(
 	void *valuep;
 	int clearit = 0;
 
-	if ((strncmp(namevalue, SGI_ACL_FILE, SGI_ACL_FILE_SIZE) == 0) ||
-			(strncmp(namevalue, SGI_ACL_DEFAULT,
-				SGI_ACL_DEFAULT_SIZE) == 0)) {
+	if ((namelen == SGI_ACL_FILE_SIZE &&
+	     strncmp(namevalue, SGI_ACL_FILE, SGI_ACL_FILE_SIZE) == 0) ||
+	    (namelen == SGI_ACL_DEFAULT_SIZE &&
+	     strncmp(namevalue, SGI_ACL_DEFAULT, SGI_ACL_DEFAULT_SIZE) == 0)) {
 		if (value == NULL) {
 			valuep = malloc(valuelen);
 			if (!valuep)
