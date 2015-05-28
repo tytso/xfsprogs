@@ -202,6 +202,66 @@ static inline int __do_div(unsigned long long *n, unsigned base)
 	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
 
 
+#define __round_mask(x, y) ((__typeof__(x))((y)-1))
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_down(x, y) ((x) & ~__round_mask(x, y))
+#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+
+/*
+ * Handling for kernel bitmap types.
+ */
+#define BITS_TO_LONGS(nr)       DIV_ROUND_UP(nr, NBBY * sizeof(long))
+#define DECLARE_BITMAP(name,bits) \
+	unsigned long name[BITS_TO_LONGS(bits)]
+#define BITMAP_FIRST_WORD_MASK(start) (~0UL << ((start) & (BITS_PER_LONG - 1)))
+
+/*
+ * This is a common helper function for find_next_bit and
+ * find_next_zero_bit.  The difference is the "invert" argument, which
+ * is XORed with each fetched word before searching it for one bits.
+ */
+static inline unsigned long
+_find_next_bit(const unsigned long *addr, unsigned long nbits,
+		unsigned long start, unsigned long invert)
+{
+	unsigned long tmp;
+
+	if (!nbits || start >= nbits)
+		return nbits;
+
+	tmp = addr[start / BITS_PER_LONG] ^ invert;
+
+	/* Handle 1st word. */
+	tmp &= BITMAP_FIRST_WORD_MASK(start);
+	start = round_down(start, BITS_PER_LONG);
+
+	while (!tmp) {
+		start += BITS_PER_LONG;
+		if (start >= nbits)
+			return nbits;
+
+		tmp = addr[start / BITS_PER_LONG] ^ invert;
+	}
+
+	return min(start + ffs(tmp), nbits);
+}
+
+/*
+ * Find the next set bit in a memory region.
+ */
+static inline unsigned long
+find_next_bit(const unsigned long *addr, unsigned long size,
+		unsigned long offset)
+{
+	return _find_next_bit(addr, size, offset, 0UL);
+}
+static inline unsigned long
+find_next_zero_bit(const unsigned long *addr, unsigned long size,
+		 unsigned long offset)
+{
+	return _find_next_bit(addr, size, offset, ~0UL);
+}
+#define find_first_zero_bit(addr, size) find_next_zero_bit((addr), (size), 0)
 
 static inline __attribute__((const))
 int is_power_of_2(unsigned long n)
@@ -241,10 +301,6 @@ roundup_64(__uint64_t x, __uint32_t y)
 	do_div(x, y);
 	return x * y;
 }
-
-#define __round_mask(x, y) ((__typeof__(x))((y)-1))
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
-#define round_down(x, y) ((x) & ~__round_mask(x, y))
 
 /* buffer management */
 #define XFS_BUF_LOCK			0
