@@ -58,6 +58,8 @@
 #define trace_xfs_alloc_read_agf(a,b)		((void) 0)
 #define trace_xfs_read_agi(a,b)			((void) 0)
 #define trace_xfs_ialloc_read_agi(a,b)		((void) 0)
+#define trace_xfs_irec_merge_pre(a,b,c,d,e,f)	((void) 0)
+#define trace_xfs_irec_merge_post(a,b,c,d)	((void) 0)
 
 #define trace_xfs_iext_insert(a,b,c,d,e)	((void) 0)
 #define trace_xfs_iext_remove(a,b,c,d)		((void) 0)
