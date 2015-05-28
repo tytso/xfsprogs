@@ -73,6 +73,8 @@ typedef struct xfs_mount {
 	uint			m_attroffset;	/* inode attribute offset */
 	int			m_ialloc_inos;	/* inodes in inode allocation */
 	int			m_ialloc_blks;	/* blocks in inode allocation */
+	int			m_ialloc_min_blks; /* min blocks in sparse inode
+						    * allocation */
 	int			m_litino;	/* size of inode union area */
 	int			m_inoalign_mask;/* mask sb_inoalignmt if used */
 	struct xfs_trans_resv	m_resv;		/* precomputed res values */
