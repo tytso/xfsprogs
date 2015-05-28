@@ -4216,8 +4216,8 @@ scanfunc_ino(
 			}
 			icount += XFS_INODES_PER_CHUNK;
 			agicount += XFS_INODES_PER_CHUNK;
-			ifree += be32_to_cpu(rp[i].ir_freecount);
-			agifreecount += be32_to_cpu(rp[i].ir_freecount);
+			ifree += be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+			agifreecount += be32_to_cpu(rp[i].ir_u.f.ir_freecount);
 			push_cur();
 			set_cur(&typtab[TYP_INODE],
 				XFS_AGB_TO_DADDR(mp, seqno,
@@ -4242,13 +4242,13 @@ scanfunc_ino(
 					(xfs_dinode_t *)((char *)iocur_top->data + ((off + j) << mp->m_sb.sb_inodelog)),
 						isfree);
 			}
-			if (nfree != be32_to_cpu(rp[i].ir_freecount)) {
+			if (nfree != be32_to_cpu(rp[i].ir_u.f.ir_freecount)) {
 				if (!sflag)
 					dbprintf(_("ir_freecount/free mismatch, "
 						 "inode chunk %u/%u, freecount "
 						 "%d nfree %d\n"),
 						seqno, agino,
-						be32_to_cpu(rp[i].ir_freecount), nfree);
+						be32_to_cpu(rp[i].ir_u.f.ir_freecount), nfree);
 				error++;
 			}
 			pop_cur();

@@ -907,10 +907,10 @@ _("inode rec for ino %" PRIu64 " (%d/%d) overlaps existing rec (start %d/%d)\n")
 		}
 	}
 
-	if (nfree != be32_to_cpu(rp->ir_freecount)) {
+	if (nfree != be32_to_cpu(rp->ir_u.f.ir_freecount)) {
 		do_warn(_("ir_freecount/free mismatch, inode "
 			"chunk %d/%u, freecount %d nfree %d\n"),
-			agno, ino, be32_to_cpu(rp->ir_freecount), nfree);
+			agno, ino, be32_to_cpu(rp->ir_u.f.ir_freecount), nfree);
 	}
 
 	return suspect;
@@ -1106,10 +1106,10 @@ check_freecount:
 	 * corruption). Issue a warning and continue the scan. The final btree
 	 * reconstruction will correct this naturally.
 	 */
-	if (nfree != be32_to_cpu(rp->ir_freecount)) {
+	if (nfree != be32_to_cpu(rp->ir_u.f.ir_freecount)) {
 		do_warn(
 _("finobt ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n"),
-			agno, ino, be32_to_cpu(rp->ir_freecount), nfree);
+			agno, ino, be32_to_cpu(rp->ir_u.f.ir_freecount), nfree);
 	}
 
 	if (!nfree) {
@@ -1232,9 +1232,9 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				agcnts->agicount += XFS_INODES_PER_CHUNK;
 				agcnts->icount += XFS_INODES_PER_CHUNK;
 				agcnts->agifreecount +=
-					be32_to_cpu(rp[i].ir_freecount);
+					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
 				agcnts->ifreecount +=
-					be32_to_cpu(rp[i].ir_freecount);
+					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
 
 				suspect = scan_single_ino_chunk(agno, &rp[i],
 						suspect);
@@ -1245,7 +1245,7 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				 * consistent with the agi
 				 */
 				agcnts->fibtfreecount +=
-					be32_to_cpu(rp[i].ir_freecount);
+					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
 
 				suspect = scan_single_finobt_chunk(agno, &rp[i],
 						suspect);

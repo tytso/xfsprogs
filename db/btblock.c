@@ -435,11 +435,11 @@ const field_t	inobt_key_flds[] = {
 };
 #undef KOFF
 
-#define	ROFF(f)	bitize(offsetof(xfs_inobt_rec_t, ir_ ## f))
+#define	ROFF(f)	bitize(offsetof(xfs_inobt_rec_t, f))
 const field_t	inobt_rec_flds[] = {
-	{ "startino", FLDT_AGINO, OI(ROFF(startino)), C1, 0, TYP_INODE },
-	{ "freecount", FLDT_INT32D, OI(ROFF(freecount)), C1, 0, TYP_NONE },
-	{ "free", FLDT_INOFREE, OI(ROFF(free)), C1, 0, TYP_NONE },
+	{ "startino", FLDT_AGINO, OI(ROFF(ir_startino)), C1, 0, TYP_INODE },
+	{ "freecount", FLDT_INT32D, OI(ROFF(ir_u.f.ir_freecount)), C1, 0, TYP_NONE },
+	{ "free", FLDT_INOFREE, OI(ROFF(ir_free)), C1, 0, TYP_NONE },
 	{ NULL }
 };
 #undef ROFF
