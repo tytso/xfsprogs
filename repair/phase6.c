@@ -1321,7 +1321,8 @@ longform_dir2_rebuild(
 	 * for the libxfs_dir_init() call).
 	 */
 	pip.i_ino = get_inode_parent(irec, ino_offset);
-	if (pip.i_ino == NULLFSINO)
+	if (pip.i_ino == NULLFSINO ||
+	    xfs_dir_ino_validate(mp, pip.i_ino))
 		pip.i_ino = mp->m_sb.sb_rootino;
 
 	xfs_bmap_init(&flist, &firstblock);
@@ -1348,7 +1349,11 @@ longform_dir2_rebuild(
 
 	ASSERT(done);
 
-	libxfs_dir_init(tp, ip, &pip);
+	error = libxfs_dir_init(tp, ip, &pip);
+	if (error) {
+		do_warn(_("xfs_dir_init failed -- error - %d\n"), error);
+		goto out_bmap_cancel;
+	}
 
 	error = libxfs_bmap_finish(&tp, &flist, &committed);
 
