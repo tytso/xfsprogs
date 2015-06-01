@@ -1925,6 +1925,66 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	freetab->ents[db].s = 0;
 }
 
+/* check v5 metadata */
+static int
+__check_dir3_header(
+	struct xfs_mount	*mp,
+	struct xfs_buf		*bp,
+	xfs_ino_t		ino,
+	__be64			owner,
+	__be64			blkno,
+	uuid_t			*uuid)
+{
+
+	/* verify owner */
+	if (be64_to_cpu(owner) != ino) {
+		do_warn(
+_("expected owner inode %" PRIu64 ", got %llu, directory block %" PRIu64 "\n"),
+			ino, be64_to_cpu(owner), bp->b_bn);
+		return 1;
+	}
+	/* verify block number */
+	if (be64_to_cpu(blkno) != bp->b_bn) {
+		do_warn(
+_("expected block %" PRIu64 ", got %llu, directory inode %" PRIu64 "\n"),
+			bp->b_bn, be64_to_cpu(blkno), ino);
+		return 1;
+	}
+	/* verify uuid */
+	if (platform_uuid_compare(uuid, &mp->m_sb.sb_uuid) != 0) {
+		do_warn(
+_("wrong FS UUID, directory inode %" PRIu64 " block %" PRIu64 "\n"),
+			ino, bp->b_bn);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int
+check_da3_header(
+	struct xfs_mount	*mp,
+	struct xfs_buf		*bp,
+	xfs_ino_t		ino)
+{
+	struct xfs_da3_blkinfo	*info = bp->b_addr;
+
+	return __check_dir3_header(mp, bp, ino, info->owner, info->blkno,
+				   &info->uuid);
+}
+
+static int
+check_dir3_header(
+	struct xfs_mount	*mp,
+	struct xfs_buf		*bp,
+	xfs_ino_t		ino)
+{
+	struct xfs_dir3_blk_hdr	*info = bp->b_addr;
+
+	return __check_dir3_header(mp, bp, ino, info->owner, info->blkno,
+				   &info->uuid);
+}
+
 /*
  * Check contents of leaf-form block.
  */
@@ -1981,6 +2041,15 @@ longform_dir2_check_leaf(
 		libxfs_putbuf(bp);
 		return 1;
 	}
+
+	if (leafhdr.magic == XFS_DIR3_LEAF1_MAGIC) {
+		error = check_da3_header(mp, bp, ip->i_ino);
+		if (error) {
+			libxfs_putbuf(bp);
+			return error;
+		}
+	}
+
 	seeval = dir_hash_see_all(hashtab, ents, leafhdr.count, leafhdr.stale);
 	if (dir_hash_check(hashtab, ip, seeval)) {
 		libxfs_putbuf(bp);
@@ -2055,17 +2124,31 @@ longform_dir2_check_node(
 		xfs_dir3_leaf_hdr_from_disk(&leafhdr, leaf);
 		ents = xfs_dir3_leaf_ents_p(leaf);
 		if (!(leafhdr.magic == XFS_DIR2_LEAFN_MAGIC ||
-		      leafhdr.magic == XFS_DIR3_LEAFN_MAGIC)) {
-			if (leafhdr.magic == XFS_DA_NODE_MAGIC ||
-			    leafhdr.magic == XFS_DA3_NODE_MAGIC) {
-				libxfs_putbuf(bp);
-				continue;
-			}
+		      leafhdr.magic == XFS_DIR3_LEAFN_MAGIC ||
+		      leafhdr.magic == XFS_DA_NODE_MAGIC ||
+		      leafhdr.magic == XFS_DA3_NODE_MAGIC)) {
 			do_warn(
 	_("unknown magic number %#x for block %u in directory inode %" PRIu64 "\n"),
 				leafhdr.magic, da_bno, ip->i_ino);
 			libxfs_putbuf(bp);
 			return 1;
+		}
+
+		/* check v5 metadata */
+		if (leafhdr.magic == XFS_DIR3_LEAFN_MAGIC ||
+		    leafhdr.magic == XFS_DA3_NODE_MAGIC) {
+			error = check_da3_header(mp, bp, ip->i_ino);
+			if (error) {
+				libxfs_putbuf(bp);
+				return error;
+			}
+		}
+
+		/* ignore nodes */
+		if (leafhdr.magic == XFS_DA_NODE_MAGIC ||
+		    leafhdr.magic == XFS_DA3_NODE_MAGIC) {
+			libxfs_putbuf(bp);
+			continue;
 		}
 
 		/*
@@ -2120,6 +2203,14 @@ longform_dir2_check_node(
 				da_bno, ip->i_ino);
 			libxfs_putbuf(bp);
 			return 1;
+		}
+
+		if (freehdr.magic == XFS_DIR3_FREE_MAGIC) {
+			error = check_dir3_header(mp, bp, ip->i_ino);
+			if (error) {
+				libxfs_putbuf(bp);
+				return error;
+			}
 		}
 		for (i = used = 0; i < freehdr.nvalid; i++) {
 			if (i + freehdr.firstdb >= freetab->nents ||
@@ -2212,6 +2303,7 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 	     da_bno = (xfs_dablk_t)next_da_bno) {
 		const struct xfs_buf_ops *ops;
 		int			 error;
+		struct xfs_dir2_data_hdr *d;
 
 		next_da_bno = da_bno + mp->m_dirblkfsbs - 1;
 		if (bmap_next_offset(NULL, ip, &next_da_bno, XFS_DATA_FORK)) {
@@ -2260,6 +2352,20 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 			}
 			continue;
 		}
+
+		/* check v5 metadata */
+		d = bplist[db]->b_addr;
+		if (be32_to_cpu(d->magic) == XFS_DIR3_BLOCK_MAGIC ||
+		    be32_to_cpu(d->magic) == XFS_DIR3_DATA_MAGIC) {
+			struct xfs_buf		 *bp = bplist[db];
+
+			error = check_dir3_header(mp, bp, ino);
+			if (error) {
+				fixit++;
+				continue;
+			}
+		}
+
 		longform_dir2_entry_check_data(mp, ip, num_illegal, need_dot,
 				irec, ino_offset, &bplist[db], hashtab,
 				&freetab, da_bno, isblock);

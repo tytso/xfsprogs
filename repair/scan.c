@@ -225,7 +225,24 @@ _("expected level %d got %d in inode %" PRIu64 ", (%s fork) bmbt block %" PRIu64
 			do_warn(
 _("expected owner inode %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
 				ino, be64_to_cpu(block->bb_u.l.bb_owner), bno);
-			return(1);
+			return 1;
+		}
+		/* verify block number */
+		if (be64_to_cpu(block->bb_u.l.bb_blkno) !=
+		    XFS_FSB_TO_DADDR(mp, bno)) {
+			do_warn(
+_("expected block %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
+				XFS_FSB_TO_DADDR(mp, bno),
+				be64_to_cpu(block->bb_u.l.bb_blkno), bno);
+			return 1;
+		}
+		/* verify uuid */
+		if (platform_uuid_compare(&block->bb_u.l.bb_uuid,
+					  &mp->m_sb.sb_uuid) != 0) {
+			do_warn(
+_("wrong FS UUID, bmbt block %" PRIu64 "\n"),
+				bno);
+			return 1;
 		}
 	}
 
