@@ -175,6 +175,20 @@ _("WARNING:  you have disallowed superblock-feature-bits-allowed\n"
 		}
 	}
 
+	/* Look for V5 feature flags we don't know about */
+	if (XFS_SB_VERSION_NUM(sb) >= XFS_SB_VERSION_5 &&
+	    (xfs_sb_has_compat_feature(sb, XFS_SB_FEAT_COMPAT_UNKNOWN) ||
+	     xfs_sb_has_ro_compat_feature(sb, XFS_SB_FEAT_RO_COMPAT_UNKNOWN) ||
+	     xfs_sb_has_incompat_feature(sb, XFS_SB_FEAT_INCOMPAT_UNKNOWN))) {
+		do_warn(
+_("Superblock has unknown compat/rocompat/incompat features (0x%x/0x%x/0x%x).\n"
+  "Using a more recent xfs_repair is recommended.\n"),
+			sb->sb_features_compat & XFS_SB_FEAT_COMPAT_UNKNOWN,
+			sb->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_UNKNOWN,
+			sb->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_UNKNOWN);
+		return 1;
+	}
+
 	if (xfs_sb_version_hasattr(sb))  {
 		if (!fs_attributes_allowed)  {
 			if (!no_modify)  {
