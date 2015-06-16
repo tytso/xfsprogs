@@ -48,4 +48,10 @@ static inline unsigned fls_long(unsigned long l)
         return fls64(l);
 }
 
+/*
+ * ffz: find first zero bit.
+ * Result is undefined if no zero bit exists.
+ */
+#define ffz(x)	ffs(~(x))
+
 #endif

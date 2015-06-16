@@ -51,12 +51,19 @@ QAHFILES = xfs_alloc.h \
 
 CFILES = cache.c \
 	crc32.c \
-	init.c kmem.c logitem.c radix-tree.c rdwr.c trans.c util.c \
+	init.c \
+	kmem.c \
+	logitem.c \
+	radix-tree.c \
+	rdwr.c \
+	trans.c \
+	util.c \
 	xfs_alloc.c \
 	xfs_alloc_btree.c \
 	xfs_attr.c \
 	xfs_attr_leaf.c \
 	xfs_attr_remote.c \
+	xfs_bit.c \
 	xfs_bmap.c \
 	xfs_bmap_btree.c \
 	xfs_btree.c \
