@@ -252,7 +252,7 @@ xlog_print_trans_buffer(xfs_caddr_t *ptr, int len, int *i, int num_ops)
     xfs_buf_log_format_t lbuf;
     int			 size, blen, map_size, struct_size;
     __be64		 x, y;
-    ushort		 flags;
+    unsigned short	 flags;
 
     /*
      * memmove to ensure 8-byte alignment for the long longs in
