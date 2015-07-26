@@ -64,6 +64,7 @@ PKG_DOC_DIR	= @datadir@/doc/@pkg_name@
 PKG_LOCALE_DIR	= @datadir@/locale
 
 CC		= @cc@
+BUILD_CC	= @BUILD_CC@
 AWK		= @awk@
 SED		= @sed@
 TAR		= @tar@

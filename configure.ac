@@ -8,6 +8,14 @@ AC_PREFIX_DEFAULT(/usr)
 
 AC_PROG_LIBTOOL
 
+AC_PROG_CC
+if test $cross_compiling = no; then
+  BUILD_CC="$CC"
+  AC_SUBST(BUILD_CC)
+else
+  AC_CHECK_PROGS(BUILD_CC, gcc cc)
+fi
+
 AC_ARG_ENABLE(shared,
 [ --enable-shared=[yes/no] Enable use of shared libraries [default=yes]],,
 	enable_shared=yes)
