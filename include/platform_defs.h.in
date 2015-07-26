@@ -178,4 +178,8 @@ typedef unsigned short umode_t;
 #define max(a,b)	(((a)>(b))?(a):(b))
 #endif
 
+#ifndef NBBY
+#define NBBY 8
+#endif
+
 #endif	/* __XFS_PLATFORM_DEFS_H__ */
