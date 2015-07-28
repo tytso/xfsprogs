@@ -23,6 +23,62 @@ int print_skip_uuid;
 int print_record_header;
 libxfs_init_t x;
 
+/*
+ * Return 1 for dirty, 0 for clean, -1 for errors
+ */
+int
+xlog_is_dirty(
+	xfs_mount_t *mp,
+	libxfs_init_t *x,
+	int verbose)
+{
+	int error;
+	struct xlog	log;
+	xfs_daddr_t head_blk, tail_blk;
+
+	memset(&log, 0, sizeof(log));
+
+	/* We (re-)init members of libxfs_init_t here?  really? */
+	x->logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
+	x->logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
+	x->lbsize = BBSIZE;
+	if (xfs_sb_version_hassector(&mp->m_sb))
+		x->lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
+
+	log.l_dev = mp->m_logdev_targp;
+	log.l_logBBsize = x->logBBsize;
+	log.l_logBBstart = x->logBBstart;
+	log.l_sectBBsize = BTOBB(x->lbsize);
+	log.l_mp = mp;
+	if (xfs_sb_version_hassector(&mp->m_sb)) {
+		log.l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
+		ASSERT(log.l_sectbb_log <= mp->m_sectbb_log);
+		/* for larger sector sizes, must have v2 or external log */
+		ASSERT(log.l_sectbb_log == 0 ||
+			log.l_logBBstart == 0 ||
+			xfs_sb_version_haslogv2(&mp->m_sb));
+		ASSERT(mp->m_sb.sb_logsectlog >= BBSHIFT);
+	}
+	log.l_sectbb_mask = (1 << log.l_sectbb_log) - 1;
+
+	if ((error = xlog_find_tail(&log, &head_blk, &tail_blk))) {
+		xlog_warn(_("%s: cannot find log head/tail "
+			  "(xlog_find_tail=%d)\n"),
+			__func__, error);
+		return -1;
+	}
+
+	if (verbose)
+		xlog_warn(
+	_("%s: head block %" PRId64 " tail block %" PRId64 "\n"),
+			__func__, head_blk, tail_blk);
+
+	if (head_blk != tail_blk)
+		return 1;
+
+	return 0;
+}
+
 static int
 header_check_uuid(xfs_mount_t *mp, xlog_rec_header_t *head)
 {
