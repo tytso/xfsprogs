@@ -2049,6 +2049,13 @@ scan_ag(
 		if (stop_on_read_error)
 			goto pop_out;
 	} else {
+		/* Replace any filesystem label with "L's" */
+		if (obfuscate) {
+			struct xfs_sb *sb = iocur_top->data;
+			memset(sb->sb_fname, 'L',
+			       min(strlen(sb->sb_fname), sizeof(sb->sb_fname)));
+			iocur_top->need_crc = 1;
+		}
 		if (write_buf(iocur_top))
 			goto pop_out;
 	}
