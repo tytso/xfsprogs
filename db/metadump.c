@@ -963,7 +963,7 @@ generate_obfuscated_name(
 }
 
 static void
-obfuscate_sf_dir(
+process_sf_dir(
 	xfs_dinode_t		*dip)
 {
 	struct xfs_dir2_sf_hdr	*sfp;
@@ -1010,12 +1010,18 @@ obfuscate_sf_dir(
 					 (char *)sfp);
 		}
 
-		generate_obfuscated_name(xfs_dir3_sfe_get_ino(mp, sfp, sfep),
+		if (obfuscate)
+			generate_obfuscated_name(
+					 xfs_dir3_sfe_get_ino(mp, sfp, sfep),
 					 namelen, &sfep->name[0]);
 
 		sfep = (xfs_dir2_sf_entry_t *)((char *)sfep +
 				xfs_dir3_sf_entsize(mp, sfp, namelen));
 	}
+
+	/* zero stale data in rest of space in data fork, if any */
+	if (zero_stale_data && (ino_dir_size < XFS_DFORK_DSIZE(dip, mp)))
+		memset(sfep, 0, XFS_DFORK_DSIZE(dip, mp) - ino_dir_size);
 }
 
 /*
@@ -1062,7 +1068,7 @@ obfuscate_path_components(
 }
 
 static void
-obfuscate_sf_symlink(
+process_sf_symlink(
 	xfs_dinode_t		*dip)
 {
 	__uint64_t		len;
@@ -1077,11 +1083,16 @@ obfuscate_sf_symlink(
 	}
 
 	buf = (char *)XFS_DFORK_DPTR(dip);
-	obfuscate_path_components(buf, len);
+	if (obfuscate)
+		obfuscate_path_components(buf, len);
+
+	/* zero stale data in rest of space in data fork, if any */
+	if (zero_stale_data && len < XFS_DFORK_DSIZE(dip, mp))
+		memset(&buf[len], 0, XFS_DFORK_DSIZE(dip, mp) - len);
 }
 
 static void
-obfuscate_sf_attr(
+process_sf_attr(
 	xfs_dinode_t		*dip)
 {
 	/*
@@ -1125,12 +1136,20 @@ obfuscate_sf_attr(
 			break;
 		}
 
-		generate_obfuscated_name(0, asfep->namelen, &asfep->nameval[0]);
-		memset(&asfep->nameval[asfep->namelen], 'v', asfep->valuelen);
+		if (obfuscate) {
+			generate_obfuscated_name(0, asfep->namelen,
+						 &asfep->nameval[0]);
+			memset(&asfep->nameval[asfep->namelen], 'v',
+			       asfep->valuelen);
+		}
 
 		asfep = (xfs_attr_sf_entry_t *)((char *)asfep +
 				XFS_ATTR_SF_ENTSIZE(asfep));
 	}
+
+	/* zero stale data in rest of space in attr fork, if any */
+	if (zero_stale_data && (ino_attr_size < XFS_DFORK_ASIZE(dip, mp)))
+		memset(asfep, 0, XFS_DFORK_ASIZE(dip, mp) - ino_attr_size);
 }
 
 static void
@@ -1717,18 +1736,25 @@ process_exinode(
 	typnm_t			itype)
 {
 	int			whichfork;
+	int			used;
 	xfs_extnum_t		nex;
 
 	whichfork = (itype == TYP_ATTR) ? XFS_ATTR_FORK : XFS_DATA_FORK;
 
 	nex = XFS_DFORK_NEXTENTS(dip, whichfork);
-	if (nex < 0 || nex > XFS_DFORK_SIZE(dip, mp, whichfork) /
-						sizeof(xfs_bmbt_rec_t)) {
+	used = nex * sizeof(xfs_bmbt_rec_t);
+	if (nex < 0 || used > XFS_DFORK_SIZE(dip, mp, whichfork)) {
 		if (show_warnings)
 			print_warning("bad number of extents %d in inode %lld",
 				nex, (long long)cur_ino);
 		return 1;
 	}
+
+	/* Zero unused data fork past used extents */
+	if (zero_stale_data && (used < XFS_DFORK_SIZE(dip, mp, whichfork)))
+		memset(XFS_DFORK_PTR(dip, whichfork) + used, 0,
+		       XFS_DFORK_SIZE(dip, mp, whichfork) - used);
+
 
 	return process_bmbt_reclist((xfs_bmbt_rec_t *)XFS_DFORK_PTR(dip,
 					whichfork), nex, itype);
@@ -1741,14 +1767,14 @@ process_inode_data(
 {
 	switch (dip->di_format) {
 		case XFS_DINODE_FMT_LOCAL:
-			if (obfuscate)
+			if (obfuscate || zero_stale_data)
 				switch (itype) {
 					case TYP_DIR2:
-						obfuscate_sf_dir(dip);
+						process_sf_dir(dip);
 						break;
 
 					case TYP_SYMLINK:
-						obfuscate_sf_symlink(dip);
+						process_sf_symlink(dip);
 						break;
 
 					default: ;
@@ -1827,8 +1853,8 @@ process_inode(
 		switch (dip->di_aformat) {
 			case XFS_DINODE_FMT_LOCAL:
 				need_new_crc = 1;
-				if (obfuscate)
-					obfuscate_sf_attr(dip);
+				if (obfuscate || zero_stale_data)
+					process_sf_attr(dip);
 				break;
 
 			case XFS_DINODE_FMT_EXTENTS:
