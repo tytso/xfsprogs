@@ -2207,8 +2207,8 @@ copy_log(void)
 		return !stop_on_read_error;
 	}
 
-	/* If not obfuscating, just copy the log as it is */
-	if (!obfuscate)
+	/* If not obfuscating or zeroing, just copy the log as it is */
+	if (!obfuscate && !zero_stale_data)
 		goto done;
 
 	dirty = xlog_is_dirty(mp, &x, 0);
