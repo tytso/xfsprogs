@@ -42,6 +42,124 @@
  *         specifically there to support the user level build.
  */
 
+/*
+ * define a guard and something we can check to determine what include context
+ * we are running from.
+ */
+#ifndef __LIBXFS_INTERNAL_XFS_H
+#define __LIBXFS_INTERNAL_XFS_H
+
+/*
+ * start by remapping all the symbols we expect external users to call
+ * to the libxfs_ namespace. This ensures that all internal symbols are
+ * remapped correctly throughout all the included header files
+ * as well as in the C code.
+ */
+#define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
+#define xfs_attr_get			libxfs_attr_get
+#define xfs_attr_set			libxfs_attr_set
+#define xfs_attr_remove			libxfs_attr_remove
+#define xfs_rtfree_extent		libxfs_rtfree_extent
+
+#define xfs_fs_repair_cmn_err		libxfs_fs_repair_cmn_err
+#define xfs_fs_cmn_err			libxfs_fs_cmn_err
+
+#define xfs_bmap_finish			libxfs_bmap_finish
+#define xfs_trans_ichgtime		libxfs_trans_ichgtime
+#define xfs_mod_incore_sb		libxfs_mod_incore_sb
+
+#define xfs_trans_alloc			libxfs_trans_alloc
+#define xfs_trans_add_item		libxfs_trans_add_item
+#define xfs_trans_bhold			libxfs_trans_bhold
+#define xfs_trans_binval		libxfs_trans_binval
+#define xfs_trans_bjoin			libxfs_trans_bjoin
+#define xfs_trans_brelse		libxfs_trans_brelse
+#define xfs_trans_commit		libxfs_trans_commit
+#define xfs_trans_cancel		libxfs_trans_cancel
+#define xfs_trans_del_item		libxfs_trans_del_item
+#define xfs_trans_dup			libxfs_trans_dup
+#define xfs_trans_get_buf		libxfs_trans_get_buf
+#define xfs_trans_getsb			libxfs_trans_getsb
+#define xfs_trans_iget			libxfs_trans_iget
+#define xfs_trans_ijoin			libxfs_trans_ijoin
+#define xfs_trans_ijoin_ref		libxfs_trans_ijoin_ref
+#define xfs_trans_init			libxfs_trans_init
+#define xfs_trans_inode_alloc_buf	libxfs_trans_inode_alloc_buf
+#define xfs_trans_log_buf		libxfs_trans_log_buf
+#define xfs_trans_log_inode		libxfs_trans_log_inode
+#define xfs_trans_mod_sb		libxfs_trans_mod_sb
+#define xfs_trans_read_buf		libxfs_trans_read_buf
+#define xfs_trans_read_buf_map		libxfs_trans_read_buf_map
+#define xfs_trans_roll			libxfs_trans_roll
+#define xfs_trans_get_buf_map		libxfs_trans_get_buf_map
+#define xfs_trans_reserve		libxfs_trans_reserve
+
+/* xfs_attr_leaf.h */
+#define xfs_attr_leaf_newentsize	libxfs_attr_leaf_newentsize
+
+/* xfs_bit.h */
+#define xfs_highbit32			libxfs_highbit32
+#define xfs_highbit64			libxfs_highbit64
+
+/* xfs_bmap.h */
+#define xfs_bmap_cancel			libxfs_bmap_cancel
+#define xfs_bmap_last_offset		libxfs_bmap_last_offset
+#define xfs_bmapi_write			libxfs_bmapi_write
+#define xfs_bmapi_read			libxfs_bmapi_read
+#define xfs_bunmapi			libxfs_bunmapi
+
+/* xfs_bmap_btree.h */
+#define xfs_bmbt_disk_get_all		libxfs_bmbt_disk_get_all
+
+/* xfs_da_btree.h */
+#define xfs_da_brelse			libxfs_da_brelse
+#define xfs_da_hashname			libxfs_da_hashname
+#define xfs_da_shrink_inode		libxfs_da_shrink_inode
+#define xfs_da_read_buf			libxfs_da_read_buf
+
+/* xfs_dir2.h */
+#define xfs_dir_createname		libxfs_dir_createname
+#define xfs_dir_init			libxfs_dir_init
+#define xfs_dir_lookup			libxfs_dir_lookup
+#define xfs_dir_replace			libxfs_dir_replace
+#define xfs_dir2_isblock		libxfs_dir2_isblock
+#define xfs_dir2_isleaf			libxfs_dir2_isleaf
+
+/* xfs_dir2_data.h */
+#define xfs_dir2_data_freescan		libxfs_dir2_data_freescan
+#define xfs_dir2_data_log_entry		libxfs_dir2_data_log_entry
+#define xfs_dir2_data_log_header	libxfs_dir2_data_log_header
+#define xfs_dir2_data_make_free		libxfs_dir2_data_make_free
+#define xfs_dir2_data_use_free		libxfs_dir2_data_use_free
+#define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
+
+/* xfs_inode.h */
+#define xfs_dinode_from_disk		libxfs_dinode_from_disk
+#define xfs_dinode_to_disk		libxfs_dinode_to_disk
+#define xfs_dinode_calc_crc		libxfs_dinode_calc_crc
+#define xfs_idata_realloc		libxfs_idata_realloc
+#define xfs_idestroy_fork		libxfs_idestroy_fork
+
+#define xfs_dinode_verify		libxfs_dinode_verify
+
+/* xfs_sb.h */
+#define xfs_mod_sb			libxfs_mod_sb
+#define xfs_sb_from_disk		libxfs_sb_from_disk
+#define xfs_sb_quota_from_disk		libxfs_sb_quota_from_disk
+#define xfs_sb_to_disk			libxfs_sb_to_disk
+
+/* xfs_symlink.h */
+#define xfs_symlink_blocks		libxfs_symlink_blocks
+#define xfs_symlink_hdr_ok		libxfs_symlink_hdr_ok
+
+/* xfs_trans_resv.h */
+#define xfs_trans_resv_calc		libxfs_trans_resv_calc
+
+
+/*
+ * Now we've renamed and mapped everything, include the rest of the external
+ * libxfs headers.
+ */
 #include <xfs/libxfs.h>
 #include "xfs_dir2_priv.h"
 
@@ -262,48 +380,6 @@ roundup_64(__uint64_t x, __uint32_t y)
 #define xfs_icsb_modify_counters(mp, field, delta, rsvd) \
 	xfs_mod_incore_sb(mp, field, delta, rsvd)
 
-/*
- * Map XFS kernel routine names to libxfs versions
- */
-
-#define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
-#define xfs_attr_get			libxfs_attr_get
-#define xfs_attr_set			libxfs_attr_set
-#define xfs_attr_remove			libxfs_attr_remove
-#define xfs_rtfree_extent		libxfs_rtfree_extent
-
-#define xfs_fs_repair_cmn_err		libxfs_fs_repair_cmn_err
-#define xfs_fs_cmn_err			libxfs_fs_cmn_err
-
-#define xfs_bmap_finish			libxfs_bmap_finish
-#define xfs_trans_ichgtime		libxfs_trans_ichgtime
-#define xfs_mod_incore_sb		libxfs_mod_incore_sb
-
-#define xfs_trans_alloc			libxfs_trans_alloc
-#define xfs_trans_add_item		libxfs_trans_add_item
-#define xfs_trans_bhold			libxfs_trans_bhold
-#define xfs_trans_binval		libxfs_trans_binval
-#define xfs_trans_bjoin			libxfs_trans_bjoin
-#define xfs_trans_brelse		libxfs_trans_brelse
-#define xfs_trans_commit		libxfs_trans_commit
-#define xfs_trans_cancel		libxfs_trans_cancel
-#define xfs_trans_del_item		libxfs_trans_del_item
-#define xfs_trans_dup			libxfs_trans_dup
-#define xfs_trans_get_buf		libxfs_trans_get_buf
-#define xfs_trans_getsb			libxfs_trans_getsb
-#define xfs_trans_iget			libxfs_trans_iget
-#define xfs_trans_ijoin			libxfs_trans_ijoin
-#define xfs_trans_ijoin_ref		libxfs_trans_ijoin_ref
-#define xfs_trans_init			libxfs_trans_init
-#define xfs_trans_inode_alloc_buf	libxfs_trans_inode_alloc_buf
-#define xfs_trans_log_buf		libxfs_trans_log_buf
-#define xfs_trans_log_inode		libxfs_trans_log_inode
-#define xfs_trans_mod_sb		libxfs_trans_mod_sb
-#define xfs_trans_read_buf		libxfs_trans_read_buf
-#define xfs_trans_read_buf_map		libxfs_trans_read_buf_map
-#define xfs_trans_roll			libxfs_trans_roll
-#define xfs_trans_get_buf_map		libxfs_trans_get_buf_map
-#define xfs_trans_reserve		libxfs_trans_reserve
 
 #define xfs_trans_get_block_res(tp)	1
 #define xfs_trans_set_sync(tp)		((void) 0)
@@ -449,3 +525,5 @@ void xfs_trans_mod_sb(xfs_trans_t *, uint, long);
 void xfs_trans_init(struct xfs_mount *);
 int  xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 void xfs_verifier_error(struct xfs_buf *bp);
+
+#endif	/* __LIBXFS_INTERNAL_XFS_H */

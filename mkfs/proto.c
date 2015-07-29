@@ -241,7 +241,7 @@ newfile(
 	flags = 0;
 	mp = ip->i_mount;
 	if (dolocal && len <= XFS_IFORK_DSIZE(ip)) {
-		xfs_idata_realloc(ip, len, XFS_DATA_FORK);
+		libxfs_idata_realloc(ip, len, XFS_DATA_FORK);
 		if (buf)
 			memmove(ip->i_df.if_u1.if_data, buf, len);
 		ip->i_d.di_size = len;

@@ -2101,7 +2101,7 @@ done:
 		need_new_crc = 1;
 
 	if (crc_was_ok && need_new_crc)
-		xfs_dinode_calc_crc(mp, dip);
+		libxfs_dinode_calc_crc(mp, dip);
 	return success;
 }
 
