@@ -412,61 +412,6 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 			return(XR_BAD_SB_WIDTH);
 	}
 
-	/*
-	 * if shared bit is set, verify that the version number is sane
-	 */
-	if (xfs_sb_version_hasshared(sb))  {
-		if (sb->sb_shared_vn > XFS_SB_MAX_SHARED_VN)
-			return(XR_BAD_SVN);
-	}
-
-	/*
-	 * mkfs's that stamped a feature bit besides the ones in the
-	 * mask below could leave garbage in the secondary superblock
-	 * sectors.  Anything stamping the shared fs bit or better into
-	 * the secondaries is ok and should generate clean secondary
-	 * superblock sectors.
-	 *
-	 * check primary and clean secondary superblocks more strictly
-	 */
-	if (is_primary_sb || sb->sb_versionnum & XR_PART_SECSB_VNMASK)  {
-		/*
-		 * return errors if shared vn or alignment fields
-		 * are set without their feature bits being set
-		 */
-		if ((!pre_65_beta && (sb->sb_versionnum & XR_PART_SECSB_VNMASK)) ||
-		    (pre_65_beta && (sb->sb_versionnum & XR_ALPHA_SECSB_VNMASK))) {
-			/*
-			 * shared version # and inode alignment fields
-			 * should be valid
-			 */
-			if (sb->sb_shared_vn && !xfs_sb_version_hasshared(sb))
-				return(XR_BAD_SVN);
-			if (sb->sb_inoalignmt && !xfs_sb_version_hasalign(sb))
-				return(XR_BAD_INO_ALIGN);
-		}
-		if ((!pre_65_beta &&
-		     (sb->sb_versionnum & XR_GOOD_SECSB_VNMASK)) ||
-		    (pre_65_beta &&
-		     (sb->sb_versionnum & XFS_SB_VERSION_DALIGNBIT)))  {
-			/*
-			 * stripe alignment values should be valid
-			 */
-			if (sb->sb_unit && !xfs_sb_version_hasdalign(sb))
-				return(XR_BAD_SB_UNIT);
-			if (sb->sb_width && !xfs_sb_version_hasdalign(sb))
-				return(XR_BAD_SB_WIDTH);
-		}
-
-#if 0
-		/*
-		 * checks involving later superblock fields get added here...
-		 */
-		if (sb->sb_versionnum & XR_GOOD_SECSB_VNMASK)  {
-		}
-#endif
-	}
-
 	return(XR_OK);
 }
 
@@ -631,58 +576,13 @@ get_sb_geometry(fs_geometry_t *geo, xfs_sb_t *sbp)
 	if (xfs_sb_version_hasalign(sbp))
 		geo->sb_ialignbit = 1;
 
-	if (xfs_sb_version_hasshared(sbp) ||
-	    sbp->sb_versionnum & XR_PART_SECSB_VNMASK)
-		geo->sb_sharedbit = 1;
-
 	if (xfs_sb_version_hasdalign(sbp))
 		geo->sb_salignbit = 1;
 
 	if (xfs_sb_version_hasextflgbit(sbp))
 		geo->sb_extflgbit = 1;
 
-	/*
-	 * protect against pre-6.5 mkfs-generated garbaged
-	 * fields in the secondary superblocks.  pay attention
-	 * to those fields if and only if their corresponding
-	 * feature bits are set in the feature bits of the
-	 * version number or we can deduce from the version bits
-	 * that are set that our field was properly initialized
-	 * because a field after the field we care about was
-	 * properly initialized as well.
-	 */
-
-	/*
-	 * inode alignment field lives before the data alignment field
-	 */
-	if ((!pre_65_beta && (sbp->sb_versionnum & XR_PART_SECSB_VNMASK)) ||
-	    (pre_65_beta && (sbp->sb_versionnum & XR_ALPHA_SECSB_VNMASK)))
-		geo->sb_inoalignmt = sbp->sb_inoalignmt;
-
-	if ((!pre_65_beta && (sbp->sb_versionnum & XR_GOOD_SECSB_VNMASK)) ||
-	    (pre_65_beta && xfs_sb_version_hasdalign(sbp))) {
-		geo->sb_unit = sbp->sb_unit;
-		geo->sb_width = sbp->sb_width;
-	}
-
-	/*
-	 * shared vn always set if either ino or data alignment is on
-	 * since that field lives between the quota and inode alignment
-	 * fields
-	 */
-	if (sbp->sb_versionnum & XR_PART_SECSB_VNMASK)
-		geo->sb_shared_vn = sbp->sb_shared_vn;
-
-	/*
-	 * superblock fields located after sb_widthfields get set
-	 * into the geometry structure only if we can determine
-	 * from the features enabled in this superblock whether
-	 * or not the sector was zero'd at mkfs time.
-	 */
-	if ((!pre_65_beta && (sbp->sb_versionnum & XR_GOOD_SECSB_VNMASK)) ||
-	    (pre_65_beta && (sbp->sb_versionnum & XR_ALPHA_SECSB_VNMASK))) {
-		geo->sb_fully_zeroed = 1;
-	}
+	geo->sb_fully_zeroed = 1;
 }
 
 /*

@@ -611,20 +611,25 @@ version_string(
 	else if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_5)
 		strcpy(s, "V5");
 
+	/*
+	 * We assume the state of these features now, so macros don't exist for
+	 * them any more.
+	 */
+	if (sbp->sb_versionnum & XFS_SB_VERSION_NLINKBIT)
+		strcat(s, ",NLINK");
+	if (sbp->sb_versionnum & XFS_SB_VERSION_SHAREDBIT)
+		strcat(s, ",SHARED");
+	if (sbp->sb_versionnum & XFS_SB_VERSION_DIRV2BIT)
+		strcat(s, ",DIRV2");
+
 	if (xfs_sb_version_hasattr(sbp))
 		strcat(s, ",ATTR");
-	if (xfs_sb_version_hasnlink(sbp))
-		strcat(s, ",NLINK");
 	if (xfs_sb_version_hasquota(sbp))
 		strcat(s, ",QUOTA");
 	if (xfs_sb_version_hasalign(sbp))
 		strcat(s, ",ALIGN");
 	if (xfs_sb_version_hasdalign(sbp))
 		strcat(s, ",DALIGN");
-	if (xfs_sb_version_hasshared(sbp))
-		strcat(s, ",SHARED");
-	if (xfs_sb_version_hasdirv2(sbp))
-		strcat(s, ",DIRV2");
 	if (xfs_sb_version_haslogv2(sbp))
 		strcat(s, ",LOGV2");
 	if (xfs_sb_version_hasextflgbit(sbp))

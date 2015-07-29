@@ -419,8 +419,7 @@ pf_read_inode_dirs(
 		if (be16_to_cpu(dino->di_magic) != XFS_DINODE_MAGIC)
 			continue;
 
-		if (!XFS_DINODE_GOOD_VERSION(dino->di_version) ||
-				(!fs_inode_nlink && dino->di_version > 1))
+		if (!XFS_DINODE_GOOD_VERSION(dino->di_version))
 			continue;
 
 		if (be64_to_cpu(dino->di_size) <= XFS_DFORK_DSIZE(dino, mp))

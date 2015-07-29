@@ -895,13 +895,6 @@ blockget_f(
 				XFS_SB_VERSION_ATTRBIT);
 		error++;
 	}
-	if ((sbversion & XFS_SB_VERSION_NLINKBIT) &&
-					!xfs_sb_version_hasnlink(&mp->m_sb)) {
-		if (!sflag)
-			dbprintf(_("sb versionnum missing nlink bit %x\n"),
-				XFS_SB_VERSION_NLINKBIT);
-		error++;
-	}
 	if ((sbversion & XFS_SB_VERSION_QUOTABIT) &&
 					!xfs_sb_version_hasquota(&mp->m_sb)) {
 		if (!sflag)

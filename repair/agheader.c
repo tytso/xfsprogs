@@ -279,12 +279,9 @@ secondary_sb_wack(
 	else if (xfs_sb_version_hassector(sb))
 		size = offsetof(xfs_sb_t, sb_logsectsize)
 			+ sizeof(sb->sb_logsectsize);
-	else if (xfs_sb_version_hasdirv2(sb))
+	else /* only support dirv2 or more recent */
 		size = offsetof(xfs_sb_t, sb_dirblklog)
 			+ sizeof(sb->sb_dirblklog);
-	else
-		size = offsetof(xfs_sb_t, sb_width)
-			+ sizeof(sb->sb_width);
 
 	/* Check the buffer we read from disk for garbage outside size */
 	for (ip = XFS_BUF_PTR(sbuf) + size;
@@ -330,7 +327,7 @@ secondary_sb_wack(
 	if (sb->sb_flags)  {
 		if (!no_modify)
 			sb->sb_flags = 0;
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(_("bad flags field in superblock %d\n"), i);
 		} else
@@ -352,7 +349,7 @@ secondary_sb_wack(
 	if (sb->sb_inprogress == 1 && sb->sb_uquotino != NULLFSINO)  {
 		if (!no_modify)
 			sb->sb_uquotino = 0;
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("non-null user quota inode field in superblock %d\n"),
@@ -367,7 +364,7 @@ secondary_sb_wack(
 			sb->sb_gquotino = 0;
 			dsb->sb_gquotino = 0;
 		}
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("non-null group quota inode field in superblock %d\n"),
@@ -388,7 +385,7 @@ secondary_sb_wack(
 			sb->sb_pquotino = 0;
 			dsb->sb_pquotino = 0;
 		}
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("non-null project quota inode field in superblock %d\n"),
@@ -401,7 +398,7 @@ secondary_sb_wack(
 	if (sb->sb_inprogress == 1 && sb->sb_qflags)  {
 		if (!no_modify)
 			sb->sb_qflags = 0;
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(_("non-null quota flags in superblock %d\n"),
 				i);
@@ -415,22 +412,10 @@ secondary_sb_wack(
 	 * written at mkfs time (and the corresponding sb version bits
 	 * are set).
 	 */
-	if (!xfs_sb_version_hasshared(sb) && sb->sb_shared_vn != 0)  {
-		if (!no_modify)
-			sb->sb_shared_vn = 0;
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
-			rval |= XR_AG_SB;
-			do_warn(
-		_("bad shared version number in superblock %d\n"),
-				i);
-		} else
-			rval |= XR_AG_SB_SEC;
-	}
-
 	if (!xfs_sb_version_hasalign(sb) && sb->sb_inoalignmt != 0)  {
 		if (!no_modify)
 			sb->sb_inoalignmt = 0;
-		if (sb->sb_versionnum & XR_PART_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("bad inode alignment field in superblock %d\n"),
@@ -443,7 +428,7 @@ secondary_sb_wack(
 	    (sb->sb_unit != 0 || sb->sb_width != 0))  {
 		if (!no_modify)
 			sb->sb_unit = sb->sb_width = 0;
-		if (sb->sb_versionnum & XR_GOOD_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("bad stripe unit/width fields in superblock %d\n"),
@@ -461,7 +446,7 @@ secondary_sb_wack(
 			sb->sb_logsectsize = 0;
 			sb->sb_logsectlog = 0;
 		}
-		if (sb->sb_versionnum & XR_GOOD_SECSB_VNMASK || !do_bzero)  {
+		if (!do_bzero)  {
 			rval |= XR_AG_SB;
 			do_warn(
 		_("bad log/data device sector size fields in superblock %d\n"),

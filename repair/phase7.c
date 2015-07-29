@@ -43,13 +43,7 @@ set_nlinks(
 		do_warn(_("resetting inode %" PRIu64 " nlinks from %u to %u\n"),
 			ino, dinoc->di_nlink, nrefs);
 
-		if (dinoc->di_version == 1 && nrefs > XFS_MAXLINK_1)  {
-			ASSERT(fs_inode_nlink);
-			do_warn(
-_("nlinks %u will overflow v1 ino, ino %" PRIu64 " will be converted to version 2\n"),
-				nrefs, ino);
-
-		}
+		ASSERT(dinoc->di_version > 1);
 		dinoc->di_nlink = nrefs;
 	} else  {
 		do_warn(

@@ -28,7 +28,6 @@ void
 update_sb_version(xfs_mount_t *mp)
 {
 	xfs_sb_t	*sb;
-	__uint16_t	vn;
 
 	sb = &mp->m_sb;
 
@@ -42,10 +41,9 @@ update_sb_version(xfs_mount_t *mp)
 		xfs_sb_version_addattr2(sb);
 	}
 
-	if (fs_inode_nlink && !xfs_sb_version_hasnlink(sb))  {
-		ASSERT(fs_inode_nlink_allowed);
-		xfs_sb_version_addnlink(sb);
-	}
+	/* V2 inode conversion is now always going to happen */
+	if (!(sb->sb_versionnum & XFS_SB_VERSION_NLINKBIT))
+		sb->sb_versionnum |= XFS_SB_VERSION_NLINKBIT;
 
 	/*
 	 * fix up the superblock version number and feature bits,
@@ -82,14 +80,7 @@ update_sb_version(xfs_mount_t *mp)
 
 		if (xfs_sb_version_hasquota(sb))  {
 			lost_quotas = 1;
-			vn = sb->sb_versionnum;
-			vn &= ~XFS_SB_VERSION_QUOTABIT;
-
-			if (!(vn & XFS_SB_VERSION_ALLFBITS))
-				vn = xfs_sb_version_toold(vn);
-
-			ASSERT(vn != 0);
-			sb->sb_versionnum = vn;
+			sb->sb_versionnum &= ~XFS_SB_VERSION_QUOTABIT;
 		}
 	}
 
@@ -109,7 +100,7 @@ parse_sb_version(xfs_sb_t *sb)
 
 	fs_attributes = 0;
 	fs_attributes2 = 0;
-	fs_inode_nlink = 0;
+	fs_inode_nlink = 1;
 	fs_quotas = 0;
 	fs_aligned_inodes = 0;
 	fs_sb_feature_bits = 0;
@@ -119,6 +110,16 @@ parse_sb_version(xfs_sb_t *sb)
 	have_gquotino = 0;
 	have_pquotino = 0;
 	issue_warning = 0;
+
+	if (sb->sb_versionnum & XFS_SB_VERSION_SHAREDBIT) {
+		do_warn(_("Shared Version bit set. Not supported. Ever.\n"));
+		return 1;
+	}
+
+	if (sb->sb_versionnum & XFS_SB_VERSION_SHAREDBIT) {
+		do_warn(_("Shared Version bit set. Not supported. Ever.\n"));
+		return 1;
+	}
 
 	/*
 	 * ok, check to make sure that the sb isn't newer
@@ -130,14 +131,6 @@ parse_sb_version(xfs_sb_t *sb)
 			issue_warning = 1;
 			do_warn(
 			_("This filesystem has uninitialized extent flags.\n"));
-		}
-	}
-
-	if (xfs_sb_version_hasshared(sb))  {
-		fs_shared = 1;
-		if (!fs_shared_allowed)  {
-			issue_warning = 1;
-			do_warn(_("This filesystem is marked shared.\n"));
 		}
 	}
 
@@ -225,24 +218,11 @@ _("WARNING:  you have disallowed attr2 attributes but this filesystem\n"
 		}
 	}
 
-	if (xfs_sb_version_hasnlink(sb))  {
-		if (!fs_inode_nlink_allowed)  {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed version 2 inodes but this filesystem\n"
-  "\thas version 2 inodes.  The filesystem will be downgraded and\n"
-  "\tall version 2 inodes will be converted to version 1 inodes.\n"
-  "\tThis may cause some hard links to files to be destroyed\n"));
-			} else  {
-				do_warn(
-_("WARNING:  you have disallowed version 2 inodes but this filesystem\n"
-  "\thas version 2 inodes.  The filesystem would be downgraded and\n"
-  "\tall version 2 inodes would be converted to version 1 inodes.\n"
-  "\tThis might cause some hard links to files to be destroyed\n"));
-			}
-		} else   {
-			fs_inode_nlink = 1;
-		}
+	if (!(sb->sb_versionnum & XFS_SB_VERSION_NLINKBIT)) {
+		do_warn(
+_("WARNING: you have a V1 inode filesystem. It %s be converted to a\n"
+  "\tversion 2 inode filesystem. If you do not want this, run an older\n"
+  "\tversion of xfs_repair.\n"), no_modify ? "would" : "will");
 	}
 
 	if (xfs_sb_version_hasquota(sb))  {

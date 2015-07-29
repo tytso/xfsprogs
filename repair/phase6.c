@@ -862,8 +862,6 @@ mk_root_dir(xfs_mount_t *mp)
 	int		vers;
 	int		times;
 
-	ASSERT(xfs_sb_version_hasdirv2(&mp->m_sb));
-
 	tp = libxfs_trans_alloc(mp, 0);
 	ip = NULL;
 
@@ -879,7 +877,7 @@ mk_root_dir(xfs_mount_t *mp)
 	/*
 	 * take care of the core -- initialization from xfs_ialloc()
 	 */
-	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
+	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, xfs_icdinode_size(vers));
 
 	ip->i_d.di_magic = XFS_DINODE_MAGIC;
@@ -945,8 +943,6 @@ mk_orphanage(xfs_mount_t *mp)
 	const int	mode = 0755;
 	int		nres;
 	struct xfs_name	xname;
-
-	ASSERT(xfs_sb_version_hasdirv2(&mp->m_sb));
 
 	/*
 	 * check for an existing lost+found first, if it exists, return
@@ -1091,8 +1087,6 @@ mv_orphanage(
 	ino_tree_node_t		*irec;
 	int			ino_offset = 0;
 	struct xfs_name		xname;
-
-	ASSERT(xfs_sb_version_hasdirv2(&mp->m_sb));
 
 	xname.name = fname;
 	xname.len = snprintf((char *)fname, sizeof(fname), "%llu",

@@ -59,20 +59,6 @@
 
 #define NUM_AGH_SECTS		4	/* # of components in an ag header */
 
-/*
- * secondary sb mask -- if the secondary sb feature bits has a
- * the partial sb mask bit set, then you depend on the fields
- * in it up to and including sb_inoalignmt but the unused part of the
- * sector may have trash in it.  If the sb has any bits set that are in
- * the good mask, then the entire sb and sector are good (was zero'ed
- * by mkfs).  The third mask is for filesystems made by pre-6.5 campus
- * alpha mkfs's.  Those are rare so we'll check for those under
- * a special option.
- */
-#define XR_PART_SECSB_VNMASK	0x0F80	/* >= XFS_SB_VERSION_ALIGNBIT */
-#define XR_GOOD_SECSB_VNMASK	0x0F00	/* >= XFS_SB_VERSION_DALIGNBIT */
-#define XR_ALPHA_SECSB_VNMASK	0x0180	/* DALIGN|ALIGN bits */
-
 /* global variables for xfs_repair */
 
 /* arguments and argument flag variables */
