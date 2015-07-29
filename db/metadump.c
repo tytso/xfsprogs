@@ -245,6 +245,124 @@ write_buf(
 	return seenint() ? -EINTR : 0;
 }
 
+static void
+zero_btree_node(
+	struct xfs_btree_block	*block,
+	typnm_t			btype)
+{
+	int			nrecs;
+	xfs_bmbt_ptr_t		*bpp;
+	xfs_bmbt_key_t		*bkp;
+	xfs_inobt_ptr_t		*ipp;
+	xfs_inobt_key_t		*ikp;
+	xfs_alloc_ptr_t		*app;
+	xfs_alloc_key_t		*akp;
+	void			*zp1, *zp2;
+	int			zlen1, zlen2;
+
+	nrecs = be16_to_cpu(block->bb_numrecs);
+
+	switch (btype) {
+	case TYP_BMAPBTA:
+	case TYP_BMAPBTD:
+		bkp = XFS_BMBT_KEY_ADDR(mp, block, 1);
+		bpp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
+		zp1 = &bkp[nrecs];
+		zlen1 = (char *)&bpp[0] - (char *)&bkp[nrecs];
+		zp2 = &bpp[nrecs];
+		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
+							(char *)&bpp[nrecs];
+		break;
+	case TYP_INOBT:
+	case TYP_FINOBT:
+		ikp = XFS_INOBT_KEY_ADDR(mp, block, 1);
+		ipp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+		zp1 = &ikp[nrecs];
+		zlen1 = (char *)&ipp[0] - (char *)&ikp[nrecs];
+		zp2 = &ipp[nrecs];
+		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
+							(char *)&ipp[nrecs];
+		break;
+	case TYP_BNOBT:
+	case TYP_CNTBT:
+		akp = XFS_ALLOC_KEY_ADDR(mp, block, 1);
+		app = XFS_ALLOC_PTR_ADDR(mp, block, 1, mp->m_alloc_mxr[1]);
+		zp1 = &akp[nrecs];
+		zlen1 = (char *)&app[0] - (char *)&akp[nrecs];
+		zp2 = &app[nrecs];
+		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
+							(char *)&app[nrecs];
+		break;
+	default:
+		zp1 = NULL;
+		break;
+	}
+
+	if (zp1 && zp2) {
+		/* Zero from end of keys to beginning of pointers */
+		memset(zp1, 0, zlen1);
+		/* Zero from end of pointers to end of block */
+		memset(zp2, 0, zlen2);
+	}
+}
+
+static void
+zero_btree_leaf(
+	struct xfs_btree_block	*block,
+	typnm_t			btype)
+{
+	int			nrecs;
+	struct xfs_bmbt_rec	*brp;
+	struct xfs_inobt_rec	*irp;
+	struct xfs_alloc_rec	*arp;
+	void			*zp;
+	int			zlen;
+
+	nrecs = be16_to_cpu(block->bb_numrecs);
+
+	switch (btype) {
+	case TYP_BMAPBTA:
+	case TYP_BMAPBTD:
+		brp = XFS_BMBT_REC_ADDR(mp, block, 1);
+		zp = &brp[nrecs];
+		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&brp[nrecs];
+		break;
+	case TYP_INOBT:
+	case TYP_FINOBT:
+		irp = XFS_INOBT_REC_ADDR(mp, block, 1);
+		zp = &irp[nrecs];
+		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&irp[nrecs];
+		break;
+	case TYP_BNOBT:
+	case TYP_CNTBT:
+		arp = XFS_ALLOC_REC_ADDR(mp, block, 1);
+		zp = &arp[nrecs];
+		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&arp[nrecs];
+		break;
+	default:
+		zp = NULL;
+		break;
+	}
+
+	/* Zero from end of records to end of block */
+	if (zp && zlen < mp->m_sb.sb_blocksize)
+		memset(zp, 0, zlen);
+}
+
+static void
+zero_btree_block(
+	struct xfs_btree_block	*block,
+	typnm_t			btype)
+{
+	int			level;
+
+	level = be16_to_cpu(block->bb_level);
+
+	if (level > 0)
+		zero_btree_node(block, btype);
+	else
+		zero_btree_leaf(block, btype);
+}
 
 static int
 scan_btree(
@@ -271,6 +389,12 @@ scan_btree(
 		rval = !stop_on_read_error;
 		goto pop_out;
 	}
+
+	if (zero_stale_data) {
+		zero_btree_block(iocur_top->data, btype);
+		iocur_top->need_crc = 1;
+	}
+
 	if (write_buf(iocur_top))
 		goto pop_out;
 

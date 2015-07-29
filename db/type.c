@@ -70,6 +70,7 @@ static const typ_t	__typtab[] = {
 	{ TYP_SB, "sb", handle_struct, sb_hfld, NULL },
 	{ TYP_SYMLINK, "symlink", handle_string, NULL, NULL },
 	{ TYP_TEXT, "text", handle_text, NULL, NULL },
+	{ TYP_FINOBT, "finobt", handle_struct, inobt_hfld, NULL },
 	{ TYP_NONE, NULL }
 };
 
@@ -104,6 +105,8 @@ static const typ_t	__typtab_crc[] = {
 	{ TYP_SYMLINK, "symlink", handle_struct, symlink_crc_hfld,
 		&xfs_symlink_buf_ops },
 	{ TYP_TEXT, "text", handle_text, NULL, NULL },
+	{ TYP_FINOBT, "finobt", handle_struct, inobt_crc_hfld,
+		&xfs_inobt_buf_ops },
 	{ TYP_NONE, NULL }
 };
 
