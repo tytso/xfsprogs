@@ -1083,8 +1083,8 @@ obfuscate_sf_attr(
 	xfs_dinode_t		*dip)
 {
 	/*
-	 * with extended attributes, obfuscate the names and zero the actual
-	 * values.
+	 * with extended attributes, obfuscate the names and fill the actual
+	 * values with 'v' (to see a valid string length, as opposed to NULLs)
 	 */
 
 	xfs_attr_shortform_t	*asfp;
@@ -1124,7 +1124,7 @@ obfuscate_sf_attr(
 		}
 
 		generate_obfuscated_name(0, asfep->namelen, &asfep->nameval[0]);
-		memset(&asfep->nameval[asfep->namelen], 0, asfep->valuelen);
+		memset(&asfep->nameval[asfep->namelen], 'v', asfep->valuelen);
 
 		asfep = (xfs_attr_sf_entry_t *)((char *)asfep +
 				XFS_ATTR_SF_ENTSIZE(asfep));
@@ -1299,7 +1299,7 @@ obfuscate_attr_block(
 				/* Macros to handle both attr and attr3 */
 				memset(block +
 					(bs - XFS_ATTR3_RMT_BUF_SPACE(mp, bs)),
-				      0, XFS_ATTR3_RMT_BUF_SPACE(mp, bs));
+				      'v', XFS_ATTR3_RMT_BUF_SPACE(mp, bs));
 		}
 		return;
 	}
@@ -1337,7 +1337,7 @@ obfuscate_attr_block(
 			}
 			generate_obfuscated_name(0, local->namelen,
 				&local->nameval[0]);
-			memset(&local->nameval[local->namelen], 0,
+			memset(&local->nameval[local->namelen], 'v',
 				be16_to_cpu(local->valuelen));
 		} else {
 			remote = xfs_attr3_leaf_name_remote(leaf, i);
