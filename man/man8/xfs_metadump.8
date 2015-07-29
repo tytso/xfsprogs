@@ -4,7 +4,7 @@ xfs_metadump \- copy XFS filesystem metadata to a file
 .SH SYNOPSIS
 .B xfs_metadump
 [
-.B \-efFgow
+.B \-aefFgow
 ] [
 .B \-m
 .I max_extents
@@ -73,6 +73,14 @@ can be restored to filesystem image (minus the data) using the
 tool.
 .PP
 .SH OPTIONS
+.TP
+.B \-a
+Copies entire metadata blocks.  Normally,
+.B xfs_metadump
+will zero any stale
+bytes interspersed with in-use metadata.  Use this option to copy full metadata
+blocks, to provide more debugging information for a corrupted filesystem.  Note
+that the extra data will be unobfuscated.
 .TP
 .B \-e
 Stops the dump on a read error. Normally, it will ignore read errors and copy

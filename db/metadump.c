@@ -57,7 +57,7 @@ static void	metadump_help(void);
 
 static const cmdinfo_t	metadump_cmd =
 	{ "metadump", NULL, metadump_f, 0, -1, 0,
-		N_("[-e] [-g] [-m max_extent] [-w] [-o] filename"),
+		N_("[-a] [-e] [-g] [-m max_extent] [-w] [-o] filename"),
 		N_("dump metadata to a file"), metadump_help };
 
 static FILE		*outf;		/* metadump file */
@@ -75,6 +75,7 @@ static int		show_progress = 0;
 static int		stop_on_read_error = 0;
 static int		max_extent_size = DEFAULT_MAX_EXT_SIZE;
 static int		obfuscate = 1;
+static int		zero_stale_data = 1;
 static int		show_warnings = 0;
 static int		progress_since_warning = 0;
 
@@ -93,6 +94,7 @@ metadump_help(void)
 " for compressing and sending to an XFS maintainer for corruption analysis \n"
 " or xfs_repair failures.\n\n"
 " Options:\n"
+"   -a -- Copy full metadata blocks without zeroing unused space\n"
 "   -e -- Ignore read errors and keep going\n"
 "   -g -- Display dump progress\n"
 "   -m -- Specify max extent size in blocks to copy (default = %d blocks)\n"
@@ -2256,8 +2258,11 @@ metadump_f(
 		return 0;
 	}
 
-	while ((c = getopt(argc, argv, "egm:ow")) != EOF) {
+	while ((c = getopt(argc, argv, "aegm:ow")) != EOF) {
 		switch (c) {
+			case 'a':
+				zero_stale_data = 0;
+				break;
 			case 'e':
 				stop_on_read_error = 1;
 				break;
