@@ -1282,15 +1282,27 @@ process_dir_data_block(
 }
 
 static void
-obfuscate_symlink_block(
+process_symlink_block(
 	char			*block)
 {
-	if (xfs_sb_version_hascrc(&(mp)->m_sb))
-		block += sizeof(struct xfs_dsymlink_hdr);
+	char *link = block;
 
-	obfuscate_path_components(block,
-				  XFS_SYMLINK_BUF_SPACE(mp,
-					mp->m_sb.sb_blocksize));
+	if (xfs_sb_version_hascrc(&(mp)->m_sb))
+		link += sizeof(struct xfs_dsymlink_hdr);
+
+	if (obfuscate)
+		obfuscate_path_components(link, XFS_SYMLINK_BUF_SPACE(mp,
+							mp->m_sb.sb_blocksize));
+	if (zero_stale_data) {
+		size_t	linklen, zlen;
+
+		linklen = strlen(link);
+		zlen = mp->m_sb.sb_blocksize - linklen;
+		if (xfs_sb_version_hascrc(&mp->m_sb))
+			zlen -= sizeof(struct xfs_dsymlink_hdr);
+		if (zlen < mp->m_sb.sb_blocksize)
+			memset(link + linklen, 0, zlen);
+	}
 }
 
 #define MAX_REMOTE_VALS		4095
@@ -1444,10 +1456,8 @@ process_single_fsb_objects(
 			iocur_top->need_crc = 1;
 			break;
 		case TYP_SYMLINK:
-			if (obfuscate) {
-				obfuscate_symlink_block(dp);
-				iocur_top->need_crc = 1;
-			}
+			process_symlink_block(dp);
+			iocur_top->need_crc = 1;
 			break;
 		case TYP_ATTR:
 			if (obfuscate) {
