@@ -1332,7 +1332,7 @@ add_remote_vals(
 
 /* Handle remote and leaf attributes */
 static void
-obfuscate_attr_block(
+process_attr_block(
 	char				*block,
 	xfs_fileoff_t			offset)
 {
@@ -1344,6 +1344,7 @@ obfuscate_attr_block(
 	xfs_attr_leaf_name_local_t 	*local;
 	xfs_attr_leaf_name_remote_t 	*remote;
 	__uint32_t			bs = mp->m_sb.sb_blocksize;
+	char				*first_name;
 
 
 	leaf = (xfs_attr_leafblock_t *)block;
@@ -1352,7 +1353,7 @@ obfuscate_attr_block(
 	if ((be16_to_cpu(leaf->hdr.info.magic) != XFS_ATTR_LEAF_MAGIC) &&
 	    (be16_to_cpu(leaf->hdr.info.magic) != XFS_ATTR3_LEAF_MAGIC)) {
 		for (i = 0; i < attr_data.remote_val_count; i++) {
-			if (attr_data.remote_vals[i] == offset)
+			if (obfuscate && attr_data.remote_vals[i] == offset)
 				/* Macros to handle both attr and attr3 */
 				memset(block +
 					(bs - XFS_ATTR3_RMT_BUF_SPACE(mp, bs)),
@@ -1375,7 +1376,15 @@ obfuscate_attr_block(
 	}
 
 	entry = xfs_attr3_leaf_entryp(leaf);
+	/* We will move this as we parse */
+	first_name = NULL;
 	for (i = 0; i < nentries; i++, entry++) {
+		int nlen, vlen, zlen;
+
+		/* Grows up; if this name is topmost, move first_name */
+		if (!first_name || xfs_attr3_leaf_name(leaf, i) < first_name)
+			first_name = xfs_attr3_leaf_name(leaf, i);
+
 		if (be16_to_cpu(entry->nameidx) > XFS_LBSIZE(mp)) {
 			if (show_warnings)
 				print_warning(
@@ -1392,10 +1401,20 @@ obfuscate_attr_block(
 						(long long)cur_ino);
 				break;
 			}
-			generate_obfuscated_name(0, local->namelen,
-				&local->nameval[0]);
-			memset(&local->nameval[local->namelen], 'v',
-				be16_to_cpu(local->valuelen));
+			if (obfuscate) {
+				generate_obfuscated_name(0, local->namelen,
+					&local->nameval[0]);
+				memset(&local->nameval[local->namelen], 'v',
+					be16_to_cpu(local->valuelen));
+			}
+			/* zero from end of nameval[] to next name start */
+			nlen = local->namelen;
+			vlen = be16_to_cpu(local->valuelen);
+			zlen = xfs_attr_leaf_entsize_local(nlen, vlen) -
+				(sizeof(xfs_attr_leaf_name_local_t) - 1 +
+				 nlen + vlen);
+			if (zero_stale_data)
+				memset(&local->nameval[nlen + vlen], 0, zlen);
 		} else {
 			remote = xfs_attr3_leaf_name_remote(leaf, i);
 			if (remote->namelen == 0 || remote->valueblk == 0) {
@@ -1405,14 +1424,33 @@ obfuscate_attr_block(
 						(long long)cur_ino);
 				break;
 			}
-			generate_obfuscated_name(0, remote->namelen,
-						 &remote->name[0]);
-			add_remote_vals(be32_to_cpu(remote->valueblk),
-					be32_to_cpu(remote->valuelen));
+			if (obfuscate) {
+				generate_obfuscated_name(0, remote->namelen,
+							 &remote->name[0]);
+				add_remote_vals(be32_to_cpu(remote->valueblk),
+						be32_to_cpu(remote->valuelen));
+			}
+			/* zero from end of name[] to next name start */
+			nlen = remote->namelen;
+			zlen = xfs_attr_leaf_entsize_remote(nlen) -
+				(sizeof(xfs_attr_leaf_name_remote_t) - 1 +
+				 nlen);
+			if (zero_stale_data)
+				memset(&remote->name[nlen], 0, zlen);
 		}
+	}
+
+	/* Zero from end of entries array to the first name/val */
+	if (zero_stale_data) {
+		struct xfs_attr_leaf_entry *entries;
+
+		entries = xfs_attr3_leaf_entryp(leaf);
+		memset(&entries[nentries], 0,
+		       first_name - (char *)&entries[nentries]);
 	}
 }
 
+/* Processes symlinks, attrs, directories ... */
 static int
 process_single_fsb_objects(
 	xfs_dfiloff_t	o,
@@ -1460,10 +1498,8 @@ process_single_fsb_objects(
 			iocur_top->need_crc = 1;
 			break;
 		case TYP_ATTR:
-			if (obfuscate) {
-				obfuscate_attr_block(dp, o);
-				iocur_top->need_crc = 1;
-			}
+			process_attr_block(dp, o);
+			iocur_top->need_crc = 1;
 			break;
 		default:
 			break;
