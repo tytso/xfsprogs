@@ -2184,6 +2184,10 @@ copy_log(void)
 		return !stop_on_read_error;
 	}
 
+	/* If not obfuscating, just copy the log as it is */
+	if (!obfuscate)
+		goto done;
+
 	dirty = xlog_is_dirty(mp, &x, 0);
 
 	switch (dirty) {
@@ -2196,18 +2200,17 @@ copy_log(void)
 		break;
 	case 1:
 		/* keep the dirty log */
-		if (obfuscate)
-			print_warning(
+		print_warning(
 _("Filesystem log is dirty; image will contain unobfuscated metadata in log."));
 		break;
 	case -1:
 		/* log detection error */
-		if (obfuscate)
-			print_warning(
+		print_warning(
 _("Could not discern log; image will contain unobfuscated metadata in log."));
 		break;
 	}
 
+done:
 	return !write_buf(iocur_top);
 }
 
