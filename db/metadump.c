@@ -1273,39 +1273,52 @@ add_remote_vals(
 	}
 }
 
+/* Handle remote and leaf attributes */
 static void
 obfuscate_attr_block(
-	char			*block,
-	xfs_dfiloff_t		offset)
+	char				*block,
+	xfs_fileoff_t			offset)
 {
-	xfs_attr_leafblock_t	*leaf;
-	int			i;
-	int			nentries;
-	xfs_attr_leaf_entry_t 	*entry;
-	xfs_attr_leaf_name_local_t *local;
-	xfs_attr_leaf_name_remote_t *remote;
+	struct xfs_attr_leafblock	*leaf;
+	struct xfs_attr3_icleaf_hdr	hdr;
+	int				i;
+	int				nentries;
+	xfs_attr_leaf_entry_t 		*entry;
+	xfs_attr_leaf_name_local_t 	*local;
+	xfs_attr_leaf_name_remote_t 	*remote;
+	__uint32_t			bs = mp->m_sb.sb_blocksize;
+
 
 	leaf = (xfs_attr_leafblock_t *)block;
 
-	if (be16_to_cpu(leaf->hdr.info.magic) != XFS_ATTR_LEAF_MAGIC) {
+	/* Remote attributes - attr3 has XFS_ATTR3_RMT_MAGIC, attr has none */
+	if ((be16_to_cpu(leaf->hdr.info.magic) != XFS_ATTR_LEAF_MAGIC) &&
+	    (be16_to_cpu(leaf->hdr.info.magic) != XFS_ATTR3_LEAF_MAGIC)) {
 		for (i = 0; i < attr_data.remote_val_count; i++) {
-			/* XXX: need to handle CRC headers */
 			if (attr_data.remote_vals[i] == offset)
-				memset(block, 0, XFS_LBSIZE(mp));
+				/* Macros to handle both attr and attr3 */
+				memset(block +
+					(bs - XFS_ATTR3_RMT_BUF_SPACE(mp, bs)),
+				      0, XFS_ATTR3_RMT_BUF_SPACE(mp, bs));
 		}
 		return;
 	}
 
-	nentries = be16_to_cpu(leaf->hdr.count);
+	/* Ok, it's a leaf - get header; accounts for crc & non-crc */
+	xfs_attr3_leaf_hdr_from_disk(&hdr, leaf);
+
+	nentries = hdr.count;
 	if (nentries * sizeof(xfs_attr_leaf_entry_t) +
-			sizeof(xfs_attr_leaf_hdr_t) > XFS_LBSIZE(mp)) {
+			xfs_attr3_leaf_hdr_size(leaf) >
+				XFS_ATTR3_RMT_BUF_SPACE(mp, bs)) {
 		if (show_warnings)
 			print_warning("invalid attr count in inode %llu",
 					(long long)cur_ino);
 		return;
 	}
 
-	for (i = 0, entry = &leaf->entries[0]; i < nentries; i++, entry++) {
+	entry = xfs_attr3_leaf_entryp(leaf);
+	for (i = 0; i < nentries; i++, entry++) {
 		if (be16_to_cpu(entry->nameidx) > XFS_LBSIZE(mp)) {
 			if (show_warnings)
 				print_warning(
