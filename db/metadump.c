@@ -1152,9 +1152,6 @@ obfuscate_dir_data_block(
 
 	datahdr = (struct xfs_dir2_data_hdr *)block;
 
-	if (offset % mp->m_dirblkfsbs != 0)
-		return;	/* corrupted, leave it alone */
-
 	if (is_block_format) {
 		xfs_dir2_leaf_entry_t	*blp;
 		xfs_dir2_block_tail_t	*btp;
@@ -1187,7 +1184,7 @@ obfuscate_dir_data_block(
 
 	dir_offset = xfs_dir3_data_entry_offset(datahdr);
 	ptr = block + dir_offset;
-	endptr = block + mp->m_sb.sb_blocksize;
+	endptr = block + mp->m_dirblksize;
 
 	while (ptr < endptr && dir_offset < end_of_data) {
 		xfs_dir2_data_entry_t	*dep;
