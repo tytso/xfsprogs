@@ -1775,7 +1775,8 @@ static int
 process_inode(
 	xfs_agnumber_t		agno,
 	xfs_agino_t 		agino,
-	xfs_dinode_t 		*dip)
+	xfs_dinode_t 		*dip,
+	bool			free_inode)
 {
 	int			success;
 	bool			crc_was_ok = false; /* no recalc by default */
@@ -1784,11 +1785,20 @@ process_inode(
 	success = 1;
 	cur_ino = XFS_AGINO_TO_INO(mp, agno, agino);
 
-	/* we only care about crc recalculation if we are obfuscating names. */
-	if (obfuscate) {
+	/* we only care about crc recalculation if we will modify the inode. */
+	if (obfuscate || zero_stale_data) {
 		crc_was_ok = xfs_verify_cksum((char *)dip,
 					mp->m_sb.sb_inodesize,
 					offsetof(struct xfs_dinode, di_crc));
+	}
+
+	if (free_inode) {
+		if (zero_stale_data) {
+			/* Zero all of the inode literal area */
+			memset(XFS_DFORK_DPTR(dip), 0,
+			       XFS_LITINO(mp, dip->di_version));
+		}
+		goto done;
 	}
 
 	/* copy appropriate data fork metadata */
@@ -1831,6 +1841,11 @@ process_inode(
 		}
 		nametable_clear();
 	}
+
+done:
+	/* Heavy handed but low cost; just do it as a catch-all. */
+	if (zero_stale_data)
+		need_new_crc = 1;
 
 	if (crc_was_ok && need_new_crc)
 		xfs_dinode_calc_crc(mp, dip);
@@ -1897,13 +1912,12 @@ copy_inode_chunk(
 	for (i = 0; i < XFS_INODES_PER_CHUNK; i++) {
 		xfs_dinode_t            *dip;
 
-		if (XFS_INOBT_IS_FREE_DISK(rp, i))
-			continue;
-
 		dip = (xfs_dinode_t *)((char *)iocur_top->data +
 				((off + i) << mp->m_sb.sb_inodelog));
 
-		if (!process_inode(agno, agino + i, dip))
+		/* process_inode handles free inodes, too */
+		if (!process_inode(agno, agino + i, dip,
+				   XFS_INOBT_IS_FREE_DISK(rp, i)))
 			goto pop_out;
 	}
 skip_processing:
