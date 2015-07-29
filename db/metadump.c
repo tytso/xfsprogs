@@ -1240,8 +1240,12 @@ static void
 obfuscate_symlink_block(
 	char			*block)
 {
-	/* XXX: need to handle CRC headers */
-	obfuscate_path_components(block, mp->m_sb.sb_blocksize);
+	if (xfs_sb_version_hascrc(&(mp)->m_sb))
+		block += sizeof(struct xfs_dsymlink_hdr);
+
+	obfuscate_path_components(block,
+				  XFS_SYMLINK_BUF_SPACE(mp,
+					mp->m_sb.sb_blocksize));
 }
 
 #define MAX_REMOTE_VALS		4095
