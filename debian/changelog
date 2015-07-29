@@ -1,3 +1,10 @@
+xfsprogs (3.2.4) unstable; urgency=low
+
+  * New upstream release
+  * Fix xfs_metadump information leak (CVE-2012-2150)
+
+ -- Nathan Scott <nathans@debian.org>  Wed, 29 Jul 2015 15:31:27 +1000
+
 xfsprogs (3.2.3) unstable; urgency=low
 
   * New upstream release
