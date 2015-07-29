@@ -2099,6 +2099,23 @@ scan_ag(
 		if (stop_on_read_error)
 			goto pop_out;
 	} else {
+		if (agf && zero_stale_data) {
+			/* Zero out unused bits of agfl */
+			int i;
+			 __be32  *agfl_bno;
+
+			agfl_bno = XFS_BUF_TO_AGFL_BNO(mp, iocur_top->bp);
+			i = be32_to_cpu(agf->agf_fllast);
+
+			for (;;) {
+				if (++i == XFS_AGFL_SIZE(mp))
+					i = 0;
+				if (i == be32_to_cpu(agf->agf_flfirst))
+					break;
+				agfl_bno[i] = cpu_to_be32(NULLAGBLOCK);
+			}
+			iocur_top->need_crc = 1;
+		}
 		if (write_buf(iocur_top))
 			goto pop_out;
 	}
