@@ -73,7 +73,7 @@ static xfs_ino_t	cur_ino;
 static int		show_progress = 0;
 static int		stop_on_read_error = 0;
 static int		max_extent_size = DEFAULT_MAX_EXT_SIZE;
-static int		dont_obfuscate = 0;
+static int		obfuscate = 1;
 static int		show_warnings = 0;
 static int		progress_since_warning = 0;
 
@@ -1367,7 +1367,7 @@ process_single_fsb_objects(
 
 		}
 
-		if (dont_obfuscate)
+		if (!obfuscate)
 			goto write;
 
 		dp = iocur_top->data;
@@ -1459,7 +1459,7 @@ process_multi_fsb_objects(
 
 			}
 
-			if (dont_obfuscate || o >= mp->m_dirleafblk) {
+			if (!obfuscate || o >= mp->m_dirleafblk) {
 				ret = write_buf(iocur_top);
 				goto out_pop;
 			}
@@ -1724,7 +1724,7 @@ process_inode_data(
 {
 	switch (dip->di_format) {
 		case XFS_DINODE_FMT_LOCAL:
-			if (!dont_obfuscate)
+			if (obfuscate)
 				switch (itype) {
 					case TYP_DIR2:
 						obfuscate_sf_dir(dip);
@@ -1768,7 +1768,7 @@ process_inode(
 	cur_ino = XFS_AGINO_TO_INO(mp, agno, agino);
 
 	/* we only care about crc recalculation if we are obfuscating names. */
-	if (!dont_obfuscate) {
+	if (obfuscate) {
 		crc_was_ok = xfs_verify_cksum((char *)dip,
 					mp->m_sb.sb_inodesize,
 					offsetof(struct xfs_dinode, di_crc));
@@ -1800,7 +1800,7 @@ process_inode(
 		switch (dip->di_aformat) {
 			case XFS_DINODE_FMT_LOCAL:
 				need_new_crc = 1;
-				if (!dont_obfuscate)
+				if (obfuscate)
 					obfuscate_sf_attr(dip);
 				break;
 
@@ -2221,7 +2221,7 @@ metadump_f(
 				}
 				break;
 			case 'o':
-				dont_obfuscate = 1;
+				obfuscate = 0;
 				break;
 			case 'w':
 				show_warnings = 1;
