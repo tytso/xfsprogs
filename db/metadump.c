@@ -17,6 +17,7 @@
  */
 
 #include <libxfs.h>
+#include <libxlog.h>
 #include "bmap.h"
 #include "command.h"
 #include "metadump.h"
@@ -2169,6 +2170,8 @@ copy_sb_inodes(void)
 static int
 copy_log(void)
 {
+	int dirty;
+
 	if (show_progress)
 		print_progress("Copying log");
 
@@ -2180,6 +2183,31 @@ copy_log(void)
 		print_warning("cannot read log");
 		return !stop_on_read_error;
 	}
+
+	dirty = xlog_is_dirty(mp, &x, 0);
+
+	switch (dirty) {
+	case 0:
+		/* clear out a clean log */
+		if (show_progress)
+			print_progress("Zeroing clean log");
+		memset(iocur_top->data, 0,
+			mp->m_sb.sb_logblocks * mp->m_sb.sb_blocksize);
+		break;
+	case 1:
+		/* keep the dirty log */
+		if (obfuscate)
+			print_warning(
+_("Filesystem log is dirty; image will contain unobfuscated metadata in log."));
+		break;
+	case -1:
+		/* log detection error */
+		if (obfuscate)
+			print_warning(
+_("Could not discern log; image will contain unobfuscated metadata in log."));
+		break;
+	}
+
 	return !write_buf(iocur_top);
 }
 
