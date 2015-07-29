@@ -1483,6 +1483,31 @@ process_single_fsb_objects(
 		if (!obfuscate && !zero_stale_data)
 			goto write;
 
+		/* Zero unused part of interior nodes */
+		if (zero_stale_data) {
+			xfs_da_intnode_t *node = iocur_top->data;
+			int magic = be16_to_cpu(node->hdr.info.magic);
+
+			if (magic == XFS_DA_NODE_MAGIC ||
+			    magic == XFS_DA3_NODE_MAGIC) {
+				struct xfs_da3_icnode_hdr hdr;
+				int used;
+
+				xfs_da3_node_hdr_from_disk(&hdr, node);
+				used = xfs_da3_node_hdr_size(node);
+
+				used += hdr.count
+					* sizeof(struct xfs_da_node_entry);
+
+				if (used < mp->m_sb.sb_blocksize) {
+					memset((char *)node + used, 0,
+						mp->m_sb.sb_blocksize - used);
+					iocur_top->need_crc = 1;
+				}
+			}
+		}
+
+		/* Handle leaf nodes */
 		dp = iocur_top->data;
 		switch (btype) {
 		case TYP_DIR2:
