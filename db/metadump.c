@@ -1153,7 +1153,7 @@ process_sf_attr(
 }
 
 static void
-obfuscate_dir_data_block(
+process_dir_data_block(
 	char		*block,
 	xfs_dfiloff_t	offset,
 	int		is_block_format)
@@ -1229,6 +1229,20 @@ obfuscate_dir_data_block(
 				return;
 			dir_offset += length;
 			ptr += length;
+			/*
+			 * Zero the unused space up to the tag - the tag is
+			 * actually at a variable offset, so zeroing &dup->tag
+			 * is zeroing the free space in between
+			 */
+			if (zero_stale_data) {
+				int zlen = length -
+						sizeof(xfs_dir2_data_unused_t);
+
+				if (zlen > 0) {
+					memset(&dup->tag, 0, zlen);
+					iocur_top->need_crc = 1;
+				}
+			}
 			if (dir_offset >= end_of_data || ptr >= endptr)
 				return;
 		}
@@ -1247,10 +1261,23 @@ obfuscate_dir_data_block(
 		if (be16_to_cpu(*xfs_dir3_data_entry_tag_p(mp, dep)) !=
 				dir_offset)
 			return;
-		generate_obfuscated_name(be64_to_cpu(dep->inumber),
+
+		if (obfuscate)
+			generate_obfuscated_name(be64_to_cpu(dep->inumber),
 					 dep->namelen, &dep->name[0]);
 		dir_offset += length;
 		ptr += length;
+		/* Zero the unused space after name, up to the tag */
+		if (zero_stale_data) {
+			/* 1 byte for ftype; don't bother with conditional */
+			int zlen =
+				(char *)xfs_dir3_data_entry_tag_p(mp, dep) -
+				(char *)&dep->name[dep->namelen] - 1;
+			if (zlen > 0) {
+				memset(&dep->name[dep->namelen] + 1, 0, zlen);
+				iocur_top->need_crc = 1;
+			}
+		}
 	}
 }
 
@@ -1403,7 +1430,7 @@ process_single_fsb_objects(
 
 		}
 
-		if (!obfuscate)
+		if (!obfuscate && !zero_stale_data)
 			goto write;
 
 		dp = iocur_top->data;
@@ -1412,17 +1439,21 @@ process_single_fsb_objects(
 			if (o >= mp->m_dirleafblk)
 				break;
 
-			obfuscate_dir_data_block(dp, o,
+			process_dir_data_block(dp, o,
 						 last == mp->m_dirblkfsbs);
 			iocur_top->need_crc = 1;
 			break;
 		case TYP_SYMLINK:
-			obfuscate_symlink_block(dp);
-			iocur_top->need_crc = 1;
+			if (obfuscate) {
+				obfuscate_symlink_block(dp);
+				iocur_top->need_crc = 1;
+			}
 			break;
 		case TYP_ATTR:
-			obfuscate_attr_block(dp, o);
-			iocur_top->need_crc = 1;
+			if (obfuscate) {
+				obfuscate_attr_block(dp, o);
+				iocur_top->need_crc = 1;
+			}
 			break;
 		default:
 			break;
@@ -1495,13 +1526,14 @@ process_multi_fsb_objects(
 
 			}
 
-			if (!obfuscate || o >= mp->m_dirleafblk) {
+			if ((!obfuscate && !zero_stale_data) ||
+			     o >= mp->m_dirleafblk) {
 				ret = write_buf(iocur_top);
 				goto out_pop;
 			}
 
-			obfuscate_dir_data_block(iocur_top->data, o,
-						  last == mp->m_dirblkfsbs);
+			process_dir_data_block(iocur_top->data, o,
+					       last == mp->m_dirblkfsbs);
 			iocur_top->need_crc = 1;
 			ret = write_buf(iocur_top);
 out_pop:
