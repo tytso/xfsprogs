@@ -8,7 +8,7 @@ usage()
 	echo $*
 	echo
 	echo "Usage:"
-	echo "	libxfs-apply --source <repodir> --commit <commit_id>"
+	echo "	libxfs-apply [--verbose] --source <repodir> --commit <commit_id>"
 	echo "	libxfs-apply --patch <patchfile>"
 	echo
 	echo "libxfs-apply should be run in the destination git repository."
@@ -41,6 +41,7 @@ check_repo()
 REPO=
 PATCH=
 COMMIT_ID=
+VERBOSE=
 GUILT=0
 
 while [ $# -gt 0 ]; do
@@ -48,6 +49,7 @@ while [ $# -gt 0 ]; do
 	--source)	REPO=$2 ; shift ;;
 	--patch)	PATCH=$2; shift ;;
 	--commit)	COMMIT_ID=$2 ; shift ;;
+	--verbose)	VERBOSE=true ;;
 	*)		usage ;;
 	esac
 	shift
@@ -57,6 +59,7 @@ if [ -n "$PATCH" ]; then
 	if [ -n "$REPO" -o -n "$COMMIT_ID" ]; then
 		usage "Need to specify either patch or source repo/commit"
 	fi
+	VERBOSE=true
 elif [ -z "$REPO" -o -z "$COMMIT_ID" ]; then
 	usage "Need to specify both source repo and commit id"
 fi
@@ -109,7 +112,7 @@ filter_kernel_patch()
 	local _patch=$1
 	local _libxfs_files=""
 
-	lsdiff $_patch | grep -q "a/libxfs/"
+	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/libxfs/"
 	if [ $? -ne 0 ]; then
 		fail "Doesn't look like an xfsprogs patch with libxfs changes"
 	fi
@@ -134,7 +137,7 @@ filter_xfsprogs_patch()
 	local _patch=$1
 	local _libxfs_files=""
 
-	lsdiff $_patch | grep -q "a/fs/xfs/libxfs/"
+	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/fs/xfs/libxfs/"
 	if [ $? -ne 0 ]; then
 		fail "Doesn't look like a kernel patch with libxfs changes"
 	fi
@@ -165,15 +168,17 @@ apply_patch()
 		filter_xfsprogs_patch $_patch > $_new_patch
 	fi
 
-	echo "Filtered patch for $REPO contains:"
-	lsdiff $_new_patch
+	if [ -n "$VERBOSE" ]; then
+		echo "Filtered patch from $REPO contains:"
+		lsdiff $_new_patch
+	fi
 
 	# Ok, now apply with guilt or patch; either may fail and require a force
 	# and/or a manual reject fixup
 	if [ $GUILT -eq 1 ]; then
-		echo "$REPO looks like a guilt directory."
+		[ -n "$VERBOSE" ] || echo "$REPO looks like a guilt directory."
 		PATCHES=`guilt applied | wc -l`
-		if [ $PATCHES -gt 0 ]; then
+		if [ -n "$VERBOSE" -a $PATCHES -gt 0 ]; then
 			echo -n "Top patch is: "
 			guilt top
 		fi
