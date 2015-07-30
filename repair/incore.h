@@ -285,6 +285,7 @@ typedef struct ino_tree_node  {
 	avlnode_t		avl_node;
 	xfs_agino_t		ino_startnum;	/* starting inode # */
 	xfs_inofree_t		ir_free;	/* inode free bit mask */
+	__uint64_t		ir_sparse;	/* sparse inode bitmask */
 	__uint64_t		ino_confirmed;	/* confirmed bitmask */
 	__uint64_t		ino_isa_dir;	/* bit == 1 if a directory */
 	__uint8_t		nlink_size;
@@ -474,6 +475,19 @@ static inline void set_inode_used(struct ino_tree_node *irec, int offset)
 static inline int is_inode_free(struct ino_tree_node *irec, int offset)
 {
 	return (irec->ir_free & XFS_INOBT_MASK(offset)) != 0;
+}
+
+/*
+ * set/test is inode sparse (not physically allocated)
+ */
+static inline void set_inode_sparse(struct ino_tree_node *irec, int offset)
+{
+	irec->ir_sparse |= XFS_INOBT_MASK(offset);
+}
+
+static inline bool is_inode_sparse(struct ino_tree_node *irec, int offset)
+{
+	return irec->ir_sparse & XFS_INOBT_MASK(offset);
 }
 
 /*

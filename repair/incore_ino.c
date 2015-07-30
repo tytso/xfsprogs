@@ -258,6 +258,7 @@ alloc_ino_node(
 	irec->ino_confirmed = 0;
 	irec->ino_isa_dir = 0;
 	irec->ir_free = (xfs_inofree_t) - 1;
+	irec->ir_sparse = 0;
 	irec->ino_un.ex_data = NULL;
 	irec->nlink_size = sizeof(__uint8_t);
 	irec->disk_nlinks.un8 = alloc_nlink_array(irec->nlink_size);

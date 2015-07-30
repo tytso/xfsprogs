@@ -183,6 +183,22 @@ extern unsigned long	libxfs_physmem(void);	/* in kilobytes */
 #define XFS_INOBT_IS_FREE_DISK(rp,i)		\
 			((be64_to_cpu((rp)->ir_free) & XFS_INOBT_MASK(i)) != 0)
 
+static inline bool
+xfs_inobt_is_sparse_disk(
+	struct xfs_inobt_rec	*rp,
+	int			offset)
+{
+	int			spshift;
+	uint16_t		holemask;
+
+	holemask = be16_to_cpu(rp->ir_u.sp.ir_holemask);
+	spshift = offset / XFS_INODES_PER_HOLEMASK_BIT;
+	if ((1 << spshift) & holemask)
+		return true;
+
+	return false;
+}
+
 static inline void
 libxfs_bmbt_disk_get_all(
 	struct xfs_bmbt_rec	*rp,
