@@ -369,10 +369,10 @@ bitoffset(
 			abase = (f->flags & FLD_ABASE1) != 0;
 			ASSERT(fa->ftyp == f->ftyp);
 			ASSERT((fa->arg & FTARG_SIZE) == 0);
-			return (int)(__psint_t)f->offset +
+			return (int)(intptr_t)f->offset +
 				(idx - abase) * fsize(f, obj, startoff, idx);
 		} else
-			return (int)(__psint_t)f->offset;
+			return (int)(intptr_t)f->offset;
 	} else
 		return (*f->offset)(obj, startoff, idx);
 }
@@ -384,7 +384,7 @@ fcount(
 	int		startoff)
 {
 	if (!(f->flags & FLD_COUNT))
-		return (int)(__psint_t)f->count;
+		return (int)(intptr_t)f->count;
 	else
 		return (*f->count)(obj, startoff);
 }
@@ -417,7 +417,7 @@ fsize(
 	fa = &ftattrtab[f->ftyp];
 	ASSERT(fa->ftyp == f->ftyp);
 	if (!(fa->arg & FTARG_SIZE))
-		return (int)(__psint_t)fa->size;
+		return (int)(intptr_t)fa->size;
 	else
 		return (*fa->size)(obj, startoff, idx);
 }

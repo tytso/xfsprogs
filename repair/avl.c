@@ -69,8 +69,8 @@ avl_checktree(
 	avlnode_t *root)
 {
 	avlnode_t *nlast, *nnext, *np;
-	__psunsigned_t offset = 0;
-	__psunsigned_t end;
+	uintptr_t offset = 0;
+	uintptr_t end;
 
 	nlast = nnext = root;
 
@@ -589,8 +589,8 @@ attach:
 avlnode_t *
 avl_findanyrange(
 	avltree_desc_t *tree,
-	__psunsigned_t start,
-	__psunsigned_t end,
+	uintptr_t start,
+	uintptr_t end,
 	int	checklen)
 {
 	avlnode_t *np = tree->avl_root;
@@ -660,10 +660,10 @@ avl_findanyrange(
 avlnode_t *
 avl_find(
 	avltree_desc_t *tree,
-	__psunsigned_t value)
+	uintptr_t value)
 {
 	avlnode_t *np = tree->avl_root;
-	__psunsigned_t nvalue;
+	uintptr_t nvalue;
 
 	while (np) {
 		nvalue = AVL_START(tree, np);
@@ -887,8 +887,8 @@ static
 avlnode_t *
 avl_insert_find_growth(
 		avltree_desc_t *tree,
-		__psunsigned_t start,	/* range start at start, */
-		__psunsigned_t end,	/* exclusive */
+		uintptr_t start,	/* range start at start, */
+		uintptr_t end,	/* exclusive */
 		int   *growthp)	/* OUT */
 {
 	avlnode_t *root = tree->avl_root;
@@ -941,7 +941,7 @@ avl_insert_grow(
 	int growth)
 {
 	avlnode_t *nnext;
-	__psunsigned_t start = AVL_START(tree, newnode);
+	uintptr_t start = AVL_START(tree, newnode);
 
 	if (growth == AVL_BACK) {
 
@@ -983,8 +983,8 @@ avl_insert(
 	avlnode_t *newnode)
 {
 	avlnode_t *np;
-	__psunsigned_t start = AVL_START(tree, newnode);
-	__psunsigned_t end = AVL_END(tree, newnode);
+	uintptr_t start = AVL_START(tree, newnode);
+	uintptr_t end = AVL_END(tree, newnode);
 	int growth;
 
 	ASSERT(newnode);
@@ -1138,16 +1138,16 @@ avlops_t avl_debug_ops = {
 	avl_debug_end,
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_debug_start(avlnode_t *node)
 {
-	return (__psunsigned_t)(struct avl_debug_node *)node->avl_start;
+	return (uintptr_t)(struct avl_debug_node *)node->avl_start;
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_debug_end(avlnode_t *node)
 {
-	return (__psunsigned_t)
+	return (uintptr_t)
 		((struct avl_debug_node *)node->avl_start +
 		 (struct avl_debug_node *)node->avl_size);
 }
@@ -1283,7 +1283,7 @@ main()
 avlnode_t *
 avl_findadjacent(
 	avltree_desc_t *tree,
-	__psunsigned_t value,
+	uintptr_t value,
 	int		dir)
 {
 	avlnode_t *np = tree->avl_root;
@@ -1357,8 +1357,8 @@ avl_findadjacent(
 void
 avl_findranges(
 	avltree_desc_t *tree,
-	__psunsigned_t start,
-	__psunsigned_t end,
+	uintptr_t start,
+	uintptr_t end,
 	avlnode_t	        **startp,
 	avlnode_t		**endp)
 {

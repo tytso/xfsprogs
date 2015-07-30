@@ -181,10 +181,10 @@ typedef enum fldt	{
 } fldt_t;
 
 typedef int (*offset_fnc_t)(void *obj, int startoff, int idx);
-#define	OI(o)	((offset_fnc_t)(__psint_t)(o))
+#define	OI(o)	((offset_fnc_t)(intptr_t)(o))
 
 typedef int (*count_fnc_t)(void *obj, int startoff);
-#define	CI(c)	((count_fnc_t)(__psint_t)(c))
+#define	CI(c)	((count_fnc_t)(intptr_t)(c))
 #define	C1	CI(1)
 
 typedef struct field
@@ -207,7 +207,7 @@ typedef struct field
 #define	FLD_COUNT	16	/* count value is a function pointer */
 
 typedef int (*size_fnc_t)(void *obj, int startoff, int idx);
-#define	SI(s)	((size_fnc_t)(__psint_t)(s))
+#define	SI(s)	((size_fnc_t)(intptr_t)(s))
 
 typedef struct ftattr
 {

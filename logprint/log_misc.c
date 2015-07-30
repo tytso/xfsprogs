@@ -929,7 +929,7 @@ xlog_print_record(
 	}
     } else {
 	read_len -= *read_type;
-	buf = (xfs_caddr_t)((__psint_t)(*partial_buf) + (__psint_t)(*read_type));
+	buf = (xfs_caddr_t)((intptr_t)(*partial_buf) + (intptr_t)(*read_type));
 	ptr = *partial_buf;
     }
     if ((ret = (int) read(fd, buf, read_len)) == -1) {

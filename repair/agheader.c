@@ -305,7 +305,7 @@ secondary_sb_wack(
 			 * be set, and the latter is never updated past
 			 * the last field - just zap them both.
 			 */
-			memset((void *)((__psint_t)sb + size), 0,
+			memset((void *)((intptr_t)sb + size), 0,
 				mp->m_sb.sb_sectsize - size);
 			memset(XFS_BUF_PTR(sbuf) + size, 0,
 				mp->m_sb.sb_sectsize - size);

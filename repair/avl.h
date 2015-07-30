@@ -31,8 +31,8 @@ typedef struct	avlnode {
  * avl-tree operations
  */
 typedef struct avlops {
-	__psunsigned_t	(*avl_start)(avlnode_t *);
-	__psunsigned_t	(*avl_end)(avlnode_t *);
+	uintptr_t	(*avl_start)(avlnode_t *);
+	uintptr_t	(*avl_end)(avlnode_t *);
 } avlops_t;
 
 #define	AVL_START(tree, n)	(*(tree)->avl_ops->avl_start)(n)
@@ -87,7 +87,7 @@ avl_init_tree(
 static inline avlnode_t *
 avl_findrange(
 	avltree_desc_t *tree,
-	__psunsigned_t value)
+	uintptr_t value)
 {
 	avlnode_t *np = tree->avl_root;
 
@@ -110,27 +110,27 @@ avl_findrange(
 avlnode_t *
 avl_find(
 	avltree_desc_t *tree,
-	__psunsigned_t value);
+	uintptr_t value);
 
 avlnode_t *
 avl_findanyrange(
 	avltree_desc_t *tree,
-	__psunsigned_t start,
-	__psunsigned_t end,
+	uintptr_t start,
+	uintptr_t end,
 	int     checklen);
 
 
 avlnode_t *
 avl_findadjacent(
 	avltree_desc_t *tree,
-	__psunsigned_t value,
+	uintptr_t value,
 	int		dir);
 
 void
 avl_findranges(
 	avltree_desc_t *tree,
-	__psunsigned_t start,
-	__psunsigned_t end,
+	uintptr_t start,
+	uintptr_t end,
 	avlnode_t	        **startp,
 	avlnode_t		**endp);
 

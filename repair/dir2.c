@@ -669,7 +669,7 @@ process_sf_dir2_fixi8(
 	int			oldsize;
 
 	newsfp = sfp;
-	oldsize = (__psint_t)*next_sfep - (__psint_t)sfp;
+	oldsize = (intptr_t)*next_sfep - (intptr_t)sfp;
 	oldsfp = malloc(oldsize);
 	if (oldsfp == NULL) {
 		do_error(_("couldn't malloc dir2 shortform copy\n"));
@@ -874,7 +874,7 @@ _("entry \"%*.*s\" in shortform directory %" PRIu64 " references %s inode %" PRI
 		if (namelen == 0) {
 			junkreason = _("is zero length");
 			bad_sfnamelen = 1;
-		} else if ((__psint_t) sfep - (__psint_t) sfp +
+		} else if ((intptr_t) sfep - (intptr_t) sfp +
 				M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
 							> ino_dir_size)  {
 			junkreason = _("extends past end of dir");
@@ -944,15 +944,15 @@ _("entry contains offset out of order in shortform dir %" PRIu64 "\n"),
 				ino_dir_size -= tmp_elen;
 
 				tmp_sfep = (xfs_dir2_sf_entry_t *)
-					((__psint_t) sfep + tmp_elen);
-				tmp_len = max_size - ((__psint_t) tmp_sfep
-							- (__psint_t) sfp);
+					((intptr_t) sfep + tmp_elen);
+				tmp_len = max_size - ((intptr_t) tmp_sfep
+							- (intptr_t) sfp);
 
 				memmove(sfep, tmp_sfep, tmp_len);
 
 				sfp->count -= 1;
 				num_entries--;
-				memset((void *) ((__psint_t) sfep + tmp_len), 0,
+				memset((void *) ((intptr_t) sfep + tmp_len), 0,
 					tmp_elen);
 
 				/*
@@ -990,7 +990,7 @@ _("would have junked entry \"%s\" in directory inode %" PRIu64 "\n"),
 		 * calculate size based on next_sfep.
 		 */
 		next_sfep = (tmp_sfep == NULL)
-			? (xfs_dir2_sf_entry_t *) ((__psint_t) sfep
+			? (xfs_dir2_sf_entry_t *) ((intptr_t) sfep
 							+ ((!bad_sfnamelen)
 				? M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
 				: M_DIROPS(mp)->sf_entsize(sfp, namelen)))
@@ -1045,7 +1045,7 @@ _("corrected directory %" PRIu64 " size, was %" PRId64 ", now %" PRIdPTR "\n"),
 				(intptr_t)next_sfep - (intptr_t)sfp);
 
 			dip->di_size = cpu_to_be64(
-					(__psint_t)next_sfep - (__psint_t)sfp);
+					(intptr_t)next_sfep - (intptr_t)sfp);
 			*dino_dirty = 1;
 			*repair = 1;
 		}
