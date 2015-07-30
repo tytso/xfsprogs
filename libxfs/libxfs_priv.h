@@ -96,7 +96,6 @@ extern char    *progname;
 #define ASSERT(ex) assert(ex)
 
 typedef __uint32_t		uint_t;
-typedef __uint32_t		inst_t;		/* an instruction */
 
 #ifndef EWRONGFS
 #define EWRONGFS	EINVAL
