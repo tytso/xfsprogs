@@ -46,7 +46,8 @@ LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc po debian
 
-SUBDIRS = include $(LIB_SUBDIRS) $(TOOL_SUBDIRS)
+# include is listed last so it is processed last in clean rules.
+SUBDIRS = $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
 
 default: include/builddefs include/platform_defs.h
 ifeq ($(HAVE_BUILDDEFS), no)
