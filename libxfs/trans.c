@@ -30,6 +30,8 @@
 #include "xfs_trans.h"
 #include "xfs_sb.h"
 
+static void xfs_trans_free_items(struct xfs_trans *tp);
+
 /*
  * Simple transaction interface
  */
@@ -205,7 +207,7 @@ libxfs_trans_cancel(
 	xfs_trans_t	*otp = tp;
 #endif
 	if (tp != NULL) {
-		xfs_trans_free_items(tp, flags);
+		xfs_trans_free_items(tp);
 		free(tp);
 		tp = NULL;
 	}
@@ -778,10 +780,9 @@ inode_item_unlock(
  * Unlock all of the items of a transaction and free all the descriptors
  * of that transaction.
  */
-void
+static void
 xfs_trans_free_items(
-	struct xfs_trans	*tp,
-	int			flags)
+	struct xfs_trans	*tp)
 {
 	struct xfs_log_item_desc *lidp, *next;
 
@@ -818,7 +819,7 @@ libxfs_trans_commit(
 #ifdef XACT_DEBUG
 		fprintf(stderr, "committed clean transaction %p\n", tp);
 #endif
-		xfs_trans_free_items(tp, flags);
+		xfs_trans_free_items(tp);
 		free(tp);
 		tp = NULL;
 		return 0;

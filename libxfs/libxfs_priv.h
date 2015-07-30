@@ -421,7 +421,6 @@ int xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 /* xfs_trans_item.c */
 void xfs_trans_add_item(struct xfs_trans *, struct xfs_log_item *);
 void xfs_trans_del_item(struct xfs_log_item *);
-void xfs_trans_free_items(struct xfs_trans *, int);
 
 /* xfs_inode_item.c */
 void xfs_inode_item_init(struct xfs_inode *, struct xfs_mount *);
