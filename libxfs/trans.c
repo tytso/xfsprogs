@@ -109,14 +109,15 @@ libxfs_trans_roll(
 	 * Ensure that the inode is always logged.
 	 */
 	trans = *tpp;
-	xfs_trans_log_inode(trans, dp, XFS_ILOG_CORE);
+	if (dp)
+		xfs_trans_log_inode(trans, dp, XFS_ILOG_CORE);
 
 	/*
 	 * Copy the critical parameters from one trans to the next.
 	 */
 	tres.tr_logres = trans->t_log_res;
 	tres.tr_logcount = trans->t_log_count;
-	*tpp = xfs_trans_dup(trans);
+	*tpp = libxfs_trans_alloc(trans->t_mountp, trans->t_type);
 
 	/*
 	 * Commit the current transaction.
@@ -147,7 +148,8 @@ libxfs_trans_roll(
 	if (error)
 		return error;
 
-	xfs_trans_ijoin(trans, dp, 0);
+	if (dp)
+		xfs_trans_ijoin(trans, dp, 0);
 	return 0;
 }
 
@@ -168,19 +170,6 @@ libxfs_trans_alloc(
 	INIT_LIST_HEAD(&ptr->t_items);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "allocated new transaction %p\n", ptr);
-#endif
-	return ptr;
-}
-
-xfs_trans_t *
-libxfs_trans_dup(
-	xfs_trans_t	*tp)
-{
-	xfs_trans_t	*ptr;
-
-	ptr = libxfs_trans_alloc(tp->t_mountp, tp->t_type);
-#ifdef XACT_DEBUG
-	fprintf(stderr, "duplicated transaction %p (new=%p)\n", tp, ptr);
 #endif
 	return ptr;
 }

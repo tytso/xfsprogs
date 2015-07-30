@@ -641,7 +641,6 @@ libxfs_inode_alloc(
 {
 	xfs_buf_t	*ialloc_context;
 	xfs_inode_t	*ip;
-	xfs_trans_t	*ntp;
 	int		error;
 
 	ialloc_context = (xfs_buf_t *)0;
@@ -657,19 +656,12 @@ libxfs_inode_alloc(
 	}
 
 	if (ialloc_context) {
-		struct xfs_trans_res	tres;
 
 		xfs_trans_bhold(*tp, ialloc_context);
-		tres.tr_logres = (*tp)->t_log_res;
-		tres.tr_logcount = (*tp)->t_log_count;
 
-		ntp = xfs_trans_dup(*tp);
-		xfs_trans_commit(*tp, 0);
-		*tp = ntp;
-		tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
-		error = xfs_trans_reserve(*tp, &tres, 0, 0);
+		error = xfs_trans_roll(tp, NULL);
 		if (error) {
-			fprintf(stderr, _("%s: cannot reserve space: %s\n"),
+			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
 				progname, strerror(error));
 			exit(1);
 		}

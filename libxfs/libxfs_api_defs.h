@@ -40,7 +40,6 @@
 #define xfs_trans_commit		libxfs_trans_commit
 #define xfs_trans_cancel		libxfs_trans_cancel
 #define xfs_trans_del_item		libxfs_trans_del_item
-#define xfs_trans_dup			libxfs_trans_dup
 #define xfs_trans_get_buf		libxfs_trans_get_buf
 #define xfs_trans_getsb			libxfs_trans_getsb
 #define xfs_trans_iget			libxfs_trans_iget
