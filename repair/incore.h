@@ -384,6 +384,14 @@ void			clear_uncertain_ino_cache(xfs_agnumber_t agno);
 /*
  * finobt helpers
  */
+
+static inline bool
+inode_rec_has_free(struct ino_tree_node *ino_rec)
+{
+	/* must have real, allocated inodes for finobt */
+	return ino_rec->ir_free & ~ino_rec->ir_sparse;
+}
+
 static inline ino_tree_node_t *
 findfirst_free_inode_rec(xfs_agnumber_t agno)
 {
@@ -391,7 +399,7 @@ findfirst_free_inode_rec(xfs_agnumber_t agno)
 
 	ino_rec = findfirst_inode_rec(agno);
 
-	while (ino_rec && !ino_rec->ir_free)
+	while (ino_rec && !inode_rec_has_free(ino_rec))
 		ino_rec = next_ino_rec(ino_rec);
 
 	return ino_rec;
@@ -402,7 +410,7 @@ next_free_ino_rec(ino_tree_node_t *ino_rec)
 {
 	ino_rec = next_ino_rec(ino_rec);
 
-	while (ino_rec && !ino_rec->ir_free)
+	while (ino_rec && !inode_rec_has_free(ino_rec))
 		ino_rec = next_ino_rec(ino_rec);
 
 	return ino_rec;
