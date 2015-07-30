@@ -899,7 +899,8 @@ init_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 {
 	__uint64_t		ninos;
 	__uint64_t		nfinos;
-	__uint64_t		rec_nfinos;
+	int			rec_nfinos;
+	int			rec_ninos;
 	ino_tree_node_t		*ino_rec;
 	int			num_recs;
 	int			level;
@@ -919,11 +920,19 @@ init_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 	 */
 	ino_rec = findfirst_inode_rec(agno);
 	for (num_recs = 0; ino_rec != NULL; ino_rec = next_ino_rec(ino_rec))  {
+		rec_ninos = 0;
 		rec_nfinos = 0;
 		for (i = 0; i < XFS_INODES_PER_CHUNK; i++)  {
 			ASSERT(is_inode_confirmed(ino_rec, i));
+			/*
+			 * sparse inodes are not factored into superblock (free)
+			 * inode counts
+			 */
+			if (is_inode_sparse(ino_rec, i))
+				continue;
 			if (is_inode_free(ino_rec, i))
 				rec_nfinos++;
+			rec_ninos++;
 		}
 
 		/*
@@ -933,7 +942,7 @@ init_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 			continue;
 
 		nfinos += rec_nfinos;
-		ninos += XFS_INODES_PER_CHUNK;
+		ninos += rec_ninos;
 		num_recs++;
 	}
 
