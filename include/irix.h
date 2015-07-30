@@ -42,7 +42,6 @@
 #define __int16_t	short
 #define __uint8_t	unsigned char
 #define __uint16_t	unsigned short
-#define loff_t		off64_t
 typedef off64_t		xfs_off_t;
 typedef __int64_t	xfs_ino_t;
 typedef __int32_t	xfs_dev_t;

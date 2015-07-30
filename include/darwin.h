@@ -118,7 +118,6 @@ static __inline__ void platform_uuid_copy(uuid_t *dst, uuid_t *src)
 #define __uint16_t	u_int16_t
 #define __uint32_t	u_int32_t
 #define __uint64_t	u_int64_t
-#define loff_t		off_t
 #define off64_t		off_t
 
 typedef off_t		xfs_off_t;
