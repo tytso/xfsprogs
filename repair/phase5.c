@@ -1158,8 +1158,12 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 	xfs_agino_t		count = 0;
 	xfs_agino_t		freecount = 0;
 	int			inocnt;
+	uint8_t			finocnt;
 	int			k;
 	int			level = btree_curs->num_levels;
+	int			spmask;
+	uint64_t		sparse;
+	uint16_t		holemask;
 
 	for (i = 0; i < level; i++)  {
 		lptr = &btree_curs->level[i];
@@ -1243,19 +1247,46 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 					cpu_to_be32(ino_rec->ino_startnum);
 			bt_rec[j].ir_free = cpu_to_be64(ino_rec->ir_free);
 
-			inocnt = 0;
+			inocnt = finocnt = 0;
 			for (k = 0; k < sizeof(xfs_inofree_t)*NBBY; k++)  {
 				ASSERT(is_inode_confirmed(ino_rec, k));
-				inocnt += is_inode_free(ino_rec, k);
+
+				if (is_inode_sparse(ino_rec, k))
+					continue;
+				if (is_inode_free(ino_rec, k))
+					finocnt++;
+				inocnt++;
 			}
 
-			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-				bt_rec[j].ir_u.sp.ir_freecount = inocnt;
-			else
+			if (!xfs_sb_version_hassparseinodes(&mp->m_sb)) {
 				bt_rec[j].ir_u.f.ir_freecount =
-							cpu_to_be32(inocnt);
-			freecount += inocnt;
-			count += XFS_INODES_PER_CHUNK;
+							cpu_to_be32(finocnt);
+				goto nextrec;
+			}
+
+			/*
+			 * Convert the 64-bit in-core sparse inode state to the
+			 * 16-bit on-disk holemask.
+			 */
+			holemask = 0;
+			spmask = (1 << XFS_INODES_PER_HOLEMASK_BIT) - 1;
+			sparse = ino_rec->ir_sparse;
+			for (k = 0; k < XFS_INOBT_HOLEMASK_BITS; k++) {
+				if (sparse & spmask) {
+					ASSERT((sparse & spmask) == spmask);
+					holemask |= (1 << k);
+				} else
+					ASSERT((sparse & spmask) == 0);
+				sparse >>= XFS_INODES_PER_HOLEMASK_BIT;
+			}
+
+			bt_rec[j].ir_u.sp.ir_freecount = finocnt;
+			bt_rec[j].ir_u.sp.ir_count = inocnt;
+			bt_rec[j].ir_u.sp.ir_holemask = cpu_to_be16(holemask);
+
+nextrec:
+			freecount += finocnt;
+			count += inocnt;
 
 			if (finobt)
 				ino_rec = next_free_ino_rec(ino_rec);
