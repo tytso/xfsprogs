@@ -33,9 +33,12 @@ extern const struct field	bmapbtd_rec_flds[];
 extern const struct field	inobt_flds[];
 extern const struct field	inobt_hfld[];
 extern const struct field	inobt_crc_flds[];
+extern const struct field	inobt_spcrc_flds[];
 extern const struct field	inobt_crc_hfld[];
+extern const struct field	inobt_spcrc_hfld[];
 extern const struct field	inobt_key_flds[];
 extern const struct field	inobt_rec_flds[];
+extern const struct field	inobt_sprec_flds[];
 
 extern const struct field	bnobt_flds[];
 extern const struct field	bnobt_hfld[];

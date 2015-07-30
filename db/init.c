@@ -169,7 +169,9 @@ init(
 		}
 	}
 
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		type_set_tab_spcrc();
+	else if (xfs_sb_version_hascrc(&mp->m_sb))
 		type_set_tab_crc();
 
 	push_cur();

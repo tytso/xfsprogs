@@ -392,6 +392,11 @@ const field_t	inobt_crc_hfld[] = {
 	{ NULL }
 };
 
+const field_t	inobt_spcrc_hfld[] = {
+	{ "", FLDT_INOBT_SPCRC, OI(0), C1, 0, TYP_NONE },
+	{ NULL }
+};
+
 #define	OFF(f)	bitize(offsetof(struct xfs_btree_block, bb_ ## f))
 const field_t	inobt_flds[] = {
 	{ "magic", FLDT_UINT32X, OI(OFF(magic)), C1, 0, TYP_NONE },
@@ -426,6 +431,26 @@ const field_t	inobt_crc_flds[] = {
 	  FLD_ARRAY|FLD_ABASE1|FLD_COUNT|FLD_OFFSET, TYP_INOBT },
 	{ NULL }
 };
+const field_t	inobt_spcrc_flds[] = {
+	{ "magic", FLDT_UINT32X, OI(OFF(magic)), C1, 0, TYP_NONE },
+	{ "level", FLDT_UINT16D, OI(OFF(level)), C1, 0, TYP_NONE },
+	{ "numrecs", FLDT_UINT16D, OI(OFF(numrecs)), C1, 0, TYP_NONE },
+	{ "leftsib", FLDT_AGBLOCK, OI(OFF(u.s.bb_leftsib)), C1, 0, TYP_INOBT },
+	{ "rightsib", FLDT_AGBLOCK, OI(OFF(u.s.bb_rightsib)), C1, 0, TYP_INOBT },
+	{ "bno", FLDT_DFSBNO, OI(OFF(u.s.bb_blkno)), C1, 0, TYP_INOBT },
+	{ "lsn", FLDT_UINT64X, OI(OFF(u.s.bb_lsn)), C1, 0, TYP_NONE },
+	{ "uuid", FLDT_UUID, OI(OFF(u.s.bb_uuid)), C1, 0, TYP_NONE },
+	{ "owner", FLDT_AGNUMBER, OI(OFF(u.s.bb_owner)), C1, 0, TYP_NONE },
+	{ "crc", FLDT_CRC, OI(OFF(u.s.bb_crc)), C1, 0, TYP_NONE },
+	{ "recs", FLDT_INOBTSPREC, btblock_rec_offset, btblock_rec_count,
+	  FLD_ARRAY|FLD_ABASE1|FLD_COUNT|FLD_OFFSET, TYP_NONE },
+	{ "keys", FLDT_INOBTKEY, btblock_key_offset, btblock_key_count,
+	  FLD_ARRAY|FLD_ABASE1|FLD_COUNT|FLD_OFFSET, TYP_NONE },
+	{ "ptrs", FLDT_INOBTPTR, btblock_ptr_offset, btblock_key_count,
+	  FLD_ARRAY|FLD_ABASE1|FLD_COUNT|FLD_OFFSET, TYP_INOBT },
+	{ NULL }
+};
+
 #undef OFF
 
 #define	KOFF(f)	bitize(offsetof(xfs_inobt_key_t, ir_ ## f))
@@ -439,6 +464,17 @@ const field_t	inobt_key_flds[] = {
 const field_t	inobt_rec_flds[] = {
 	{ "startino", FLDT_AGINO, OI(ROFF(ir_startino)), C1, 0, TYP_INODE },
 	{ "freecount", FLDT_INT32D, OI(ROFF(ir_u.f.ir_freecount)), C1, 0, TYP_NONE },
+	{ "free", FLDT_INOFREE, OI(ROFF(ir_free)), C1, 0, TYP_NONE },
+	{ NULL }
+};
+/* sparse inode on-disk format */
+const field_t	inobt_sprec_flds[] = {
+	{ "startino", FLDT_AGINO, OI(ROFF(ir_startino)), C1, 0, TYP_INODE },
+	{ "holemask", FLDT_UINT16X, OI(ROFF(ir_u.sp.ir_holemask)), C1, 0,
+	  TYP_NONE },
+	{ "count", FLDT_UINT8D, OI(ROFF(ir_u.sp.ir_count)), C1, 0, TYP_NONE },
+	{ "freecount", FLDT_INT8D, OI(ROFF(ir_u.sp.ir_freecount)), C1, 0,
+	  TYP_NONE },
 	{ "free", FLDT_INOFREE, OI(ROFF(ir_free)), C1, 0, TYP_NONE },
 	{ NULL }
 };

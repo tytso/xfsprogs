@@ -110,12 +110,52 @@ static const typ_t	__typtab_crc[] = {
 	{ TYP_NONE, NULL }
 };
 
+static const typ_t	__typtab_spcrc[] = {
+	{ TYP_AGF, "agf", handle_struct, agf_hfld, &xfs_agf_buf_ops },
+	{ TYP_AGFL, "agfl", handle_struct, agfl_crc_hfld, &xfs_agfl_buf_ops },
+	{ TYP_AGI, "agi", handle_struct, agi_hfld, &xfs_agfl_buf_ops },
+	{ TYP_ATTR, "attr3", handle_struct, attr3_hfld,
+		&xfs_attr3_db_buf_ops },
+	{ TYP_BMAPBTA, "bmapbta", handle_struct, bmapbta_crc_hfld,
+		&xfs_bmbt_buf_ops },
+	{ TYP_BMAPBTD, "bmapbtd", handle_struct, bmapbtd_crc_hfld,
+		&xfs_bmbt_buf_ops },
+	{ TYP_BNOBT, "bnobt", handle_struct, bnobt_crc_hfld,
+		&xfs_allocbt_buf_ops },
+	{ TYP_CNTBT, "cntbt", handle_struct, cntbt_crc_hfld,
+		&xfs_allocbt_buf_ops },
+	{ TYP_DATA, "data", handle_block, NULL, NULL },
+	{ TYP_DIR2, "dir3", handle_struct, dir3_hfld,
+		&xfs_dir3_db_buf_ops },
+	{ TYP_DQBLK, "dqblk", handle_struct, dqblk_hfld,
+		&xfs_dquot_buf_ops },
+	{ TYP_INOBT, "inobt", handle_struct, inobt_spcrc_hfld,
+		&xfs_inobt_buf_ops },
+	{ TYP_INODATA, "inodata", NULL, NULL, NULL },
+	{ TYP_INODE, "inode", handle_struct, inode_crc_hfld,
+		&xfs_inode_buf_ops },
+	{ TYP_LOG, "log", NULL, NULL, NULL },
+	{ TYP_RTBITMAP, "rtbitmap", NULL, NULL, NULL },
+	{ TYP_RTSUMMARY, "rtsummary", NULL, NULL, NULL },
+	{ TYP_SB, "sb", handle_struct, sb_hfld, &xfs_sb_buf_ops },
+	{ TYP_SYMLINK, "symlink", handle_struct, symlink_crc_hfld,
+		&xfs_symlink_buf_ops },
+	{ TYP_TEXT, "text", handle_text, NULL, NULL },
+	{ TYP_NONE, NULL }
+};
+
 const typ_t	*typtab = __typtab;
 
 void
 type_set_tab_crc(void)
 {
 	typtab = __typtab_crc;
+}
+
+void
+type_set_tab_spcrc(void)
+{
+	typtab = __typtab_spcrc;
 }
 
 static const typ_t *

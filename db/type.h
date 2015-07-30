@@ -48,6 +48,7 @@ extern const typ_t	*typtab, *cur_typ;
 
 extern void	type_init(void);
 extern void	type_set_tab_crc(void);
+extern void	type_set_tab_spcrc(void);
 extern void	handle_block(int action, const struct field *fields, int argc,
 			     char **argv);
 extern void	handle_string(int action, const struct field *fields, int argc,
