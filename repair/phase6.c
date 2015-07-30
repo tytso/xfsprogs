@@ -2407,14 +2407,14 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 out_fix:
 	if (!no_modify && (fixit || dotdot_update)) {
 		dir_hash_dup_names(hashtab);
-		for (i = 0; i < freetab->naents; i++)
+		for (i = 0; i < num_bps; i++)
 			if (bplist[i])
 				libxfs_putbuf(bplist[i]);
 		longform_dir2_rebuild(mp, ino, ip, irec, ino_offset, hashtab);
 		*num_illegal = 0;
 		*need_dot = 0;
 	} else {
-		for (i = 0; i < freetab->naents; i++)
+		for (i = 0; i < num_bps; i++)
 			if (bplist[i])
 				libxfs_putbuf(bplist[i]);
 	}
