@@ -46,7 +46,6 @@ typedef off64_t		xfs_off_t;
 typedef __int64_t	xfs_ino_t;
 typedef __int32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
-typedef char*		xfs_caddr_t;
 
 #define xfs_flock64	flock64
 #define xfs_flock64_t	struct flock64

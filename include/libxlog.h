@@ -88,7 +88,7 @@ extern int xlog_is_dirty(xfs_mount_t *mp, libxfs_init_t *x, int verbose);
 extern struct xfs_buf *xlog_get_bp(struct xlog *, int);
 extern void	xlog_put_bp(struct xfs_buf *);
 extern int	xlog_bread(struct xlog *log, xfs_daddr_t blk_no, int nbblks,
-				xfs_buf_t *bp, xfs_caddr_t *offset);
+				xfs_buf_t *bp, char **offset);
 extern int	xlog_bread_noalign(struct xlog *log, xfs_daddr_t blk_no,
 				int nbblks, xfs_buf_t *bp);
 
@@ -101,7 +101,7 @@ extern int	xlog_find_tail(struct xlog *log, xfs_daddr_t *head_blk,
 
 extern int	xlog_test_footer(struct xlog *log);
 extern int	xlog_recover(struct xlog *log, int readonly);
-extern void	xlog_recover_print_data(xfs_caddr_t p, int len);
+extern void	xlog_recover_print_data(char *p, int len);
 extern void	xlog_recover_print_logitem(xlog_recover_item_t *item);
 extern void	xlog_recover_print_trans_head(xlog_recover_t *tr);
 extern int	xlog_print_find_oldest(struct xlog *log, xfs_daddr_t *last_blk);

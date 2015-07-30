@@ -124,7 +124,6 @@ typedef off_t		xfs_off_t;
 typedef u_int64_t	xfs_ino_t;
 typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
-typedef char*		xfs_caddr_t;
 
 #define stat64		stat
 #define fstat64		fstat

@@ -57,7 +57,7 @@ xlog_print_find_oldest(
 
 void
 xlog_recover_print_data(
-	xfs_caddr_t	p,
+	char		*p,
 	int		len)
 {
 	if (print_data) {
@@ -85,7 +85,7 @@ xlog_recover_print_buffer(
 	xfs_agi_t		*agi;
 	xfs_agf_t		*agf;
 	xfs_buf_log_format_t	*f;
-	xfs_caddr_t		p;
+	char			*p;
 	int			len, num, i;
 	xfs_daddr_t		blkno;
 	xfs_disk_dquot_t	*ddq;

@@ -1142,8 +1142,8 @@ main(int argc, char **argv)
 	return 0;
 }
 
-xfs_caddr_t
-next_log_chunk(xfs_caddr_t p, int offset, void *private)
+char *
+next_log_chunk(char *p, int offset, void *private)
 {
 	wbuf	*buf = (wbuf *)private;
 
@@ -1166,7 +1166,7 @@ next_log_chunk(xfs_caddr_t p, int offset, void *private)
 xfs_off_t
 write_log_header(int fd, wbuf *buf, xfs_mount_t *mp)
 {
-	xfs_caddr_t	p = buf->data;
+	char		*p = buf->data;
 	xfs_off_t	logstart;
 	int		offset;
 

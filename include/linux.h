@@ -142,6 +142,5 @@ typedef loff_t		xfs_off_t;
 typedef __uint64_t	xfs_ino_t;
 typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
-typedef char*		xfs_caddr_t;
 
 #endif	/* __XFS_LINUX_H__ */

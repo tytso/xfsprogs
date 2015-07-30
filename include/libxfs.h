@@ -146,11 +146,11 @@ extern void	platform_findsizes(char *path, int fd, long long *sz, int *bsz);
 extern int	platform_nproc(void);
 
 /* check or write log footer: specify device, log size in blocks & uuid */
-typedef xfs_caddr_t (libxfs_get_block_t)(xfs_caddr_t, int, void *);
+typedef char	*(libxfs_get_block_t)(char *, int, void *);
 
 extern int	libxfs_log_clear (struct xfs_buftarg *, xfs_daddr_t, uint,
 				uuid_t *, int, int, int);
-extern int	libxfs_log_header (xfs_caddr_t, uuid_t *, int, int, int,
+extern int	libxfs_log_header (char *, uuid_t *, int, int, int,
 				libxfs_get_block_t *, void *);
 
 

@@ -52,7 +52,6 @@ typedef off_t		off64_t;
 typedef __uint64_t	xfs_ino_t;
 typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
-typedef char*		xfs_caddr_t;
 
 #define	O_LARGEFILE	0
 
