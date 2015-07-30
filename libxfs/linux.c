@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
 
-#include "xfs.h"
+#include "libxfs_priv.h"
 #include "xfs_fs.h"
 
 int platform_has_uuid = 1;

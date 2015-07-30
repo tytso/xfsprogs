@@ -17,7 +17,7 @@
  */
 
 
-#include "xfs.h"
+#include "libxfs_priv.h"
 #include "init.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"
@@ -30,7 +30,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-#include <xfs/libxfs.h>		/* for now */
+#include <xfs/libxfs.h>		/* for LIBXFS_EXIT_ON_FAILURE */
 
 /*
  * Important design/architecture note:

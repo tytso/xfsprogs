@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include "init.h"
 
-#include "xfs.h"
+#include "libxfs_priv.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

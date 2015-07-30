@@ -15,10 +15,10 @@ PKGHFILES = xfs_fs.h \
 	xfs_types.h
 
 # headers with build dependencies
-HFILES = xfs.h \
-	init.h \
+HFILES = init.h \
 	crc32defs.h \
 	crc32table.h \
+	libxfs_priv.h \
 	xfs_dir2_priv.h \
 
 # headers installed in QA targets

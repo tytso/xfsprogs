@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "xfs.h"
+#include "libxfs_priv.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"
