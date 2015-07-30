@@ -109,6 +109,8 @@ char	*iopts[] = {
 	"attr",
 #define	I_PROJID32BIT	6
 	"projid32bit",
+#define I_SPINODES	7
+	"sparse",
 	NULL
 };
 
@@ -1005,6 +1007,7 @@ main(
 	int			crcs_enabled;
 	int			finobt;
 	bool			finobtflag;
+	int			spinodes;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -1040,6 +1043,7 @@ main(
 	crcs_enabled = 1;
 	finobt = 1;
 	finobtflag = false;
+	spinodes = 0;
 	memset(&fsx, 0, sizeof(fsx));
 
 	memset(&xi, 0, sizeof(xi));
@@ -1360,6 +1364,13 @@ main(
 					if (c < 0 || c > 1)
 						illegal(value, "i projid32bit");
 					projid16bit = c ? 0 : 1;
+					break;
+				case I_SPINODES:
+					if (!value || *value == '\0')
+						value = "1";
+					spinodes = atoi(value);
+					if (spinodes < 0 || spinodes > 1)
+						illegal(value, "i spinodes");
 					break;
 				default:
 					unknown('i', value);
@@ -1901,6 +1912,12 @@ _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 _("warning: finobt not supported without CRC support, disabled.\n"));
 		}
 		finobt = 0;
+	}
+
+	if (spinodes && !crcs_enabled) {
+		fprintf(stderr,
+_("warning: sparse inodes not supported without CRC support, disabled.\n"));
+		spinodes = 0;
 	}
 
 	if (nsflag || nlflag) {
@@ -2581,7 +2598,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		printf(_(
 		   "meta-data=%-22s isize=%-6d agcount=%lld, agsize=%lld blks\n"
 		   "         =%-22s sectsz=%-5u attr=%u, projid32bit=%u\n"
-		   "         =%-22s crc=%-8u finobt=%u\n"
+		   "         =%-22s crc=%-8u finobt=%u, sparse=%u\n"
 		   "data     =%-22s bsize=%-6u blocks=%llu, imaxpct=%u\n"
 		   "         =%-22s sunit=%-6u swidth=%u blks\n"
 		   "naming   =version %-14u bsize=%-6u ascii-ci=%d ftype=%d\n"
@@ -2590,7 +2607,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		   "realtime =%-22s extsz=%-6d blocks=%lld, rtextents=%lld\n"),
 			dfile, isize, (long long)agcount, (long long)agsize,
 			"", sectorsize, attrversion, !projid16bit,
-			"", crcs_enabled, finobt,
+			"", crcs_enabled, finobt, spinodes,
 			"", blocksize, (long long)dblocks, imaxpct,
 			"", dsunit, dswidth,
 			dirversion, dirblocksize, nci, dirftype,
@@ -2657,6 +2674,20 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	} else {
 		sbp->sb_logsectlog = 0;
 		sbp->sb_logsectsize = 0;
+	}
+
+	/*
+	 * Sparse inode chunk support has two main inode alignment requirements.
+	 * First, sparse chunk alignment must match the cluster size. Second,
+	 * full chunk alignment must match the inode chunk size.
+	 *
+	 * Copy the already calculated/scaled inoalignmt to spino_align and
+	 * update the former to the full inode chunk size.
+	 */
+	if (spinodes) {
+		sbp->sb_spino_align = sbp->sb_inoalignmt;
+		sbp->sb_inoalignmt = XFS_INODES_PER_CHUNK * isize >> blocklog;
+		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_SPINODES;
 	}
 
 	if (force_overwrite)
@@ -3206,7 +3237,7 @@ usage( void )
 			    sectlog=n|sectsize=num\n\
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i log=n|perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
-			    projid32bit=0|1]\n\
+			    projid32bit=0|1,sparse=0|1]\n\
 /* no discard */	[-K]\n\
 /* log subvol */	[-l agnum=n,internal,size=num,logdev=xxx,version=n\n\
 			    sunit=value|su=num,sectlog=n|sectsize=num,\n\

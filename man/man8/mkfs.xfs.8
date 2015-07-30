@@ -410,6 +410,23 @@ This is used to enable 32bit quota project identifiers. The
 is either 0 or 1, with 1 signifying that 32bit projid are to be enabled.
 If the value is omitted, 1 is assumed.  (This default changed
 in release version 3.2.0.)
+.TP
+.BI sparse[= value ]
+Enable sparse inode chunk allocation. The
+.I value
+is either 0 or 1, with 1 signifying that sparse allocation is enabled.
+If the value is omitted, 1 is assumed. Sparse inode allocation is
+disabled by default. This feature is only available for filesystems
+formatted with
+.B \-m crc=1.
+.IP
+When enabled, sparse inode allocation allows the filesystem to allocate
+smaller than the standard 64-inode chunk when free space is severely
+limited. This feature is useful for filesystems that might fragment free
+space over time such that no free extents are large enough to
+accommodate a chunk of 64 inodes. Without this feature enabled, inode
+allocations can fail with out of space errors under severe fragmented
+free space conditions.
 .RE
 .TP
 .BI \-l " log_section_options"
