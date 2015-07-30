@@ -55,8 +55,6 @@ typedef __int64_t	xfs_daddr_t;
 typedef char*		xfs_caddr_t;
 typedef off_t		loff_t;
 
-typedef enum { B_FALSE,B_TRUE }	boolean_t;
-
 #define	O_LARGEFILE	0
 
 #define HAVE_FID	1

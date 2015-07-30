@@ -144,9 +144,6 @@ typedef char*		xfs_caddr_t;
 #define O_SYNC          0
 #endif
 
-#define B_FALSE		0
-#define B_TRUE		1
-
 #define ENOATTR		989     /* Attribute not found */
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */

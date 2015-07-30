@@ -641,7 +641,7 @@ xlog_print_trans_inode(
 	int		len,
 	int		*i,
 	int		num_ops,
-	boolean_t	continued)
+	int		continued)
 {
     xfs_icdinode_t	   dino;
     xlog_op_header_t	   *op_head;

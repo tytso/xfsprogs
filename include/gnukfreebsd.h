@@ -45,8 +45,6 @@ typedef __int64_t	xfs_daddr_t;
 typedef char*		xfs_caddr_t;
 typedef off_t		loff_t;
 
-typedef enum { B_FALSE,B_TRUE }	boolean_t;
-
 #define HAVE_FID	1
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)

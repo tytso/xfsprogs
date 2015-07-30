@@ -144,9 +144,4 @@ typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
 typedef char*		xfs_caddr_t;
 
-#ifndef _BOOLEAN_T_DEFINED
-typedef enum {B_FALSE, B_TRUE}	boolean_t;
-#define _BOOLEAN_T_DEFINED	1
-#endif
-
 #endif	/* __XFS_LINUX_H__ */
