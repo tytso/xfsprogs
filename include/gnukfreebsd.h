@@ -45,10 +45,6 @@ typedef __int64_t	xfs_daddr_t;
 typedef char*		xfs_caddr_t;
 typedef off_t		loff_t;
 
-#ifndef	_UCHAR_T_DEFINED
-typedef unsigned char	uchar_t;
-#define	_UCHAR_T_DEFINED	1
-#endif
 typedef enum { B_FALSE,B_TRUE }	boolean_t;
 
 #define HAVE_FID	1

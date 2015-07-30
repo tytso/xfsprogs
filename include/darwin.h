@@ -127,7 +127,6 @@ typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
 typedef char*		xfs_caddr_t;
 
-typedef unsigned char	uchar_t;
 #define stat64		stat
 #define fstat64		fstat
 #define lseek64		lseek

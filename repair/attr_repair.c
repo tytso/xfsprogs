@@ -1121,7 +1121,7 @@ process_leaf_attr_remote(
 	if (remotep->namelen == 0 || namecheck((char *)&remotep->name[0], 
 						remotep->namelen) || 
 			be32_to_cpu(entry->hashval) != 
-				libxfs_da_hashname((uchar_t *)&remotep->name[0], 
+				libxfs_da_hashname((unsigned char *)&remotep->name[0], 
 						remotep->namelen) ||
 			be32_to_cpu(entry->hashval) < last_hashval ||
 			be32_to_cpu(remotep->valueblk) == 0) {

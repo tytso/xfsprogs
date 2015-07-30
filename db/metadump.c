@@ -529,7 +529,7 @@ struct name_ent {
 	struct name_ent		*next;
 	xfs_dahash_t		hash;
 	int			namelen;
-	uchar_t			name[1];
+	unsigned char		name[1];
 };
 
 #define NAME_TABLE_SIZE		4096
@@ -555,7 +555,7 @@ nametable_clear(void)
  * return a pointer to its entry, otherwise return a null pointer.
  */
 static struct name_ent *
-nametable_find(xfs_dahash_t hash, int namelen, uchar_t *name)
+nametable_find(xfs_dahash_t hash, int namelen, unsigned char *name)
 {
 	struct name_ent	*ent;
 
@@ -572,7 +572,7 @@ nametable_find(xfs_dahash_t hash, int namelen, uchar_t *name)
  * name's new entry, or a null pointer if an error occurs.
  */
 static struct name_ent *
-nametable_add(xfs_dahash_t hash, int namelen, uchar_t *name)
+nametable_add(xfs_dahash_t hash, int namelen, unsigned char *name)
 {
 	struct name_ent	*ent;
 
@@ -593,10 +593,10 @@ nametable_add(xfs_dahash_t hash, int namelen, uchar_t *name)
 #define is_invalid_char(c)	((c) == '/' || (c) == '\0')
 #define rol32(x,y)		(((x) << (y)) | ((x) >> (32 - (y))))
 
-static inline uchar_t
+static inline unsigned char
 random_filename_char(void)
 {
-	static uchar_t filename_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	static unsigned char filename_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 						"abcdefghijklmnopqrstuvwxyz"
 						"0123456789-_";
 
@@ -611,7 +611,7 @@ is_orphanage_dir(
 	struct xfs_mount	*mp,
 	xfs_ino_t		dir_ino,
 	size_t			name_len,
-	uchar_t			*name)
+	unsigned char		*name)
 {
 	return dir_ino == mp->m_sb.sb_rootino &&
 			name_len == ORPHANAGE_LEN &&
@@ -630,7 +630,7 @@ static int
 in_lost_found(
 	xfs_ino_t		ino,
 	int			namelen,
-	uchar_t			*name)
+	unsigned char		*name)
 {
 	static xfs_ino_t	orphanage_ino = 0;
 	char			s[24];	/* 21 is enough (64 bits in decimal) */
@@ -671,13 +671,13 @@ static void
 obfuscate_name(
 	xfs_dahash_t	hash,
 	size_t		name_len,
-	uchar_t		*name)
+	unsigned char	*name)
 {
-	uchar_t		*newp = name;
+	unsigned char	*newp = name;
 	int		i;
 	xfs_dahash_t	new_hash = 0;
-	uchar_t		*first;
-	uchar_t		high_bit;
+	unsigned char	*first;
+	unsigned char	high_bit;
 	int		shift;
 
 	/*
@@ -826,16 +826,16 @@ obfuscate_name(
 static int
 flip_bit(
 	size_t		name_len,
-	uchar_t		*name,
+	unsigned char	*name,
 	uint32_t	bitseq)
 {
 	int	index;
 	size_t	offset;
-	uchar_t	*p0, *p1;
-	uchar_t	m0, m1;
+	unsigned char *p0, *p1;
+	unsigned char m0, m1;
 	struct {
 	    int		byte;	/* Offset from start within name */
-	    uchar_t	bit;	/* Bit within that byte */
+	    unsigned char bit;	/* Bit within that byte */
 	} bit_to_flip[][2] = {	/* Sorted by second entry's byte */
 	    { { 0, 0 }, { 1, 7 } },	/* Each row defines a pair */
 	    { { 1, 0 }, { 2, 7 } },	/* of bytes and a bit within */
@@ -964,7 +964,7 @@ flip_bit(
 static int
 find_alternate(
 	size_t		name_len,
-	uchar_t		*name,
+	unsigned char	*name,
 	uint32_t	seq)
 {
 	uint32_t	bitseq = 0;
@@ -1001,9 +1001,9 @@ find_alternate(
  * are already in the table.
  */
 static int
-handle_duplicate_name(xfs_dahash_t hash, size_t name_len, uchar_t *name)
+handle_duplicate_name(xfs_dahash_t hash, size_t name_len, unsigned char *name)
 {
-	uchar_t		new_name[name_len + 1];
+	unsigned char	new_name[name_len + 1];
 	uint32_t	seq = 1;
 
 	if (!nametable_find(hash, name_len, name))
@@ -1036,7 +1036,7 @@ static void
 generate_obfuscated_name(
 	xfs_ino_t		ino,
 	int			namelen,
-	uchar_t			*name)
+	unsigned char		*name)
 {
 	xfs_dahash_t		hash;
 
@@ -1160,8 +1160,8 @@ obfuscate_path_components(
 	char			*buf,
 	__uint64_t		len)
 {
-	uchar_t			*comp = (uchar_t *)buf;
-	uchar_t			*end = comp + len;
+	unsigned char		*comp = (unsigned char *)buf;
+	unsigned char		*end = comp + len;
 	xfs_dahash_t		hash;
 
 	while (comp < end) {

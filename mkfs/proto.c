@@ -443,7 +443,7 @@ parseproto(
 	mode |= val;
 	creds.cr_uid = (int)getnum(pp);
 	creds.cr_gid = (int)getnum(pp);
-	xname.name = (uchar_t *)name;
+	xname.name = (unsigned char *)name;
 	xname.len = name ? strlen(name) : 0;
 	xname.type = 0;
 	tp = libxfs_trans_alloc(mp, 0);
