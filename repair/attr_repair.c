@@ -1180,7 +1180,7 @@ process_leaf_attr_block(
 	da_freemap_t *attr_freemap;
 	struct xfs_attr3_icleaf_hdr leafhdr;
 
-	xfs_attr3_leaf_hdr_from_disk(&leafhdr, leaf);
+	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
 	clearit = usedbs = 0;
 	firstb = mp->m_sb.sb_blocksize;
 	stop = xfs_attr3_leaf_hdr_size(leaf);
@@ -1312,7 +1312,7 @@ process_leaf_attr_block(
 		*/
 	}
 	if (*repair)
-		xfs_attr3_leaf_hdr_to_disk(leaf, &leafhdr);
+		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, leaf, &leafhdr);
 
 	free(attr_freemap);
 	return (clearit);  /* and repair */
@@ -1370,7 +1370,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 			repair++;
 
 		leaf = bp->b_addr;
-		xfs_attr3_leaf_hdr_from_disk(&leafhdr, leaf);
+		xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
 
 		/* check magic number for leaf directory btree block */
 		if (!(leafhdr.magic == XFS_ATTR_LEAF_MAGIC ||
@@ -1558,7 +1558,7 @@ process_longform_attr(
 
 	/* verify leaf block */
 	leaf = (xfs_attr_leafblock_t *)XFS_BUF_PTR(bp);
-	xfs_attr3_leaf_hdr_from_disk(&leafhdr, leaf);
+	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
 
 	/* check sibling pointers in leaf block or root block 0 before
 	* we have to release the btree block
@@ -1571,7 +1571,8 @@ process_longform_attr(
 			repairlinks = 1;
 			leafhdr.forw = 0;
 			leafhdr.back = 0;
-			xfs_attr3_leaf_hdr_to_disk(leaf, &leafhdr);
+			xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo,
+						   leaf, &leafhdr);
 		} else  {
 			do_warn(
 	_("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"), ino);

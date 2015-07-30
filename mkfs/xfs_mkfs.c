@@ -2678,7 +2678,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	buf = libxfs_getbuf(mp->m_ddev_targp, XFS_SB_DADDR, XFS_FSS_TO_BB(mp, 1));
 	buf->b_ops = &xfs_sb_buf_ops;
 	memset(XFS_BUF_PTR(buf), 0, sectorsize);
-	libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp, XFS_SB_ALL_BITS);
+	libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	libxfs_purgebuf(buf);
 
@@ -2739,7 +2739,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 				XFS_FSS_TO_BB(mp, 1));
 		buf->b_ops = &xfs_sb_buf_ops;
 		memset(XFS_BUF_PTR(buf), 0, sectorsize);
-		libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp, XFS_SB_ALL_BITS);
+		libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
 		/*

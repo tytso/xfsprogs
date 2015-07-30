@@ -435,7 +435,7 @@ write_primary_sb(xfs_sb_t *sbp, int size)
 		do_error(_("couldn't seek to offset 0 in filesystem\n"));
 	}
 
-	libxfs_sb_to_disk(buf, sbp, XFS_SB_ALL_BITS);
+	libxfs_sb_to_disk(buf, sbp);
 
 	if (xfs_sb_version_hascrc(sbp))
 		xfs_update_cksum((char *)buf, size, XFS_SB_CRC_OFF);

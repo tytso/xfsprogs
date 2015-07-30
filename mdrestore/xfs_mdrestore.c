@@ -168,7 +168,7 @@ perform_restore(
 
 	memset(block_buffer, 0, sb.sb_sectsize);
 	sb.sb_inprogress = 0;
-	libxfs_sb_to_disk((xfs_dsb_t *)block_buffer, &sb, XFS_SB_ALL_BITS);
+	libxfs_sb_to_disk((xfs_dsb_t *)block_buffer, &sb);
 	if (xfs_sb_version_hascrc(&sb)) {
 		xfs_update_cksum(block_buffer, sb.sb_sectsize,
 				 offsetof(struct xfs_sb, sb_crc));

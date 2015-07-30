@@ -551,7 +551,7 @@ parseproto(
 		if (!pip) {
 			pip = ip;
 			mp->m_sb.sb_rootino = ip->i_ino;
-			libxfs_mod_sb(tp, XFS_SB_ROOTINO);
+			libxfs_log_sb(tp);
 			isroot = 1;
 		} else {
 			libxfs_trans_ijoin(tp, pip, 0);
@@ -657,7 +657,7 @@ rtinit(
 	rbmip->i_d.di_flags = XFS_DIFLAG_NEWRTBM;
 	*(__uint64_t *)&rbmip->i_d.di_atime = 0;
 	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
-	libxfs_mod_sb(tp, XFS_SB_RBMINO);
+	libxfs_log_sb(tp);
 	mp->m_rbmip = rbmip;
 	error = -libxfs_inode_alloc(&tp, NULL, S_IFREG, 1, 0,
 					&creds, &fsxattrs, &rsumip);
@@ -667,7 +667,7 @@ rtinit(
 	mp->m_sb.sb_rsumino = rsumip->i_ino;
 	rsumip->i_d.di_size = mp->m_rsumsize;
 	libxfs_trans_log_inode(tp, rsumip, XFS_ILOG_CORE);
-	libxfs_mod_sb(tp, XFS_SB_RSUMINO);
+	libxfs_log_sb(tp);
 	libxfs_trans_commit(tp, 0);
 	mp->m_rsumip = rsumip;
 	/*

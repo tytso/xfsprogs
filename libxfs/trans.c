@@ -834,7 +834,7 @@ libxfs_trans_commit(
 			sbp->sb_fdblocks += tp->t_fdblocks_delta;
 		if (tp->t_frextents_delta)
 			sbp->sb_frextents += tp->t_frextents_delta;
-		xfs_mod_sb(tp, XFS_SB_ALL_BITS);
+		xfs_log_sb(tp);
 	}
 
 #ifdef XACT_DEBUG

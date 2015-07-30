@@ -1616,7 +1616,7 @@ scan_ag(
 	if (sb_dirty && !no_modify) {
 		if (agno == 0)
 			memcpy(&mp->m_sb, sb, sizeof(xfs_sb_t));
-		libxfs_sb_to_disk(XFS_BUF_TO_SBP(sbbuf), sb, XFS_SB_ALL_BITS);
+		libxfs_sb_to_disk(XFS_BUF_TO_SBP(sbbuf), sb);
 		libxfs_writebuf(sbbuf, 0);
 	} else
 		libxfs_putbuf(sbbuf);

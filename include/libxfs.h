@@ -158,6 +158,9 @@ extern int	libxfs_log_header (xfs_caddr_t, uuid_t *, int, int, int,
  */
 typedef struct xfs_mount {
 	xfs_sb_t		m_sb;		/* copy of fs superblock */
+#define m_icount	m_sb.sb_icount
+#define m_ifree		m_sb.sb_ifree
+#define m_fdblocks	m_sb.sb_fdblocks
 	char			*m_fsname;	/* filesystem name */
 	int			m_bsize;	/* fs logical block size */
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
@@ -715,9 +718,9 @@ xfs_buf_update_cksum(struct xfs_buf *bp, unsigned long cksum_offset)
 #ifndef __LIBXFS_INTERNAL_XFS_H
 
 /* xfs_sb.h */
-void	libxfs_mod_sb(struct xfs_trans *, __int64_t);
+void	libxfs_log_sb(struct xfs_trans *tp);
 void	libxfs_sb_from_disk(struct xfs_sb *, struct xfs_dsb *);
-void	libxfs_sb_to_disk(struct xfs_dsb *, struct xfs_sb *, __int64_t);
+void	libxfs_sb_to_disk(struct xfs_dsb *, struct xfs_sb *);
 void	libxfs_sb_quota_from_disk(struct xfs_sb *sbp);
 
 /* xfs_bmap.h */
@@ -757,6 +760,7 @@ int	libxfs_dir2_shrink_inode(struct xfs_da_args *args, xfs_dir2_db_t db,
 void	libxfs_dir2_data_freescan(struct xfs_da_geometry *geo,
 		const struct xfs_dir_ops *ops,
 		struct xfs_dir2_data_hdr *hdr, int *loghead);
+
 void	libxfs_dir2_data_log_entry(struct xfs_da_args *args,
 		struct xfs_buf *bp, struct xfs_dir2_data_entry *dep);
 void	libxfs_dir2_data_log_header(struct xfs_da_args *args,

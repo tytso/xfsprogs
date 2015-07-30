@@ -453,26 +453,17 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	return 0;
 }
 
-/*
- * Utility routine common used to apply a delta to a field in the
- * in-core superblock.
- * Switch on the field indicated and apply the delta to that field.
- * Fields are not allowed to dip below zero, so if the delta would
- * do this do not apply it and return EINVAL.
- *
- * Originally derived from xfs_mod_incore_sb_unlocked().
- */
 int
 libxfs_mod_incore_sb(
-	xfs_mount_t	*mp,
-	xfs_sb_field_t	field,
+	struct xfs_mount *mp,
+	int		field,
 	int64_t		delta,
 	int		rsvd)
 {
 	long long	lcounter;	/* long counter for 64 bit fields */
 
 	switch (field) {
-	case XFS_SBS_FDBLOCKS:
+	case XFS_TRANS_SB_FDBLOCKS:
 		lcounter = (long long)mp->m_sb.sb_fdblocks;
 		lcounter += delta;
 		if (lcounter < 0)
