@@ -22,10 +22,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include <xfs/platform_defs.h>
-#include <xfs/list.h>
-#include <xfs/cache.h>
-#include <xfs/libxfs.h>
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_bit.h"
 
 #define CACHE_DEBUG 1
 #undef CACHE_DEBUG

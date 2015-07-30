@@ -52,7 +52,7 @@ int	xfs_attr_shortform_to_leaf(struct xfs_da_args *args);
 int	xfs_attr_shortform_remove(struct xfs_da_args *args);
 int	xfs_attr_shortform_list(struct xfs_attr_list_context *context);
 int	xfs_attr_shortform_allfit(struct xfs_buf *bp, struct xfs_inode *dp);
-int	xfs_attr_shortform_bytesfit(xfs_inode_t *dp, int bytes);
+int	xfs_attr_shortform_bytesfit(struct xfs_inode *dp, int bytes);
 
 
 /*

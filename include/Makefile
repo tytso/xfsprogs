@@ -23,9 +23,12 @@ QAHFILES = libxfs.h libxlog.h \
 	swab.h \
 	xfs_arch.h \
 	xfs_btree_trace.h \
+	xfs_inode.h \
 	xfs_log_recover.h \
 	xfs_metadump.h \
-	xfs_trace.h
+	xfs_mount.h \
+	xfs_trace.h \
+	xfs_trans.h
 
 HFILES = handle.h jdm.h xqm.h xfs.h
 HFILES += $(PKG_PLATFORM).h

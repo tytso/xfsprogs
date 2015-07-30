@@ -1,6 +1,6 @@
 
 
-#include <xfs/libxfs.h>
+#include "xfs.h"
 
 /*
  * Simple memory interface

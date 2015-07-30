@@ -18,8 +18,6 @@
 #ifndef LOGPRINT_H
 #define LOGPRINT_H
 
-#include <xfs/libxlog.h>
-
 /* command line flags */
 extern int	print_data;
 extern int	print_only_data;

@@ -15,10 +15,13 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
-#include "logprint.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <xfs/libxfs.h>
+#include <xfs/libxlog.h>
+
+#include "logprint.h"
 
 #define OP_PRINT	0
 #define OP_PRINT_TRANS	1

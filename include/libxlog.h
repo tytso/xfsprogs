@@ -17,8 +17,6 @@
 #ifndef LIBXLOG_H
 #define LIBXLOG_H
 
-#include <xfs/libxfs.h>
-
 /*
  * define the userlevel xlog_t to be the subset of the kernel's
  * xlog_t that we actually need to get our work done, avoiding
@@ -51,6 +49,8 @@ struct xlog {
 
 /*
  * macros mapping kernel code to user code
+ *
+ * XXX: this is duplicated stuff - should be shared with libxfs.
  */
 #ifndef EFSCORRUPTED
 #define EFSCORRUPTED			 990
@@ -65,6 +65,12 @@ struct xlog {
 #define XFS_CORRUPTION_ERROR(e,l,mp,m)	((void) 0)
 #define XFS_MOUNT_WAS_CLEAN		0x1
 #define unlikely(x)			(x)
+#define xfs_alert(mp,fmt,args...)	cmn_err(CE_ALERT,fmt, ## args)
+#define xfs_warn(mp,fmt,args...)	cmn_err(CE_WARN,fmt, ## args)
+#define xfs_hex_dump(d,n)		((void) 0)
+#define __round_mask(x, y) ((__typeof__(x))((y)-1))
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_down(x, y) ((x) & ~__round_mask(x, y))
 
 extern void xlog_warn(char *fmt,...);
 extern void xlog_exit(char *fmt,...);

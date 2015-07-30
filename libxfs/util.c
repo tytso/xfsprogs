@@ -16,10 +16,23 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdarg.h>
+#include "xfs.h"
+#include "init.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode_buf.h"
+#include "xfs_inode_fork.h"
+#include "xfs_inode.h"
+#include "xfs_trans.h"
+#include "xfs_bmap.h"
+#include "xfs_bmap_btree.h"
+#include "xfs_trans_space.h"
+#include "xfs_ialloc.h"
+#include "xfs_alloc.h"
 
 /*
  * Calculate the worst case log unit reservation for a given superblock
@@ -723,4 +736,13 @@ xfs_verifier_error(
 	xfs_alert(NULL, "Metadata %s detected at block 0x%llx/0x%x",
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  bp->b_bn, BBTOB(bp->b_length));
+}
+
+void
+xfs_reinit_percpu_counters(
+	struct xfs_mount	*mp)
+{
+	mp->m_icount = mp->m_sb.sb_icount;
+	mp->m_ifree = mp->m_sb.sb_ifree;
+	mp->m_fdblocks = mp->m_sb.sb_fdblocks;
 }

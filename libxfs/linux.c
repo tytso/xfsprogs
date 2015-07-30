@@ -17,7 +17,6 @@
  */
 
 #define ustat __kernel_ustat
-#include <xfs/libxfs.h>
 #include <mntent.h>
 #include <sys/stat.h>
 #undef ustat
@@ -25,6 +24,9 @@
 #include <sys/mount.h>
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
+
+#include "xfs.h"
+#include "xfs_fs.h"
 
 int platform_has_uuid = 1;
 extern char *progname;

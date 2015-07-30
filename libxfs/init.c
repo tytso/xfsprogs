@@ -16,9 +16,22 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs.h>
 #include <sys/stat.h>
 #include "init.h"
+
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode_buf.h"
+#include "xfs_inode_fork.h"
+#include "xfs_inode.h"
+#include "xfs_trans.h"
+
+#include <xfs/libxfs.h>		/* for now */
 
 char *progname = "libxfs";	/* default, changed by each tool */
 
@@ -387,7 +400,7 @@ manage_zones(int release)
 	}
 	/* otherwise initialise zone allocation */
 	xfs_buf_zone = kmem_zone_init(sizeof(xfs_buf_t), "xfs_buffer");
-	xfs_inode_zone = kmem_zone_init(sizeof(xfs_inode_t), "xfs_inode");
+	xfs_inode_zone = kmem_zone_init(sizeof(struct xfs_inode), "xfs_inode");
 	xfs_ifork_zone = kmem_zone_init(sizeof(xfs_ifork_t), "xfs_ifork");
 	xfs_ili_zone = kmem_zone_init(
 			sizeof(xfs_inode_log_item_t), "xfs_inode_log_item");
