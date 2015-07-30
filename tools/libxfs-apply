@@ -5,7 +5,13 @@
 
 usage()
 {
-	echo "libxfs-apply repodir [patchfile|commitid]"
+	echo $*
+	echo
+	echo "Usage:"
+	echo "	libxfs-apply --source <repodir> --commit <commit_id>"
+	echo "	libxfs-apply --patch <patchfile>"
+	echo
+	echo "libxfs-apply should be run in the destination git repository."
 	exit
 }
 
@@ -16,35 +22,63 @@ cleanup()
 
 fail()
 {
+	echo "Fail:"
+	echo $*
 	cleanup
-	cd $ORIG_DIR
 	exit
 }
 
-if [ "$#" -eq 2 -a -d "$1" -a -f "$2" ]; then
-	REPO=$1
-	PATCH=$2
-elif [ "$#" -eq 2 -a -d "$1" ]; then
-	REPO=$1
-	PATCH=`mktemp`
-	git show $2 > $PATCH || usage
-else
-	usage
+# We should see repository contents we recognise, both at the source and
+# destination. Kernel repositorys will have fs/xfs/libxfs, and xfsprogs
+# repositories will have libxcmd.
+check_repo()
+{
+	if [ ! -d "fs/xfs/libxfs" -a ! -d "libxcmd" ]; then
+		usage "$1 repository contents not recognised!"
+	fi
+}
+
+REPO=
+PATCH=
+COMMIT_ID=
+GUILT=0
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--source)	REPO=$2 ; shift ;;
+	--patch)	PATCH=$2; shift ;;
+	--commit)	COMMIT_ID=$2 ; shift ;;
+	*)		usage ;;
+	esac
+	shift
+done
+
+if [ -n "$PATCH" ]; then
+	if [ -n "$REPO" -o -n "$COMMIT_ID" ]; then
+		usage "Need to specify either patch or source epo/commit"
+	fi
+elif [ -z "$REPO" -o -z "$COMMIT_ID" ]; then
+	usage "Need to specify both source repo and commit id"
 fi
 
+check_repo Destination
 
-ORIG_DIR=`pwd`
 LIBXFS_FILES=`mktemp`
 NEWPATCH=`mktemp`
 
-cd $REPO
+# switch to source repo and pull the commit into the patch file
+if [ -n "$COMMIT_ID" ]; then
+	pushd $REPO > /dev/null
+	check_repo Source
+	PATCH=`mktemp`
+	git show $2 > $PATCH || usage "Bad source commit ID!"
+	popd > /dev/null
+fi
 
 # Are we using guilt? This works even if no patch is applied.
 guilt top &> /dev/null
 if [ $? -eq 0 ]; then
 	GUILT=1
-else
-	GUILT=0
 fi
 
 # Filter the patch into the right format & files for the other tree
@@ -52,8 +86,7 @@ fi
 if   [ -d "fs/xfs/libxfs" ]; then	# We are applying a progs patch to the kernel tree
 	lsdiff $PATCH | grep -q "a/libxfs/"
 	if [ $? -ne 0 ]; then
-		echo "Doesn't look like an xfsprogs patch with libxfs changes"
-		fail
+		fail "Doesn't look like an xfsprogs patch with libxfs changes"
 	fi
 
 	# The files we will try to apply to
@@ -70,8 +103,7 @@ if   [ -d "fs/xfs/libxfs" ]; then	# We are applying a progs patch to the kernel 
 elif [ -d "libxfs" -a -d "libxlog" ]; then	# We are applying a kernel patch to the xfsprogs tree
 	lsdiff $PATCH | grep -q "a/fs/xfs/libxfs/"
 	if [ $? -ne 0 ]; then
-		echo "Doesn't look like a kernel patch with libxfs changes"
-		fail
+		fail "Doesn't look like a kernel patch with libxfs changes"
 	fi
 
 	# The files we will try to apply to
@@ -84,9 +116,6 @@ elif [ -d "libxfs" -a -d "libxlog" ]; then	# We are applying a kernel patch to t
 		--addoldprefix=a/ \
 		--addnewprefix=b/ \
 		$PATCH > $NEWPATCH 
-else
-	echo "Sorry, I don't recognize repo $REPO"
-	fail
 fi
 
 echo "Filtered patch for $REPO contains:"
