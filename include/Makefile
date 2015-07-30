@@ -21,45 +21,38 @@ include $(TOPDIR)/include/builddefs
 QAHFILES = libxfs.h libxlog.h \
 	atomic.h bitops.h cache.h kmem.h list.h hlist.h parent.h radix-tree.h \
 	swab.h \
-	xfs_ag.h xfs_alloc.h xfs_alloc_btree.h xfs_arch.h xfs_attr_leaf.h \
-	xfs_attr_sf.h xfs_bit.h xfs_bmap.h xfs_bmap_btree.h xfs_btree.h \
-	xfs_attr_remote.h \
+	xfs_arch.h \
 	xfs_btree_trace.h \
-	xfs_cksum.h \
-	xfs_da_btree.h \
-	xfs_da_format.h \
-	xfs_dinode.h \
-	xfs_dir2.h \
-	xfs_format.h \
-	xfs_ialloc.h \
-	xfs_ialloc_btree.h \
-	xfs_inode_buf.h \
-	xfs_inode_fork.h \
-	xfs_inum.h \
-	xfs_log_format.h \
 	xfs_log_recover.h \
 	xfs_metadump.h \
-	xfs_quota_defs.h \
-	xfs_sb.h \
-	xfs_shared.h \
-	xfs_trace.h \
-	xfs_trans_resv.h \
-	xfs_trans_space.h
+	xfs_trace.h
 
-HFILES = handle.h jdm.h xqm.h xfs.h xfs_fs.h xfs_types.h
+HFILES = handle.h jdm.h xqm.h xfs.h
 HFILES += $(PKG_PLATFORM).h
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
 DKHFILES = volume.h fstyp.h dvh.h
+LIBHFILES = command.h input.h path.h project.h
 LSRCFILES = $(shell echo $(PHFILES) | sed -e "s/$(PKG_PLATFORM).h//g")
 LSRCFILES += platform_defs.h.in builddefs.in buildmacros buildrules install-sh
-LSRCFILES += $(DKHFILES) command.h input.h path.h project.h
-LDIRT = xfs disk
+LSRCFILES += $(DKHFILES) $(LIBHFILES)
+LDIRT = disk
+LDIRDIRT = xfs
 
-default install: xfs disk
+default install: .xfs disk
 
-xfs disk:
+disk:
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) . $@
+
+# set up include/xfs header directory
+.xfs: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+
+%-hdrs: xfs
+	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
+
+xfs:
+	@mkdir -p xfs
+
 
 include $(BUILDRULES)
 
@@ -70,3 +63,4 @@ install-dev: default
 
 install-qa: install-dev
 	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
+

@@ -10,7 +10,46 @@ LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
 
-HFILES = xfs.h init.h xfs_dir2_priv.h crc32defs.h crc32table.h
+# headers to install in include/xfs
+PKGHFILES = xfs_fs.h \
+	xfs_types.h
+
+# headers with build dependencies
+HFILES = xfs.h \
+	init.h \
+	crc32defs.h \
+	crc32table.h \
+	xfs_dir2_priv.h \
+
+# headers installed in QA targets
+QAHFILES = xfs_ag.h \
+	xfs_alloc.h \
+	xfs_alloc_btree.h \
+	xfs_attr_leaf.h \
+	xfs_attr_sf.h \
+	xfs_bit.h \
+	xfs_bmap.h \
+	xfs_bmap_btree.h \
+	xfs_btree.h \
+	xfs_attr_remote.h \
+	xfs_cksum.h \
+	xfs_da_btree.h \
+	xfs_da_format.h \
+	xfs_dinode.h \
+	xfs_dir2.h \
+	xfs_format.h \
+	xfs_ialloc.h \
+	xfs_ialloc_btree.h \
+	xfs_inode_buf.h \
+	xfs_inode_fork.h \
+	xfs_inum.h \
+	xfs_log_format.h \
+	xfs_quota_defs.h \
+	xfs_sb.h \
+	xfs_shared.h \
+	xfs_trans_resv.h \
+	xfs_trans_space.h
+
 CFILES = cache.c \
 	crc32.c \
 	init.c kmem.c logitem.c radix-tree.c rdwr.c trans.c util.c \
@@ -64,7 +103,7 @@ DEBUG = -DNDEBUG
 
 LDIRT = gen_crc32table crc32table.h crc32selftest
 
-default: crc32selftest ltdepend $(LTLIBRARY)
+default: xfs crc32selftest ltdepend $(LTLIBRARY)
 
 crc32table.h: gen_crc32table.c
 	@echo "    [CC]     gen_crc32table"
@@ -82,12 +121,21 @@ crc32selftest: gen_crc32table.c crc32table.h crc32.c
 	$(Q) $(CC) $(CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
 	$(Q) ./$@
 
+# set up include/xfs header directory
+xfs: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
+
+%-hdrs:
+	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
+
 include $(BUILDRULES)
 
 install: default
 
-install-dev: default
+install-dev: install
+	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
 
-install-qa: default
+install-qa: install-dev
+	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
 
 -include .ltdep
+

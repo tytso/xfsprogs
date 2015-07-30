@@ -94,7 +94,7 @@ MAKEDEP := $(MAKEDEPEND) $(CFLAGS)
 ltdepend: rmltdep .ltdep
 
 rmltdep:
-	@rm -f .ltdep
+	$(Q)rm -f .ltdep
 
 .ltdep: $(CFILES) $(HFILES)
 	$(Q)$(MAKEDEP) $(CFILES) | $(SED) -e 's,^\([^:]*\)\.o,\1.lo,' > .ltdep
@@ -102,7 +102,7 @@ rmltdep:
 depend: rmdep .dep
 
 rmdep:
-	@rm -f .dep
+	$(Q)rm -f .dep
 
 .dep: $(CFILES) $(HFILES)
 	$(Q)$(MAKEDEP) $(CFILES) > .dep

@@ -40,7 +40,9 @@ LDIRDIRT = $(SRCDIR)
 LDIRT += $(SRCTAR)
 endif
 
-LIB_SUBDIRS = libxfs libxlog libxcmd libhandle libdisk
+
+DLIB_SUBDIRS = libxlog libxcmd libhandle libdisk
+LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc po debian
 
@@ -54,15 +56,16 @@ else
 endif
 
 # tool/lib dependencies
+# note: include/xfs is set up by libxfs, too, so everything is dependent on it.
 $(LIB_SUBDIRS) $(TOOL_SUBDIRS): include
-copy mdrestore: libxfs
-db logprint: libxfs libxlog
+$(DLIB_SUBDIRS) $(TOOL_SUBDIRS): libxfs
+db logprint: libxlog
 fsr: libhandle
-growfs: libxfs libxcmd
+growfs: libxcmd
 io: libxcmd libhandle
-mkfs: libxfs
 quota: libxcmd
-repair: libxfs libxlog
+repair: libxlog
+
 
 ifneq ($(ENABLE_BLKID), yes)
 mkfs: libdisk
