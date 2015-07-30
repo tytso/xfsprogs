@@ -40,6 +40,8 @@ LDIRDIRT = $(SRCDIR)
 LDIRT += $(SRCTAR)
 endif
 
+# header install rules to populate include/xfs correctly
+HDR_SUBDIRS = include libxfs
 
 DLIB_SUBDIRS = libxlog libxcmd libhandle libdisk
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
@@ -53,6 +55,7 @@ default: include/builddefs include/platform_defs.h
 ifeq ($(HAVE_BUILDDEFS), no)
 	$(Q)$(MAKE) $(MAKEOPTS) -C . $@
 else
+	$(Q)$(MAKE) $(MAKEOPTS) headers
 	$(Q)$(MAKE) $(MAKEOPTS) $(SUBDIRS)
 endif
 

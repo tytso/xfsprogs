@@ -102,7 +102,7 @@ DEBUG = -DNDEBUG
 
 LDIRT = gen_crc32table crc32table.h crc32selftest
 
-default: xfs crc32selftest ltdepend $(LTLIBRARY)
+default: crc32selftest ltdepend $(LTLIBRARY)
 
 crc32table.h: gen_crc32table.c
 	@echo "    [CC]     gen_crc32table"
@@ -121,7 +121,7 @@ crc32selftest: gen_crc32table.c crc32table.h crc32.c
 	$(Q) ./$@
 
 # set up include/xfs header directory
-xfs: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
+headers: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*

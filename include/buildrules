@@ -13,6 +13,11 @@ clean clobber : $(addsuffix -clean,$(SUBDIRS))
 	@echo "Cleaning $*"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* clean
 
+headers: $(addsuffix -headers, $(HDR_SUBDIRS))
+%-headers:
+	@echo "   [HEADERS] $*"
+	$(Q)$(MAKE) $(MAKEOPTS) -C $* headers
+
 # Never blow away subdirs
 ifdef SUBDIRS
 .PRECIOUS: $(SUBDIRS)
