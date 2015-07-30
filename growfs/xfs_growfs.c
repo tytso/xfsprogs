@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <xfs/path.h>
+#include "xfs/path.h"
 
 static void
 usage(void)

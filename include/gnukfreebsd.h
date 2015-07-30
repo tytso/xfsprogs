@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include <libgen.h>
 #include <paths.h>
-#include <xfs/swab.h>
+#include "xfs/swab.h"
 
 #define constpp	char * const *
 

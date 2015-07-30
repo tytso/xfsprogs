@@ -21,7 +21,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <xfs/project.h>
+#include "xfs/project.h"
 #include <stdbool.h>
 
 extern char	**breakline(char *input, int *count);

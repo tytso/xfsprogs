@@ -69,15 +69,15 @@ typedef __u64	__bitwise	__be64;
 typedef struct filldir		filldir_t;
 
 #if defined(__linux__)
-#include <xfs/linux.h>
+#include "xfs/linux.h"
 #elif defined(__FreeBSD__)
-#include <xfs/freebsd.h>
+#include "xfs/freebsd.h"
 #elif defined(__FreeBSD_kernel__)
-#include <xfs/gnukfreebsd.h>
+#include "xfs/gnukfreebsd.h"
 #elif defined(__APPLE__)
-#include <xfs/darwin.h>
+#include "xfs/darwin.h"
 #elif defined(__sgi__) || defined(__sgi)
-#include <xfs/irix.h>
+#include "xfs/irix.h"
 #else
 # error unknown platform... have fun porting!
 #endif

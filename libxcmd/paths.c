@@ -24,9 +24,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <xfs/path.h>
-#include <xfs/input.h>
-#include <xfs/project.h>
+#include "xfs/path.h"
+#include "xfs/input.h"
+#include "xfs/project.h"
 #include <limits.h>
 
 extern char *progname;
