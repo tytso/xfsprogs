@@ -116,7 +116,7 @@ libxfs_trans_roll(
 	 */
 	error = xfs_trans_commit(trans, 0);
 	if (error)
-		return (error);
+		return error;
 
 	trans = *tpp;
 

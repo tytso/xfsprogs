@@ -62,7 +62,7 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 		break;
 	}
 
-        return (i < cnt);
+        return i < cnt;
 }
 
 int
@@ -169,7 +169,7 @@ platform_direct_blockdev(void)
 int
 platform_align_blockdev(void)
 {
-	return (sizeof(void *));
+	return sizeof(void *);
 }
 
 int

@@ -50,7 +50,7 @@ platform_check_iswritable(char *name, char *block, struct stat64 *s, int fatal)
 		exit(1);
 	}
 	close(fd);
-	return (writable == 0);
+	return writable == 0;
 }
 
 int
@@ -112,7 +112,7 @@ platform_direct_blockdev(void)
 int
 platform_align_blockdev(void)
 {
-	return (sizeof(void *));
+	return sizeof(void *);
 }
 
 int

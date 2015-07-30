@@ -88,7 +88,7 @@ platform_direct_blockdev(void)
 int
 platform_align_blockdev(void)
 {
-	return (sizeof(void *));
+	return sizeof(void *);
 }
 
 int

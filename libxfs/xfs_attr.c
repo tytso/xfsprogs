@@ -509,27 +509,27 @@ xfs_attr_shortform_addname(xfs_da_args_t *args)
 
 	retval = xfs_attr_shortform_lookup(args);
 	if ((args->flags & ATTR_REPLACE) && (retval == ENOATTR)) {
-		return(retval);
+		return retval;
 	} else if (retval == EEXIST) {
 		if (args->flags & ATTR_CREATE)
-			return(retval);
+			return retval;
 		retval = xfs_attr_shortform_remove(args);
 		ASSERT(retval == 0);
 	}
 
 	if (args->namelen >= XFS_ATTR_SF_ENTSIZE_MAX ||
 	    args->valuelen >= XFS_ATTR_SF_ENTSIZE_MAX)
-		return(XFS_ERROR(ENOSPC));
+		return XFS_ERROR(ENOSPC);
 
 	newsize = XFS_ATTR_SF_TOTSIZE(args->dp);
 	newsize += XFS_ATTR_SF_ENTSIZE_BYNAME(args->namelen, args->valuelen);
 
 	forkoff = xfs_attr_shortform_bytesfit(args->dp, newsize);
 	if (!forkoff)
-		return(XFS_ERROR(ENOSPC));
+		return XFS_ERROR(ENOSPC);
 
 	xfs_attr_shortform_add(args, forkoff);
-	return(0);
+	return 0;
 }
 
 
@@ -616,7 +616,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 			ASSERT(committed);
 			args->trans = NULL;
 			xfs_bmap_cancel(args->flist);
-			return(error);
+			return error;
 		}
 
 		/*
@@ -632,13 +632,13 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 		 */
 		error = xfs_trans_roll(&args->trans, dp);
 		if (error)
-			return (error);
+			return error;
 
 		/*
 		 * Fob the whole rest of the problem off on the Btree code.
 		 */
 		error = xfs_attr_node_addname(args);
-		return(error);
+		return error;
 	}
 
 	/*
@@ -647,7 +647,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 	 */
 	error = xfs_trans_roll(&args->trans, dp);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * If there was an out-of-line value, allocate the blocks we
@@ -658,7 +658,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 	if (args->rmtblkno > 0) {
 		error = xfs_attr_rmtval_set(args);
 		if (error)
-			return(error);
+			return error;
 	}
 
 	/*
@@ -674,7 +674,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 		 */
 		error = xfs_attr3_leaf_flipflags(args);
 		if (error)
-			return(error);
+			return error;
 
 		/*
 		 * Dismantle the "old" attribute/value pair by removing
@@ -688,7 +688,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 		if (args->rmtblkno) {
 			error = xfs_attr_rmtval_remove(args);
 			if (error)
-				return(error);
+				return error;
 		}
 
 		/*
@@ -718,7 +718,7 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 				ASSERT(committed);
 				args->trans = NULL;
 				xfs_bmap_cancel(args->flist);
-				return(error);
+				return error;
 			}
 
 			/*
@@ -1005,7 +1005,7 @@ restart:
 	if (args->rmtblkno > 0) {
 		error = xfs_attr_rmtval_set(args);
 		if (error)
-			return(error);
+			return error;
 	}
 
 	/*
@@ -1035,7 +1035,7 @@ restart:
 		if (args->rmtblkno) {
 			error = xfs_attr_rmtval_remove(args);
 			if (error)
-				return(error);
+				return error;
 		}
 
 		/*
@@ -1108,8 +1108,8 @@ out:
 	if (state)
 		xfs_da_state_free(state);
 	if (error)
-		return(error);
-	return(retval);
+		return error;
+	return retval;
 }
 
 /*
@@ -1271,7 +1271,7 @@ xfs_attr_node_removename(xfs_da_args_t *args)
 
 out:
 	xfs_da_state_free(state);
-	return(error);
+	return error;
 }
 
 /*
@@ -1319,7 +1319,7 @@ xfs_attr_fillstate(xfs_da_state_t *state)
 		}
 	}
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -1350,7 +1350,7 @@ xfs_attr_refillstate(xfs_da_state_t *state)
 						blk->blkno, blk->disk_blkno,
 						&blk->bp, XFS_ATTR_FORK);
 			if (error)
-				return(error);
+				return error;
 		} else {
 			blk->bp = NULL;
 		}
@@ -1369,13 +1369,13 @@ xfs_attr_refillstate(xfs_da_state_t *state)
 						blk->blkno, blk->disk_blkno,
 						&blk->bp, XFS_ATTR_FORK);
 			if (error)
-				return(error);
+				return error;
 		} else {
 			blk->bp = NULL;
 		}
 	}
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -1429,5 +1429,5 @@ xfs_attr_node_get(xfs_da_args_t *args)
 	}
 
 	xfs_da_state_free(state);
-	return(retval);
+	return retval;
 }

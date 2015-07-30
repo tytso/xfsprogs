@@ -290,7 +290,7 @@ int
 cache_overflowed(
 	struct cache *		cache)
 {
-	return (cache->c_maxcount == cache->c_max);
+	return cache->c_maxcount == cache->c_max;
 }
 
 
@@ -550,7 +550,7 @@ cache_node_purge(
 		cache_abort();
 	}
 #endif
-	return (count == 0);
+	return count == 0;
 }
 
 /*
