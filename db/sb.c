@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <xfs/libxlog.h>
+#include "xfs/libxlog.h"
 #include "command.h"
 #include "type.h"
 #include "faddr.h"

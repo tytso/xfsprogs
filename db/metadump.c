@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <libxlog.h>
+#include "xfs/libxlog.h"
 #include "bmap.h"
 #include "command.h"
 #include "metadump.h"

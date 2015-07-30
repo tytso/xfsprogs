@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <libxlog.h>
+#include "xfs/libxlog.h"
 #include "agheader.h"
 #include "globals.h"
 #include "protos.h"

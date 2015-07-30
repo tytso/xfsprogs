@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <xfs/libxlog.h>
+#include "xfs/libxlog.h"
 #include <sys/resource.h>
 #include "avl.h"
 #include "avl64.h"

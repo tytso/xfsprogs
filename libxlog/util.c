@@ -17,7 +17,7 @@
  */
 
 #include "xfs/libxfs.h"
-#include <xfs/libxlog.h>
+#include "xfs/libxlog.h"
 
 int print_exit;
 int print_skip_uuid;
