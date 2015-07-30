@@ -160,6 +160,8 @@ filter_xfsprogs_patch()
 apply_patch()
 {
 	local _patch=$1
+	local _patch_name=$2
+	local _current_commit=$3
 	local _new_patch=`mktemp`
 
 	if [ -d "fs/xfs/libxfs" ]; then
@@ -182,19 +184,43 @@ apply_patch()
 			echo -n "Top patch is: "
 			guilt top
 		fi
-		read -r -p "Create new Guilt patch? (Enter patch name or return to skip) " response
-		if [ -n "$response" ]; then
-			guilt refresh;
-			guilt import -P $response $_new_patch
-			guilt push
+
+		guilt import -P $_patch_name $_new_patch
+		guilt push
+		if [ $? -ne 0 ]; then
+			echo "Guilt push failed!"
+			echo "Force push patch, fix and refresh."
+			echo "Restart from commit $_current_commit"
+			fail "Manual cleanup required!"
 		fi
+		guilt refresh
 	else
 		echo "Applying with patch utility:"
 		patch -p1 < $_new_patch
+		echo "Patch was applied in $REPO; check for rejects, etc"
 	fi
 
 	rm -f $_new_patch
-	echo "Patch was applied in $REPO; check for rejects, guilt push -f, etc"
+}
+
+# name a guilt patch. Code is lifted from guilt import-commit.
+name_patch()
+{
+	s=`git log --no-decorate --pretty=oneline -1 $1 | cut -c 42-`
+
+	# Try to convert the first line of the commit message to a
+	# valid patch name.
+	fname=`printf %s "$s" |  \
+			sed -e "s/&/and/g" -e "s/[ :]/_/g" -e "s,[/\\],-,g" \
+			    -e "s/['\\[{}]//g" -e 's/]//g' -e 's/\*/-/g' \
+			    -e 's/\?/-/g' -e 's/\.\.\.*/./g' -e 's/^\.//' \
+			    -e 's/\.patch$//' -e 's/\.$//' | tr A-Z a-z`
+
+	# Try harder to make it a legal commit name by
+	# removing all but a few safe characters.
+	fname=`echo $fname|tr -d -c _a-zA-Z0-9---/\\n`
+
+	echo $fname
 }
 
 # single patch is easy.
@@ -228,9 +254,10 @@ for commit in $commit_list; do
 	# switch to source repo and pull commit into a patch file
 	pushd $REPO > /dev/null
 	git show $commit > $PATCH || usage "Bad source commit ID!"
+	patch_name=`name_patch $commit`
 	popd > /dev/null
 
-	apply_patch $PATCH
+	apply_patch $PATCH $patch_name $commit
 done
 
 
