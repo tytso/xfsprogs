@@ -222,4 +222,11 @@ int	xfs_bmap_shift_extents(struct xfs_trans *tp, struct xfs_inode *ip,
 		int num_exts);
 int	xfs_bmap_split_extent(struct xfs_inode *ip, xfs_fileoff_t split_offset);
 
+struct xfs_bmbt_rec_host *
+	xfs_bmap_search_extents(struct xfs_inode *ip, xfs_fileoff_t bno,
+				int fork, int *eofp, xfs_extnum_t *lastxp,
+				struct xfs_bmbt_irec *gotp,
+				struct xfs_bmbt_irec *prevp);
+
+
 #endif	/* __XFS_BMAP_H__ */

@@ -19,6 +19,7 @@
 #ifndef __LIBXFS_H__
 #define __LIBXFS_H__
 
+#include <xfs/libxfs_api_defs.h>
 #include <xfs/platform_defs.h>
 
 #include <xfs/list.h>
@@ -153,11 +154,6 @@ extern int	libxfs_log_header (xfs_caddr_t, uuid_t *, int, int, int,
 				libxfs_get_block_t *, void *);
 
 
-#define LIBXFS_ATTR_ROOT	0x0002	/* use attrs in root namespace */
-#define LIBXFS_ATTR_SECURE	0x0008	/* use attrs in security namespace */
-#define LIBXFS_ATTR_CREATE	0x0010	/* create, but fail if attr exists */
-#define LIBXFS_ATTR_REPLACE	0x0020	/* set, but fail if attr not exists */
-
 /* Shared utility routines */
 extern unsigned int	libxfs_log2_roundup(unsigned int i);
 
@@ -187,121 +183,6 @@ extern unsigned long	libxfs_physmem(void);	/* in kilobytes */
 #define XFS_INOBT_IS_FREE_DISK(rp,i)		\
 			((be64_to_cpu((rp)->ir_free) & XFS_INOBT_MASK(i)) != 0)
 
-/*
- * public xfs kernel routines to be called as libxfs_*
- *
- * These are all present in the xfs_* namespace but we don't want that namespace
- * to be used or even exposed, and hence we declare them here explicitly if we
- * aren't directly building the libxfs code itself.
- *
- * XXX: This needs to be more formalised in the shared header files so that
- * these declarations can go away, and so there's documentation in the kernel
- * code base that certain functions are shared with userspace.
- */
-#ifndef __LIBXFS_INTERNAL_XFS_H__
-
-/* xfs_sb.h */
-void	libxfs_log_sb(struct xfs_trans *tp);
-void	libxfs_sb_from_disk(struct xfs_sb *, struct xfs_dsb *);
-void	libxfs_sb_to_disk(struct xfs_dsb *, struct xfs_sb *);
-void	libxfs_sb_quota_from_disk(struct xfs_sb *sbp);
-
-/* xfs_bmap.h */
-int	libxfs_bmapi_write(struct xfs_trans *tp, struct xfs_inode *ip,
-		xfs_fileoff_t bno, xfs_filblks_t len, int flags,
-		xfs_fsblock_t *firstblock, xfs_extlen_t total,
-		struct xfs_bmbt_irec *mval, int *nmap,
-		struct xfs_bmap_free *flist);
-int	libxfs_bunmapi(struct xfs_trans *tp, struct xfs_inode *ip,
-		xfs_fileoff_t bno, xfs_filblks_t len, int flags,
-		xfs_extnum_t nexts, xfs_fsblock_t *firstblock,
-		struct xfs_bmap_free *flist, int *done);
-void	libxfs_bmap_cancel(struct xfs_bmap_free *flist);
-int	libxfs_bmap_last_offset(struct xfs_inode *ip,
-		xfs_fileoff_t *unused, int whichfork);
-int	libxfs_bmap_finish(struct xfs_trans **tp, struct xfs_bmap_free *flist,
-		int *committed);
-
-/* xfs_dir2.h */
-int	libxfs_dir_init(struct xfs_trans *tp, struct xfs_inode *dp,
-				struct xfs_inode *pdp);
-int	libxfs_dir_createname(struct xfs_trans *tp, struct xfs_inode *dp,
-				struct xfs_name *name, xfs_ino_t inum,
-				xfs_fsblock_t *first,
-				struct xfs_bmap_free *flist, xfs_extlen_t tot);
-int	libxfs_dir_lookup(struct xfs_trans *tp, struct xfs_inode *dp,
-				struct xfs_name *name, xfs_ino_t *inum,
-				struct xfs_name *ci_name);
-int	libxfs_dir_replace(struct xfs_trans *tp, struct xfs_inode *dp,
-				struct xfs_name *name, xfs_ino_t inum,
-				xfs_fsblock_t *first,
-				struct xfs_bmap_free *flist, xfs_extlen_t tot);
-
-int	libxfs_dir2_isblock(struct xfs_da_args *args, int *r);
-int	libxfs_dir2_isleaf(struct xfs_da_args *args, int *r);
-int	libxfs_dir2_shrink_inode(struct xfs_da_args *args, xfs_dir2_db_t db,
-				struct xfs_buf *bp);
-
-void	libxfs_dir2_data_freescan(struct xfs_da_geometry *geo,
-		const struct xfs_dir_ops *ops,
-		struct xfs_dir2_data_hdr *hdr, int *loghead);
-
-void	libxfs_dir2_data_log_entry(struct xfs_da_args *args,
-		struct xfs_buf *bp, struct xfs_dir2_data_entry *dep);
-void	libxfs_dir2_data_log_header(struct xfs_da_args *args,
-		struct xfs_buf *bp);
-void	libxfs_dir2_data_log_unused(struct xfs_da_args *args,
-		struct xfs_buf *bp, struct xfs_dir2_data_unused *dup);
-void	libxfs_dir2_data_make_free(struct xfs_da_args *args,
-		struct xfs_buf *bp, xfs_dir2_data_aoff_t offset,
-		xfs_dir2_data_aoff_t len, int *needlogp, int *needscanp);
-void	libxfs_dir2_data_use_free(struct xfs_da_args *args,
-		struct xfs_buf *bp, struct xfs_dir2_data_unused *dup,
-		xfs_dir2_data_aoff_t offset, xfs_dir2_data_aoff_t len,
-		int *needlogp, int *needscanp);
-
-/* xfs_da_btree.h */
-uint	libxfs_da_hashname(const __uint8_t *name_string, int name_length);
-int	libxfs_da_shrink_inode(xfs_da_args_t *args, xfs_dablk_t dead_blkno,
-					  struct xfs_buf *dead_buf);
-int	libxfs_da_read_buf(struct xfs_trans *trans, struct xfs_inode *dp,
-			       xfs_dablk_t bno, xfs_daddr_t mappedbno,
-			       struct xfs_buf **bpp, int whichfork,
-			       const struct xfs_buf_ops *ops);
-
-
-/* xfs_inode_buf.h */
-void	libxfs_dinode_calc_crc(struct xfs_mount *, struct xfs_dinode *);
-
-/* xfs_inode_fork.h */
-void	libxfs_idata_realloc(struct xfs_inode *, int, int);
-
-/* xfs_symlink_remote.h */
-int	libxfs_symlink_blocks(struct xfs_mount *mp, int pathlen);
-bool	libxfs_symlink_hdr_ok(xfs_ino_t ino, uint32_t offset, uint32_t size,
-			      struct xfs_buf *bp);
-
-/* xfs_bit.h */
-/* XXX: these are special as they are static inline functions in the header */
-#define libxfs_highbit32	xfs_highbit32
-#define libxfs_highbit64	xfs_highbit64
-
-/* xfs_alloc.c */
-int libxfs_alloc_fix_freelist(xfs_alloc_arg_t *, int);
-
-/* xfs_attr.c */
-int libxfs_attr_get(struct xfs_inode *, const unsigned char *,
-					unsigned char *, int *, int);
-int libxfs_attr_set(struct xfs_inode *, const unsigned char *,
-					unsigned char *, int, int);
-int libxfs_attr_remove(struct xfs_inode *, const unsigned char *, int);
-
-/* xfs_bmap.c */
-xfs_bmbt_rec_host_t *xfs_bmap_search_extents(struct xfs_inode *, xfs_fileoff_t,
-				int, int *, xfs_extnum_t *, xfs_bmbt_irec_t *,
-				xfs_bmbt_irec_t *);
-void libxfs_bmbt_get_all(struct xfs_bmbt_rec_host *r, struct xfs_bmbt_irec *s);
-
 static inline void
 libxfs_bmbt_disk_get_all(
 	struct xfs_bmbt_rec	*rp,
@@ -314,21 +195,18 @@ libxfs_bmbt_disk_get_all(
 	libxfs_bmbt_get_all(&hrec, irec);
 }
 
-void libxfs_dinode_from_disk(struct xfs_icdinode *,
-			     struct xfs_dinode *);
-bool libxfs_dinode_verify(struct xfs_mount *mp, xfs_ino_t ino,
-		       struct xfs_dinode *dip);
-
-/* this file */
-/* XXX: this needs cleanup  like the xfs_bit.h stuff */
-#define libxfs_verify_cksum	xfs_verify_cksum
-#define libxfs_buf_verify_cksum	xfs_buf_verify_cksum
-#define libxfs_buf_update_cksum	xfs_buf_update_cksum
-
-#endif /* __LIBXFS_INTERNAL_XFS_H__ */
-
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
+
+/* XXX: need parts of xfs_attr.h in userspace */
+#define LIBXFS_ATTR_ROOT	0x0002	/* use attrs in root namespace */
+#define LIBXFS_ATTR_SECURE	0x0008	/* use attrs in security namespace */
+#define LIBXFS_ATTR_CREATE	0x0010	/* create, but fail if attr exists */
+#define LIBXFS_ATTR_REPLACE	0x0020	/* set, but fail if attr not exists */
+
+int xfs_attr_remove(struct xfs_inode *dp, const unsigned char *name, int flags);
+int xfs_attr_set(struct xfs_inode *dp, const unsigned char *name,
+		 unsigned char *value, int valuelen, int flags);
 
 #endif	/* __LIBXFS_H__ */

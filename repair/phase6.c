@@ -454,7 +454,8 @@ bmap_next_offset(
 	    (error = xfs_iread_extents(tp, ip, whichfork)))
 		return error;
 	bno = *bnop + 1;
-	xfs_bmap_search_extents(ip, bno, whichfork, &eof, &lastx, &got, &prev);
+	libxfs_bmap_search_extents(ip, bno, whichfork, &eof, &lastx,
+				   &got, &prev);
 	if (eof)
 		*bnop = NULLFILEOFF;
 	else

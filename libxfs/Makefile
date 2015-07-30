@@ -46,7 +46,8 @@ QAHFILES = xfs_alloc.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \
 	xfs_trans_space.h \
-	libxfs_io.h
+	libxfs_io.h \
+	libxfs_api_defs.h
 
 CFILES = cache.c \
 	crc32.c \
