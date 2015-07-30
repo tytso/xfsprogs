@@ -775,6 +775,7 @@ scan_single_ino_chunk(
 	xfs_agblock_t		agbno;
 	int			j;
 	int			nfree;
+	int			ninodes;
 	int			off;
 	int			state;
 	ino_tree_node_t		*ino_rec = NULL;
@@ -926,7 +927,7 @@ _("inode rec for ino %" PRIu64 " (%d/%d) overlaps existing rec (start %d/%d)\n")
 	 * Mark sparse inodes as such in the in-core tree. Verify that sparse
 	 * inodes are free and that freecount is consistent with the free mask.
 	 */
-	nfree = 0;
+	nfree = ninodes = 0;
 	for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
 		if (ino_issparse(rp, j)) {
 			if (!suspect && !XFS_INOBT_IS_FREE_DISK(rp, j)) {
@@ -939,9 +940,11 @@ _("ir_holemask/ir_free mismatch, inode chunk %d/%u, holemask 0x%x free 0x%llx\n"
 			}
 			if (!suspect && ino_rec)
 				set_inode_sparse(ino_rec, j);
-		} else if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-			/* freecount only tracks non-sparse inos */
-			nfree++;
+		} else {
+			/* count fields track non-sparse inos */
+			if (XFS_INOBT_IS_FREE_DISK(rp, j))
+				nfree++;
+			ninodes++;
 		}
 	}
 
@@ -949,6 +952,14 @@ _("ir_holemask/ir_free mismatch, inode chunk %d/%u, holemask 0x%x free 0x%llx\n"
 		do_warn(
 _("ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n"),
 			agno, ino, freecount, nfree);
+	}
+
+	/* verify sparse record formats have a valid inode count */
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	    ninodes != rp->ir_u.sp.ir_count) {
+		do_warn(
+_("invalid inode count, inode chunk %d/%u, count %d ninodes %d\n"),
+			agno, ino, rp->ir_u.sp.ir_count, ninodes);
 	}
 
 	return suspect;
@@ -965,6 +976,7 @@ scan_single_finobt_chunk(
 	xfs_agblock_t		agbno;
 	int			j;
 	int			nfree;
+	int			ninodes;
 	int			off;
 	int			state;
 	ino_tree_node_t		*ino_rec = NULL;
@@ -1086,11 +1098,13 @@ _("finobt rec for ino %" PRIu64 " (%d/%u) does not match existing rec (%d/%d)\n"
 			return ++suspect;
 		}
 
-		nfree = 0;
+		nfree = ninodes = 0;
 		for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
 			int isfree = XFS_INOBT_IS_FREE_DISK(rp, j);
 			int issparse = ino_issparse(rp, j);
 
+			if (!issparse)
+				ninodes++;
 			if (isfree && !issparse)
 				nfree++;
 
@@ -1152,7 +1166,7 @@ _("finobt rec for ino %" PRIu64 " (%d/%u) does not match existing rec (%d/%d)\n"
 	 * Mark sparse inodes as such in the in-core tree. Verify that sparse
 	 * inodes are free and that freecount is consistent with the free mask.
 	 */
-	nfree = 0;
+	nfree = ninodes = 0;
 	for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
 		if (ino_issparse(rp, j)) {
 			if (!suspect && !XFS_INOBT_IS_FREE_DISK(rp, j)) {
@@ -1165,10 +1179,13 @@ _("finobt ir_holemask/ir_free mismatch, inode chunk %d/%u, holemask 0x%x free 0x
 			}
 			if (!suspect && ino_rec)
 				set_inode_sparse(ino_rec, j);
-		} else if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-			/* freecount only tracks non-sparse inos */
-			nfree++;
+		} else {
+			/* count fields track non-sparse inos */
+			if (XFS_INOBT_IS_FREE_DISK(rp, j))
+				nfree++;
+			ninodes++;
 		}
+
 	}
 
 check_freecount:
@@ -1193,6 +1210,14 @@ _("finobt ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n
 	if (!nfree) {
 		do_warn(
 _("finobt record with no free inodes, inode chunk %d/%u\n"), agno, ino);
+	}
+
+	/* verify sparse record formats have a valid inode count */
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	    ninodes != rp->ir_u.sp.ir_count) {
+		do_warn(
+_("invalid inode count, inode chunk %d/%u, count %d ninodes %d\n"),
+			agno, ino, rp->ir_u.sp.ir_count, ninodes);
 	}
 
 	return suspect;
