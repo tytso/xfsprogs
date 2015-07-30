@@ -89,7 +89,7 @@ avl_findrange(
 	avltree_desc_t *tree,
 	__psunsigned_t value)
 {
-	register avlnode_t *np = tree->avl_root;
+	avlnode_t *np = tree->avl_root;
 
 	while (np) {
 		if (value < AVL_START(tree, np)) {
@@ -128,9 +128,9 @@ avl_findadjacent(
 
 void
 avl_findranges(
-	register avltree_desc_t *tree,
-	register __psunsigned_t start,
-	register __psunsigned_t end,
+	avltree_desc_t *tree,
+	__psunsigned_t start,
+	__psunsigned_t end,
 	avlnode_t	        **startp,
 	avlnode_t		**endp);
 

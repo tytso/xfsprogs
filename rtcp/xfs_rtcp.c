@@ -34,7 +34,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	register int	c, i, r, errflg = 0;
+	int	c, i, r, errflg = 0;
 	struct stat64	s2;
 	int		extsize = - 1;
 
