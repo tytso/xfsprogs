@@ -294,13 +294,13 @@ static __inline__ void platform_getoptreset(void)
 
 static __inline__ int platform_uuid_compare(uuid_t *uu1, uuid_t *uu2)
 {
-	uint_t status;
+	__uint32_t status;
 	return uuid_compare(uu1, uu2, &status);
 }
 
 static __inline__ void platform_uuid_unparse(uuid_t *uu, char *buffer)
 {
-	uint_t status;
+	__uint32_t status;
 	char *s;
 	uuid_to_string(uu, &s, &status);
 	if (status == uuid_s_ok)
@@ -311,7 +311,7 @@ static __inline__ void platform_uuid_unparse(uuid_t *uu, char *buffer)
 
 static __inline__ int platform_uuid_parse(char *buffer, uuid_t *uu)
 {
-	uint_t status;
+	__uint32_t status;
 	uuid_from_string(buffer, uu, &status);
 	return (status == uuid_s_ok);
 }
@@ -324,13 +324,13 @@ static __inline__ int platform_uuid_is_null(uuid_t *uu)
 
 static __inline__ void platform_uuid_generate(uuid_t *uu)
 {
-	uint_t status;
+	__uint32_t status;
 	uuid_create(uu, &status);
 }
 
 static __inline__ void platform_uuid_clear(uuid_t *uu)
 {
-	uint_t status;
+	__uint32_t status;
 	uuid_create_nil(uu, &status);
 }
 
