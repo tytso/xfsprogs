@@ -170,12 +170,13 @@ find_secondary_sb(xfs_sb_t *rsb)
 }
 
 /*
- * Calculate what inode alignment field ought to be
- * based on internal superblock info and determine if it is valid.
+ * Calculate what the inode alignment field ought to be based on internal
+ * superblock info and determine if it is valid.
  *
- * For v5 superblocks, the inode alignment will either match that of the
- * standard XFS_INODE_BIG_CLUSTER_SIZE, or it will be scaled based on the inode
- * size. Either value is valid in this case.
+ * For standard v5 superblocks, the inode alignment must either match
+ * XFS_INODE_BIG_CLUSTER_SIZE or a multiple based on the inode size. For v5
+ * superblocks with sparse inode chunks enabled, inode alignment must match the
+ * inode chunk size.
  *
  * Return true if the alignment is valid, false otherwise.
  */
@@ -200,6 +201,20 @@ sb_validate_ino_align(struct xfs_sb *sb)
 		 sb->sb_inodesize / XFS_DINODE_MIN_SIZE) >> sb->sb_blocklog;
 	if (align == sb->sb_inoalignmt)
 		return true;
+
+	/*
+	 * Sparse inodes requires inoalignmt to match full inode chunk size and
+	 * spino_align to match the scaled alignment (as calculated above).
+	 */
+	if (xfs_sb_version_hassparseinodes(sb)) {
+		if (align != sb->sb_spino_align)
+			return false;
+
+		align = (sb->sb_inodesize * XFS_INODES_PER_CHUNK)
+			>> sb->sb_blocklog;
+		if (align == sb->sb_inoalignmt)
+			return true;
+	}
 
 	return false;
 }
