@@ -44,7 +44,6 @@ struct aghdr_cnts {
 	__uint32_t	agicount;
 	__uint32_t	agifreecount;
 	__uint64_t	fdblocks;
-	__uint64_t	icount;
 	__uint64_t	ifreecount;
 	__uint32_t	fibtfreecount;
 };
@@ -1246,7 +1245,6 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			if (magic == XFS_IBT_MAGIC ||
 			    magic == XFS_IBT_CRC_MAGIC) {
 				agcnts->agicount += XFS_INODES_PER_CHUNK;
-				agcnts->icount += XFS_INODES_PER_CHUNK;
 				agcnts->agifreecount += freecount;
 				agcnts->ifreecount += freecount;
 
@@ -1685,7 +1683,7 @@ scan_ags(
 	/* tally up the counts */
 	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
 		fdblocks += agcnts[i].fdblocks;
-		icount += agcnts[i].icount;
+		icount += agcnts[i].agicount;
 		ifreecount += agcnts[i].ifreecount;
 	}
 
