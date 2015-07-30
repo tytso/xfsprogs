@@ -1244,7 +1244,16 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 
 			if (magic == XFS_IBT_MAGIC ||
 			    magic == XFS_IBT_CRC_MAGIC) {
-				agcnts->agicount += XFS_INODES_PER_CHUNK;
+				int icount = XFS_INODES_PER_CHUNK;
+
+				/*
+				 * ir_count holds the inode count for all
+				 * records on fs' with sparse inode support
+				 */
+				if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+					icount = rp[i].ir_u.sp.ir_count;
+
+				agcnts->agicount += icount;
 				agcnts->agifreecount += freecount;
 				agcnts->ifreecount += freecount;
 
