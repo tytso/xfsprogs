@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# 2 args:
+#	libxfs-apply <repo> <commit ID or patchfile>
+
+usage()
+{
+	echo "libxfs-apply repodir [patchfile|commitid]"
+	exit
+}
+
+cleanup()
+{
+	rm -f $PATCH $LIBXFS_FILES $NEWPATCH
+}
+
+fail()
+{
+	cleanup
+	cd $ORIG_DIR
+	exit
+}
+
+if [ "$#" -eq 2 -a -d "$1" -a -f "$2" ]; then
+	REPO=$1
+	PATCH=$2
+elif [ "$#" -eq 2 -a -d "$1" ]; then
+	REPO=$1
+	PATCH=`mktemp`
+	git show $2 > $PATCH || usage
+else
+	usage
+fi
+
+
+ORIG_DIR=`pwd`
+LIBXFS_FILES=`mktemp`
+NEWPATCH=`mktemp`
+
+cd $REPO
+
+# Are we using guilt? This works even if no patch is applied.
+guilt top &> /dev/null
+if [ $? -eq 0 ]; then
+	GUILT=1
+else
+	GUILT=0
+fi
+
+# Filter the patch into the right format & files for the other tree
+
+if   [ -d "fs/xfs/libxfs" ]; then	# We are applying a progs patch to the kernel tree
+	lsdiff $PATCH | grep -q "a/libxfs/"
+	if [ $? -ne 0 ]; then
+		echo "Doesn't look like an xfsprogs patch with libxfs changes"
+		fail
+	fi
+
+	# The files we will try to apply to
+	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $LIBXFS_FILES
+
+	# Create the new patch
+	filterdiff \
+		-I $LIBXFS_FILES \
+		--strip=1 \
+		--addoldprefix=a/fs/xfs/ \
+		--addnewprefix=b/fs/xfs/ \
+		$PATCH > $NEWPATCH 
+
+elif [ -d "libxfs" -a -d "libxlog" ]; then	# We are applying a kernel patch to the xfsprogs tree
+	lsdiff $PATCH | grep -q "a/fs/xfs/libxfs/"
+	if [ $? -ne 0 ]; then
+		echo "Doesn't look like a kernel patch with libxfs changes"
+		fail
+	fi
+
+	# The files we will try to apply to
+	ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $LIBXFS_FILES
+
+	# Create the new patch
+	filterdiff \
+		-I $LIBXFS_FILES \
+		--strip=3 \
+		--addoldprefix=a/ \
+		--addnewprefix=b/ \
+		$PATCH > $NEWPATCH 
+else
+	echo "Sorry, I don't recognize repo $REPO"
+	fail
+fi
+
+echo "Filtered patch for $REPO contains:"
+lsdiff $NEWPATCH
+
+
+# Ok, now apply with guilt or patch; either may fail and require a force
+# and/or a manual reject fixup
+if [ $GUILT -eq 1 ]; then
+	echo "$REPO looks like a guilt directory."
+	PATCHES=`guilt applied | wc -l`
+	if [ $PATCHES -gt 0 ]; then
+		echo -n "Top patch is: "
+		guilt top
+	fi
+	read -r -p "Create new Guilt patch? (Enter patch name or return to skip) " response
+	[ -z "$response" ] && guilt refresh; guilt import -P $response $NEWPATCH; guilt push
+else
+	echo "Applying with patch utility:"
+	patch -p1 < $NEWPATCH
+fi
+
+echo "Patch was applied in $REPO; check for rejects, guilt push -f, etc"
+
+cleanup
