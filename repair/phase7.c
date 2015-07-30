@@ -93,7 +93,7 @@ update_inode_nlinks(
 	set_nlinks(&ip->i_d, ino, nlinks, &dirty);
 
 	if (!dirty)  {
-		libxfs_trans_cancel(tp, XFS_TRANS_RELEASE_LOG_RES);
+		libxfs_trans_cancel(tp);
 	} else  {
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 		/*

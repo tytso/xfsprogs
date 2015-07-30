@@ -1403,7 +1403,7 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 
 out_bmap_cancel:
 	libxfs_bmap_cancel(&flist);
-	libxfs_trans_cancel(tp, XFS_TRANS_RELEASE_LOG_RES | XFS_TRANS_ABORT);
+	libxfs_trans_cancel(tp);
 	return;
 }
 
@@ -2949,8 +2949,7 @@ process_dir_inode(
 					XFS_TRANS_RELEASE_LOG_RES |
 					XFS_TRANS_SYNC);
 			} else  {
-				libxfs_trans_cancel(tp,
-					XFS_TRANS_RELEASE_LOG_RES);
+				libxfs_trans_cancel(tp);
 			}
 			break;
 

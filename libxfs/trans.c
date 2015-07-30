@@ -200,8 +200,7 @@ libxfs_trans_reserve(
 
 void
 libxfs_trans_cancel(
-	xfs_trans_t	*tp,
-	int		flags)
+	xfs_trans_t	*tp)
 {
 #ifdef XACT_DEBUG
 	xfs_trans_t	*otp = tp;

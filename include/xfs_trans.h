@@ -90,7 +90,7 @@ xfs_trans_t	*libxfs_trans_alloc(struct xfs_mount *, int);
 int	libxfs_trans_reserve(struct xfs_trans *, struct xfs_trans_res *,
 				     uint, uint);
 int	libxfs_trans_commit(struct xfs_trans *, uint);
-void	libxfs_trans_cancel(struct xfs_trans *, int);
+void	libxfs_trans_cancel(struct xfs_trans *);
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);
 
 int	libxfs_trans_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,

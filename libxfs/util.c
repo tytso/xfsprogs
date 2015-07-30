@@ -572,7 +572,7 @@ libxfs_alloc_file_space(
 			 * Free the transaction structure.
 			 */
 			ASSERT(error == -ENOSPC);
-			xfs_trans_cancel(tp, 0);
+			xfs_trans_cancel(tp);
 			break;
 		}
 		xfs_trans_ijoin(tp, ip, 0);
@@ -605,7 +605,7 @@ libxfs_alloc_file_space(
 
 error0:	/* Cancel bmap, cancel trans */
 	xfs_bmap_cancel(&free_list);
-	xfs_trans_cancel(tp, 0);
+	xfs_trans_cancel(tp);
 	return error;
 }
 
