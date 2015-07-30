@@ -17,7 +17,7 @@
  */
 
 #include <stdio.h>
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "avl64.h"
 
 #define CERT	ASSERT

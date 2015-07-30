@@ -121,14 +121,15 @@ crc32selftest: gen_crc32table.c crc32table.h crc32.c
 	$(Q) ./$@
 
 # set up include/xfs header directory
-headers: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
-
-%-hdrs:
-	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
-
 include $(BUILDRULES)
 
 install: default
+	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
+
+install-headers: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
+
+%-hdrs:
+	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
 
 install-dev: install
 	$(INSTALL) -m 644 $(PKGHFILES) $(HFILES) $(PKG_INC_DIR)
@@ -136,5 +137,13 @@ install-dev: install
 install-qa: install-dev
 	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
 
+# We need to install the headers before building the dependencies.  If we
+# include the .ltdep file, the makefile decides that it needs to build the
+# dependencies to remake the makefile before running the header install target,
+# hence making it impossible to avoid errors being thrown by the dependency
+# generation. Hence we play games so that we only include this file if we aren't
+# running the install-headers target.
+ifndef NODEP
 -include .ltdep
+endif
 

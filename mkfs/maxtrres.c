@@ -24,7 +24,7 @@
  * directory block size.
  */
 
-#include <xfs/libxfs.h>
+#include "xfs/libxfs.h"
 #include "xfs_mkfs.h"
 
 int

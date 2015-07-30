@@ -54,14 +54,16 @@ LSRCFILES += $(DKHFILES) $(LIBHFILES)
 LDIRT = disk
 LDIRDIRT = xfs
 
-default install: disk
+default: disk
 
 disk:
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) . $@
 
+include $(BUILDRULES)
+
 # set up include/xfs header directory
-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
 
 %-hdrs: xfs
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
@@ -69,11 +71,10 @@ headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHF
 xfs:
 	@mkdir -p xfs
 
-
-include $(BUILDRULES)
-
-install-dev: default
+install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
+
+install-dev: install
 	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
 
 install-qa: install-dev

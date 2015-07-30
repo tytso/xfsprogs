@@ -44,6 +44,9 @@ dibuild:
 	@echo "== dpkg-buildpackage: installer" 1>&2
 	if [ ! -f mkfs/mkfs.xfs-$(bootpkg) ]; then \
 		$(diopts) $(MAKE) include/platform_defs.h; \
+		for dir in include libxfs; do \
+			$(MAKE) -C $$dir NODEP=1 install-headers; \
+		done; \
 		for dir in include libxfs libdisk mkfs; do \
 			$(MAKE) -C $$dir; \
 		done; \

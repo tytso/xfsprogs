@@ -1,5 +1,5 @@
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "globals.h"
 #include "progress.h"
 #include "err_protos.h"
