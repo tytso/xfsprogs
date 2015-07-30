@@ -634,7 +634,7 @@ verify_da_path(xfs_mount_t	*mp,
 		 * contains what appears to be a valid node block, but only if
 		 * we are fixing errors.
 		 */
-		if (bp->b_error == EFSBADCRC && !no_modify)
+		if (bp->b_error == -EFSBADCRC && !no_modify)
 			cursor->level[this_level].dirty++;
 	}
 	/*
@@ -1023,7 +1023,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 			break;
 		}
 
-		if (bp->b_error == EFSBADCRC || bp->b_error == EFSCORRUPTED) {
+		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
 			do_warn(
 	_("Corrupt remote block for attributes of inode %" PRIu64 "\n"), ino);
 			clearit = 1;
@@ -1366,7 +1366,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 				da_bno, dev_bno, ino);
 			goto error_out;
 		}
-		if (bp->b_error == EFSBADCRC)
+		if (bp->b_error == -EFSBADCRC)
 			repair++;
 
 		leaf = bp->b_addr;
@@ -1553,7 +1553,7 @@ process_longform_attr(
 			ino);
 		return(1);
 	}
-	if (bp->b_error == EFSBADCRC)
+	if (bp->b_error == -EFSBADCRC)
 		(*repair)++;
 
 	/* verify leaf block */

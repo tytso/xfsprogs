@@ -165,13 +165,13 @@ xfs_mount_validate_sb(
 	 */
 	if (sbp->sb_magicnum != XFS_SB_MAGIC) {
 		xfs_warn(mp, "bad magic number");
-		return EWRONGFS;
+		return -EWRONGFS;
 	}
 
 
 	if (!xfs_sb_good_version(sbp)) {
 		xfs_warn(mp, "bad version");
-		return EWRONGFS;
+		return -EWRONGFS;
 	}
 
 	/*
@@ -199,7 +199,7 @@ xfs_mount_validate_sb(
 				xfs_warn(mp,
 "Attempted to mount read-only compatible filesystem read-write.\n"
 "Filesystem can only be safely mounted read only.");
-				return EINVAL;
+				return -EINVAL;
 			}
 		}
 		if (xfs_sb_has_incompat_feature(sbp,
@@ -209,7 +209,7 @@ xfs_mount_validate_sb(
 "Filesystem can not be safely mounted by this kernel.",
 				(sbp->sb_features_incompat &
 						XFS_SB_FEAT_INCOMPAT_UNKNOWN));
-			return EINVAL;
+			return -EINVAL;
 		}
 	}
 
@@ -217,13 +217,13 @@ xfs_mount_validate_sb(
 		if (sbp->sb_qflags & (XFS_OQUOTA_ENFD | XFS_OQUOTA_CHKD)) {
 			xfs_notice(mp,
 			   "Version 5 of Super block has XFS_OQUOTA bits.");
-			return EFSCORRUPTED;
+			return -EFSCORRUPTED;
 		}
 	} else if (sbp->sb_qflags & (XFS_PQUOTA_ENFD | XFS_GQUOTA_ENFD |
 				XFS_PQUOTA_CHKD | XFS_GQUOTA_CHKD)) {
 			xfs_notice(mp,
 "Superblock earlier than Version 5 has XFS_[PQ]UOTA_{ENFD|CHKD} bits.");
-			return EFSCORRUPTED;
+			return -EFSCORRUPTED;
 	}
 
 	if (unlikely(
@@ -231,7 +231,7 @@ xfs_mount_validate_sb(
 		xfs_warn(mp,
 		"filesystem is marked as having an external log; "
 		"specify logdev on the mount command line.");
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	if (unlikely(
@@ -239,7 +239,7 @@ xfs_mount_validate_sb(
 		xfs_warn(mp,
 		"filesystem is marked as having an internal log; "
 		"do not specify logdev on the mount command line.");
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	/*
@@ -273,7 +273,7 @@ xfs_mount_validate_sb(
 	    sbp->sb_dblocks < XFS_MIN_DBLOCKS(sbp)			||
 	    sbp->sb_shared_vn != 0)) {
 		xfs_notice(mp, "SB sanity check failed");
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 	}
 
 	/*
@@ -288,14 +288,14 @@ xfs_mount_validate_sb(
 	default:
 		xfs_warn(mp, "inode size of %d bytes not supported",
 				sbp->sb_inodesize);
-		return ENOSYS;
+		return -ENOSYS;
 	}
 
 	if (xfs_sb_validate_fsb_count(sbp, sbp->sb_dblocks) ||
 	    xfs_sb_validate_fsb_count(sbp, sbp->sb_rblocks)) {
 		xfs_warn(mp,
 		"file system too large to be mounted on this system.");
-		return EFBIG;
+		return -EFBIG;
 	}
 
 	return 0;
@@ -584,7 +584,7 @@ xfs_sb_read_verify(
 			/* Only fail bad secondaries on a known V5 filesystem */
 			if (bp->b_bn == XFS_SB_DADDR ||
 			    xfs_sb_version_hascrc(&mp->m_sb)) {
-				error = EFSBADCRC;
+				error = -EFSBADCRC;
 				goto out_error;
 			}
 		}
@@ -594,7 +594,7 @@ xfs_sb_read_verify(
 out_error:
 	if (error) {
 		xfs_buf_ioerror(bp, error);
-		if (error == EFSCORRUPTED || error == EFSBADCRC)
+		if (error == -EFSCORRUPTED || error == -EFSBADCRC)
 			xfs_verifier_error(bp);
 	}
 }
@@ -617,7 +617,7 @@ xfs_sb_quiet_read_verify(
 		return;
 	}
 	/* quietly fail */
-	xfs_buf_ioerror(bp, EWRONGFS);
+	xfs_buf_ioerror(bp, -EWRONGFS);
 }
 
 static void

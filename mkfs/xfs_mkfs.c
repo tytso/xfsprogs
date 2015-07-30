@@ -2998,7 +2998,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		args.agno = agno;
 		args.alignment = 1;
 		args.pag = xfs_perag_get(mp,agno);
-		c = libxfs_trans_reserve(tp, &tres, worst_freelist, 0);
+		c = -libxfs_trans_reserve(tp, &tres, worst_freelist, 0);
 		if (c)
 			res_failed(c);
 

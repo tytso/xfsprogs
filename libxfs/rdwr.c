@@ -708,7 +708,7 @@ __read_buf(int fd, void *buf, int len, off64_t offset, int flags)
 
 	sts = pread64(fd, buf, len, offset);
 	if (sts < 0) {
-		int error = errno;
+		int error = -errno;
 		fprintf(stderr, _("%s: read failed: %s\n"),
 			progname, strerror(error));
 		if (flags & LIBXFS_EXIT_ON_FAILURE)
@@ -719,7 +719,7 @@ __read_buf(int fd, void *buf, int len, off64_t offset, int flags)
 			progname, sts, len);
 		if (flags & LIBXFS_EXIT_ON_FAILURE)
 			exit(1);
-		return EIO;
+		return -EIO;
 	}
 	return 0;
 }
@@ -876,7 +876,7 @@ __write_buf(int fd, void *buf, int len, off64_t offset, int flags)
 
 	sts = pwrite64(fd, buf, len, offset);
 	if (sts < 0) {
-		int error = errno;
+		int error = -errno;
 		fprintf(stderr, _("%s: pwrite64 failed: %s\n"),
 			progname, strerror(error));
 		if (flags & LIBXFS_B_EXIT)
@@ -887,7 +887,7 @@ __write_buf(int fd, void *buf, int len, off64_t offset, int flags)
 			progname, sts, len);
 		if (flags & LIBXFS_B_EXIT)
 			exit(1);
-		return EIO;
+		return -EIO;
 	}
 	return 0;
 }
@@ -905,7 +905,7 @@ libxfs_writebufr(xfs_buf_t *bp)
 	 * bugs like this. Make sure the error is obvious as to the cause.
 	 */
 	if (bp->b_flags & LIBXFS_B_STALE) {
-		bp->b_error = ESTALE;
+		bp->b_error = -ESTALE;
 		return bp->b_error;
 	}
 
@@ -1114,7 +1114,7 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 
 	ip = kmem_zone_zalloc(xfs_inode_zone, 0);
 	if (!ip)
-		return ENOMEM;
+		return -ENOMEM;
 
 	ip->i_ino = ino;
 	ip->i_mount = mp;

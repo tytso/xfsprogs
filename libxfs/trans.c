@@ -190,7 +190,7 @@ libxfs_trans_reserve(
 	 */
 	if (blocks > 0) {
 		if (mpsb->sb_fdblocks < blocks)
-			return ENOSPC;
+			return -ENOSPC;
 	}
 	/* user space, don't need log/RT stuff (preserve the API though) */
 	return 0;
@@ -560,7 +560,7 @@ libxfs_trans_read_buf_map(
 	if (tp == NULL) {
 		bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
 		if (!bp) {
-			return (flags & XBF_TRYLOCK) ?  EAGAIN : ENOMEM;
+			return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
 		}
 		if (bp->b_error)
 			goto out_relse;
@@ -578,7 +578,7 @@ libxfs_trans_read_buf_map(
 
 	bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
 	if (!bp) {
-		return (flags & XBF_TRYLOCK) ?  EAGAIN : ENOMEM;
+		return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
 	}
 	if (bp->b_error)
 		goto out_relse;

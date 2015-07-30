@@ -1285,7 +1285,7 @@ _("cannot read inode %" PRIu64 ", file block %d, disk block %" PRIu64 "\n"),
 				lino, i, fsbno);
 			return 1;
 		}
-		if (bp->b_error == EFSBADCRC) {
+		if (bp->b_error == -EFSBADCRC) {
 			do_warn(
 _("Bad symlink buffer CRC, block %" PRIu64 ", inode %" PRIu64 ".\n"
   "Correcting CRC, but symlink may be bad.\n"), fsbno, lino);

@@ -476,12 +476,12 @@ libxfs_mod_incore_sb(
 		lcounter = (long long)mp->m_sb.sb_fdblocks;
 		lcounter += delta;
 		if (lcounter < 0)
-			return ENOSPC;
+			return -ENOSPC;
 		mp->m_sb.sb_fdblocks = lcounter;
 		return 0;
 	default:
 		ASSERT(0);
-		return EINVAL;
+		return -EINVAL;
 	}
 }
 
@@ -541,7 +541,7 @@ libxfs_alloc_file_space(
 	int		error;
 
 	if (len <= 0)
-		return EINVAL;
+		return -EINVAL;
 
 	count = len;
 	error = 0;
@@ -567,7 +567,7 @@ libxfs_alloc_file_space(
 			/*
 			 * Free the transaction structure.
 			 */
-			ASSERT(error == ENOSPC);
+			ASSERT(error == -ENOSPC);
 			xfs_trans_cancel(tp, 0);
 			break;
 		}
@@ -592,7 +592,7 @@ libxfs_alloc_file_space(
 
 		allocated_fsb = imapp->br_blockcount;
 		if (reccount == 0)
-			return ENOSPC;
+			return -ENOSPC;
 
 		startoffset_fsb += allocated_fsb;
 		allocatesize_fsb -= allocated_fsb;
@@ -649,7 +649,7 @@ libxfs_inode_alloc(
 	}
 	if (!ialloc_context && !ip) {
 		*ipp = NULL;
-		return ENOSPC;
+		return -ENOSPC;
 	}
 
 	if (ialloc_context) {
@@ -673,7 +673,7 @@ libxfs_inode_alloc(
 		error = libxfs_ialloc(*tp, pip, mode, nlink, rdev, cr,
 				   fsx, 1, &ialloc_context, &ip);
 		if (!ip)
-			error = ENOSPC;
+			error = -ENOSPC;
 		if (error)
 			return error;
 	}
@@ -730,6 +730,6 @@ xfs_verifier_error(
 	struct xfs_buf		*bp)
 {
 	xfs_alert(NULL, "Metadata %s detected at block 0x%llx/0x%x",
-		  bp->b_error == EFSBADCRC ? "CRC error" : "corruption",
+		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  bp->b_bn, BBTOB(bp->b_length));
 }

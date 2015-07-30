@@ -429,12 +429,12 @@ write_cur_buf(void)
 {
 	int ret;
 
-	ret = libxfs_writebufr(iocur_top->bp);
+	ret = -libxfs_writebufr(iocur_top->bp);
 	if (ret != 0)
 		dbprintf(_("write error: %s\n"), strerror(ret));
 
 	/* re-read buffer from disk */
-	ret = libxfs_readbufr(mp->m_ddev_targp, iocur_top->bb, iocur_top->bp,
+	ret = -libxfs_readbufr(mp->m_ddev_targp, iocur_top->bb, iocur_top->bp,
 			      iocur_top->blen, 0);
 	if (ret != 0)
 		dbprintf(_("read error: %s\n"), strerror(ret));
@@ -445,13 +445,13 @@ write_cur_bbs(void)
 {
 	int ret;
 
-	ret = libxfs_writebufr(iocur_top->bp);
+	ret = -libxfs_writebufr(iocur_top->bp);
 	if (ret != 0)
 		dbprintf(_("write error: %s\n"), strerror(ret));
 
 
 	/* re-read buffer from disk */
-	ret = libxfs_readbufr_map(mp->m_ddev_targp, iocur_top->bp, 0);
+	ret = -libxfs_readbufr_map(mp->m_ddev_targp, iocur_top->bp, 0);
 	if (ret != 0)
 		dbprintf(_("read error: %s\n"), strerror(ret));
 }

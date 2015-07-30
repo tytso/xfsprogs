@@ -463,9 +463,9 @@ xfs_agfl_read_verify(
 		return;
 
 	if (!xfs_buf_verify_cksum(bp, XFS_AGFL_CRC_OFF))
-		xfs_buf_ioerror(bp, EFSBADCRC);
+		xfs_buf_ioerror(bp, -EFSBADCRC);
 	else if (!xfs_agfl_verify(bp))
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 
 	if (bp->b_error)
 		xfs_verifier_error(bp);
@@ -483,7 +483,7 @@ xfs_agfl_write_verify(
 		return;
 
 	if (!xfs_agfl_verify(bp)) {
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 		xfs_verifier_error(bp);
 		return;
 	}
@@ -539,7 +539,7 @@ xfs_alloc_update_counters(
 	xfs_trans_agblocks_delta(tp, len);
 	if (unlikely(be32_to_cpu(agf->agf_freeblks) >
 		     be32_to_cpu(agf->agf_length)))
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 
 	xfs_alloc_log_agf(tp, agbp, XFS_AGF_FREEBLKS);
 	return 0;
@@ -2214,11 +2214,11 @@ xfs_agf_read_verify(
 
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
 	    !xfs_buf_verify_cksum(bp, XFS_AGF_CRC_OFF))
-		xfs_buf_ioerror(bp, EFSBADCRC);
+		xfs_buf_ioerror(bp, -EFSBADCRC);
 	else if (XFS_TEST_ERROR(!xfs_agf_verify(mp, bp), mp,
 				XFS_ERRTAG_ALLOC_READ_AGF,
 				XFS_RANDOM_ALLOC_READ_AGF))
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 
 	if (bp->b_error)
 		xfs_verifier_error(bp);
@@ -2232,7 +2232,7 @@ xfs_agf_write_verify(
 	struct xfs_buf_log_item	*bip = bp->b_fspriv;
 
 	if (!xfs_agf_verify(mp, bp)) {
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 		xfs_verifier_error(bp);
 		return;
 	}
@@ -2582,11 +2582,11 @@ xfs_free_extent(
 	 */
 	args.agno = XFS_FSB_TO_AGNO(args.mp, bno);
 	if (args.agno >= args.mp->m_sb.sb_agcount)
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 
 	args.agbno = XFS_FSB_TO_AGBNO(args.mp, bno);
 	if (args.agbno >= args.mp->m_sb.sb_agblocks)
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 
 	args.pag = xfs_perag_get(args.mp, args.agno);
 	ASSERT(args.pag);
@@ -2598,7 +2598,7 @@ xfs_free_extent(
 	/* validate the extent size is legal now we have the agf locked */
 	if (args.agbno + len >
 			be32_to_cpu(XFS_BUF_TO_AGF(args.agbp)->agf_length)) {
-		error = EFSCORRUPTED;
+		error = -EFSCORRUPTED;
 		goto error0;
 	}
 

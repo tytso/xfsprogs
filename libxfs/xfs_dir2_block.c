@@ -72,9 +72,9 @@ xfs_dir3_block_read_verify(
 
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
 	     !xfs_buf_verify_cksum(bp, XFS_DIR3_DATA_CRC_OFF))
-		xfs_buf_ioerror(bp, EFSBADCRC);
+		xfs_buf_ioerror(bp, -EFSBADCRC);
 	else if (!xfs_dir3_block_verify(bp))
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 
 	if (bp->b_error)
 		xfs_verifier_error(bp);
@@ -89,7 +89,7 @@ xfs_dir3_block_write_verify(
 	struct xfs_dir3_blk_hdr	*hdr3 = bp->b_addr;
 
 	if (!xfs_dir3_block_verify(bp)) {
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 		xfs_verifier_error(bp);
 		return;
 	}
@@ -373,7 +373,7 @@ xfs_dir2_block_addname(
 	if (args->op_flags & XFS_DA_OP_JUSTCHECK) {
 		xfs_trans_brelse(tp, bp);
 		if (!dup)
-			return ENOSPC;
+			return -ENOSPC;
 		return 0;
 	}
 
@@ -383,7 +383,7 @@ xfs_dir2_block_addname(
 	if (!dup) {
 		/* Don't have a space reservation: return no-space.  */
 		if (args->total == 0)
-			return ENOSPC;
+			return -ENOSPC;
 		/*
 		 * Convert to the next larger format.
 		 * Then add the new entry in that format.
@@ -685,7 +685,7 @@ xfs_dir2_block_lookup_int(
 		if (low > high) {
 			ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
 			xfs_trans_brelse(tp, bp);
-			return ENOENT;
+			return -ENOENT;
 		}
 	}
 	/*
@@ -733,7 +733,7 @@ xfs_dir2_block_lookup_int(
 	 * No match, release the buffer and return ENOENT.
 	 */
 	xfs_trans_brelse(tp, bp);
-	return ENOENT;
+	return -ENOENT;
 }
 
 /*
@@ -1073,7 +1073,7 @@ xfs_dir2_sf_to_block(
 	 */
 	if (dp->i_d.di_size < offsetof(xfs_dir2_sf_hdr_t, parent)) {
 		ASSERT(XFS_FORCED_SHUTDOWN(mp));
-		return EIO;
+		return -EIO;
 	}
 
 	oldsfp = (xfs_dir2_sf_hdr_t *)ifp->if_u1.if_data;

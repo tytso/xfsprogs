@@ -268,7 +268,7 @@ xfs_ialloc_inode_init(
 					 mp->m_bsize * blks_per_cluster,
 					 XBF_UNMAPPED);
 		if (!fbuf)
-			return ENOMEM;
+			return -ENOMEM;
 
 		/* Initialize the inode buffers and log them appropriately. */
 		fbuf->b_ops = &xfs_inode_buf_ops;
@@ -356,7 +356,7 @@ xfs_ialloc_ag_alloc(
 	newlen = args.mp->m_ialloc_inos;
 	if (args.mp->m_maxicount &&
 	    args.mp->m_sb.sb_icount + newlen > args.mp->m_maxicount)
-		return ENOSPC;
+		return -ENOSPC;
 	args.minlen = args.maxlen = args.mp->m_ialloc_blks;
 	/*
 	 * First try to allocate inodes contiguous with the last-allocated
@@ -1361,7 +1361,7 @@ xfs_dialloc(
 		if (error) {
 			xfs_trans_brelse(tp, agbp);
 
-			if (error != ENOSPC)
+			if (error != -ENOSPC)
 				goto out_error;
 
 			xfs_perag_put(pag);
@@ -1392,7 +1392,7 @@ nextag:
 			agno = 0;
 		if (agno == start_agno) {
 			*inop = NULLFSINO;
-			return noroom ? ENOSPC : 0;
+			return noroom ? -ENOSPC : 0;
 		}
 	}
 
@@ -1658,7 +1658,7 @@ xfs_difree(
 		xfs_warn(mp, "%s: agno >= mp->m_sb.sb_agcount (%d >= %d).",
 			__func__, agno, mp->m_sb.sb_agcount);
 		ASSERT(0);
-		return EINVAL;
+		return -EINVAL;
 	}
 	agino = XFS_INO_TO_AGINO(mp, inode);
 	if (inode != XFS_AGINO_TO_INO(mp, agno, agino))  {
@@ -1666,14 +1666,14 @@ xfs_difree(
 			__func__, (unsigned long long)inode,
 			(unsigned long long)XFS_AGINO_TO_INO(mp, agno, agino));
 		ASSERT(0);
-		return EINVAL;
+		return -EINVAL;
 	}
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 	if (agbno >= mp->m_sb.sb_agblocks)  {
 		xfs_warn(mp, "%s: agbno >= mp->m_sb.sb_agblocks (%d >= %d).",
 			__func__, agbno, mp->m_sb.sb_agblocks);
 		ASSERT(0);
-		return EINVAL;
+		return -EINVAL;
 	}
 	/*
 	 * Get the allocation group header.
@@ -1745,7 +1745,7 @@ xfs_imap_lookup(
 		if (i)
 			error = xfs_inobt_get_rec(cur, &rec, &i);
 		if (!error && i == 0)
-			error = EINVAL;
+			error = -EINVAL;
 	}
 
 	xfs_trans_brelse(tp, agbp);
@@ -1756,12 +1756,12 @@ xfs_imap_lookup(
 	/* check that the returned record contains the required inode */
 	if (rec.ir_startino > agino ||
 	    rec.ir_startino + mp->m_ialloc_inos <= agino)
-		return EINVAL;
+		return -EINVAL;
 
 	/* for untrusted inodes check it is allocated first */
 	if ((flags & XFS_IGET_UNTRUSTED) &&
 	    (rec.ir_free & XFS_INOBT_MASK(agino - rec.ir_startino)))
-		return EINVAL;
+		return -EINVAL;
 
 	*chunk_agbno = XFS_AGINO_TO_AGBNO(mp, rec.ir_startino);
 	*offset_agbno = agbno - *chunk_agbno;
@@ -1805,7 +1805,7 @@ xfs_imap(
 		 * as they can be invalid without implying corruption.
 		 */
 		if (flags & XFS_IGET_UNTRUSTED)
-			return EINVAL;
+			return -EINVAL;
 		if (agno >= mp->m_sb.sb_agcount) {
 			xfs_alert(mp,
 				"%s: agno (%d) >= mp->m_sb.sb_agcount (%d)",
@@ -1825,7 +1825,7 @@ xfs_imap(
 		}
 		xfs_stack_trace();
 #endif /* DEBUG */
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	blks_per_cluster = xfs_icluster_size_fsb(mp);
@@ -1898,7 +1898,7 @@ out_map:
 			__func__, (unsigned long long) imap->im_blkno,
 			(unsigned long long) imap->im_len,
 			XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks));
-		return EINVAL;
+		return -EINVAL;
 	}
 	return 0;
 }
@@ -2048,11 +2048,11 @@ xfs_agi_read_verify(
 
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
 	    !xfs_buf_verify_cksum(bp, XFS_AGI_CRC_OFF))
-		xfs_buf_ioerror(bp, EFSBADCRC);
+		xfs_buf_ioerror(bp, -EFSBADCRC);
 	else if (XFS_TEST_ERROR(!xfs_agi_verify(bp), mp,
 				XFS_ERRTAG_IALLOC_READ_AGI,
 				XFS_RANDOM_IALLOC_READ_AGI))
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 
 	if (bp->b_error)
 		xfs_verifier_error(bp);
@@ -2066,7 +2066,7 @@ xfs_agi_write_verify(
 	struct xfs_buf_log_item	*bip = bp->b_fspriv;
 
 	if (!xfs_agi_verify(bp)) {
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 		xfs_verifier_error(bp);
 		return;
 	}

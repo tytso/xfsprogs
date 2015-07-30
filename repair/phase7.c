@@ -67,10 +67,10 @@ update_inode_nlinks(
 	tp = libxfs_trans_alloc(mp, XFS_TRANS_REMOVE);
 
 	nres = no_modify ? 0 : 10;
-	error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
+	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
 	ASSERT(error == 0);
 
-	error = libxfs_trans_iget(mp, tp, ino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, ino, 0, 0, &ip);
 
 	if (error)  {
 		if (!no_modify)
@@ -101,7 +101,7 @@ update_inode_nlinks(
 		 * we're not allocating anything
 		 */
 		ASSERT(error == 0);
-		error = libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES |
+		error = -libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES |
 				XFS_TRANS_SYNC);
 
 		ASSERT(error == 0);

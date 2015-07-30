@@ -75,7 +75,7 @@ xfs_btree_check_lblock(
 		if (bp)
 			trace_xfs_btree_corrupt(bp, _RET_IP_);
 		XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, mp);
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -123,7 +123,7 @@ xfs_btree_check_sblock(
 		if (bp)
 			trace_xfs_btree_corrupt(bp, _RET_IP_);
 		XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, mp);
-		return EFSCORRUPTED;
+		return -EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -1123,7 +1123,7 @@ xfs_btree_get_buf_block(
 				 mp->m_bsize, flags);
 
 	if (!*bpp)
-		return ENOMEM;
+		return -ENOMEM;
 
 	(*bpp)->b_ops = cur->bc_ops->buf_ops;
 	*block = XFS_BUF_TO_BLOCK(*bpp);
@@ -1481,7 +1481,7 @@ xfs_btree_increment(
 		if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
 			goto out0;
 		ASSERT(0);
-		error = EFSCORRUPTED;
+		error = -EFSCORRUPTED;
 		goto error0;
 	}
 	ASSERT(lev < cur->bc_nlevels);
@@ -1580,7 +1580,7 @@ xfs_btree_decrement(
 		if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
 			goto out0;
 		ASSERT(0);
-		error = EFSCORRUPTED;
+		error = -EFSCORRUPTED;
 		goto error0;
 	}
 	ASSERT(lev < cur->bc_nlevels);
@@ -4008,7 +4008,7 @@ xfs_btree_block_change_owner(
 	/* now read rh sibling block for next iteration */
 	xfs_btree_get_sibling(cur, block, &rptr, XFS_BB_RIGHTSIB);
 	if (xfs_btree_ptr_is_null(cur, &rptr))
-		return ENOENT;
+		return -ENOENT;
 
 	return xfs_btree_lookup_get_block(cur, level, &rptr, &block);
 }
@@ -4051,7 +4051,7 @@ xfs_btree_change_owner(
 							     buffer_list);
 		} while (!error);
 
-		if (error != ENOENT)
+		if (error != -ENOENT)
 			return error;
 	}
 

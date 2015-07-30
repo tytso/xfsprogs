@@ -147,13 +147,13 @@ dir_read_buf(
 	int error;
 	int error2;
 
-	error = libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
+	error = -libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
 				   XFS_DATA_FORK, ops);
 
 	if (error != EFSBADCRC && error != EFSCORRUPTED)
 		return error;
 
-	error2 = libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
+	error2 = -libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
 				   XFS_DATA_FORK, NULL);
 	if (error2)
 		return error2;
@@ -496,11 +496,11 @@ mk_rbmino(xfs_mount_t *mp)
 	 */
 	tp = libxfs_trans_alloc(mp, 0);
 
-	i = libxfs_trans_reserve(tp, &tres, 10, 0);
+	i = -libxfs_trans_reserve(tp, &tres, 10, 0);
 	if (i)
 		res_failed(i);
 
-	error = libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime bitmap inode -- error - %d\n"),
@@ -551,7 +551,7 @@ mk_rbmino(xfs_mount_t *mp)
 	 * from mkfs)
 	 */
 	tp = libxfs_trans_alloc(mp, 0);
-	error = libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
+	error = -libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
 				(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1), 0);
 	if (error)
 		res_failed(error);
@@ -561,7 +561,7 @@ mk_rbmino(xfs_mount_t *mp)
 	xfs_bmap_init(&flist, &first);
 	while (bno < mp->m_sb.sb_rbmblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
-		error = libxfs_bmapi_write(tp, ip, bno,
+		error = -libxfs_bmapi_write(tp, ip, bno,
 			  (xfs_extlen_t)(mp->m_sb.sb_rbmblocks - bno),
 			  0, &first, mp->m_sb.sb_rbmblocks,
 			  map, &nmap, &flist);
@@ -577,7 +577,7 @@ mk_rbmino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	error = libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, &committed);
 	if (error) {
 		do_error(
 		_("allocation of the realtime bitmap failed, error = %d\n"),
@@ -605,11 +605,11 @@ fill_rbmino(xfs_mount_t *mp)
 
 	tp = libxfs_trans_alloc(mp, 0);
 
-	error = libxfs_trans_reserve(tp, &tres, 10, 0);
+	error = -libxfs_trans_reserve(tp, &tres, 10, 0);
 	if (error)
 		res_failed(error);
 
-	error = libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime bitmap inode -- error - %d\n"),
@@ -622,7 +622,7 @@ fill_rbmino(xfs_mount_t *mp)
 		 * fill the file one block at a time
 		 */
 		nmap = 1;
-		error = libxfs_bmapi_write(tp, ip, bno, 1, 0,
+		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0,
 					&first, 1, &map, &nmap, NULL);
 		if (error || nmap != 1) {
 			do_error(
@@ -632,7 +632,7 @@ fill_rbmino(xfs_mount_t *mp)
 
 		ASSERT(map.br_startblock != HOLESTARTBLOCK);
 
-		error = libxfs_trans_read_buf(
+		error = -libxfs_trans_read_buf(
 				mp, tp, mp->m_dev,
 				XFS_FSB_TO_DADDR(mp, map.br_startblock),
 				XFS_FSB_TO_BB(mp, 1), 1, &bp, NULL);
@@ -677,11 +677,11 @@ fill_rsumino(xfs_mount_t *mp)
 
 	tp = libxfs_trans_alloc(mp, 0);
 
-	error = libxfs_trans_reserve(tp, &tres, 10, 0);
+	error = -libxfs_trans_reserve(tp, &tres, 10, 0);
 	if (error)
 		res_failed(error);
 
-	error = libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime summary inode -- error - %d\n"),
@@ -694,7 +694,7 @@ fill_rsumino(xfs_mount_t *mp)
 		 * fill the file one block at a time
 		 */
 		nmap = 1;
-		error = libxfs_bmapi_write(tp, ip, bno, 1, 0,
+		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0,
 					&first, 1, &map, &nmap, NULL);
 		if (error || nmap != 1) {
 			do_error(
@@ -704,7 +704,7 @@ fill_rsumino(xfs_mount_t *mp)
 
 		ASSERT(map.br_startblock != HOLESTARTBLOCK);
 
-		error = libxfs_trans_read_buf(
+		error = -libxfs_trans_read_buf(
 				mp, tp, mp->m_dev,
 				XFS_FSB_TO_DADDR(mp, map.br_startblock),
 				XFS_FSB_TO_BB(mp, 1), 1, &bp, NULL);
@@ -752,11 +752,11 @@ mk_rsumino(xfs_mount_t *mp)
 	 */
 	tp = libxfs_trans_alloc(mp, 0);
 
-	i = libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
+	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
 	if (i)
 		res_failed(i);
 
-	error = libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime summary inode -- error - %d\n"),
@@ -813,7 +813,7 @@ mk_rsumino(xfs_mount_t *mp)
 	tres.tr_logres = BBTOB(128);
 	tres.tr_logcount = XFS_DEFAULT_PERM_LOG_COUNT;
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
-	error = libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
+	error = -libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
 			      (XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1), 0);
 	if (error)
 		res_failed(error);
@@ -823,7 +823,7 @@ mk_rsumino(xfs_mount_t *mp)
 	xfs_bmap_init(&flist, &first);
 	while (bno < nsumblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
-		error = libxfs_bmapi_write(tp, ip, bno,
+		error = -libxfs_bmapi_write(tp, ip, bno,
 			  (xfs_extlen_t)(nsumblocks - bno),
 			  0, &first, nsumblocks, map, &nmap, &flist);
 		if (error) {
@@ -838,7 +838,7 @@ mk_rsumino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	error = libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, &committed);
 	if (error) {
 		do_error(
 	_("allocation of the realtime summary ino failed, error = %d\n"),
@@ -865,11 +865,11 @@ mk_root_dir(xfs_mount_t *mp)
 	tp = libxfs_trans_alloc(mp, 0);
 	ip = NULL;
 
-	i = libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
+	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
 	if (i)
 		res_failed(i);
 
-	error = libxfs_trans_iget(mp, tp, mp->m_sb.sb_rootino, 0, 0, &ip);
+	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rootino, 0, 0, &ip);
 	if (error) {
 		do_error(_("could not iget root inode -- error - %d\n"), error);
 	}
@@ -953,7 +953,7 @@ mk_orphanage(xfs_mount_t *mp)
 	 * would have been cleared in phase3 and phase4.
 	 */
 
-	if ((i = libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip, 0)))
+	if ((i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip, 0)))
 		do_error(_("%d - couldn't iget root inode to obtain %s\n"),
 			i, ORPHANAGE);
 
@@ -972,7 +972,7 @@ mk_orphanage(xfs_mount_t *mp)
 	xfs_bmap_init(&flist, &first);
 
 	nres = XFS_MKDIR_SPACE_RES(mp, xname.len);
-	i = libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
+	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
 	if (i)
 		res_failed(i);
 
@@ -980,11 +980,11 @@ mk_orphanage(xfs_mount_t *mp)
 	 * use iget/ijoin instead of trans_iget because the ialloc
 	 * wrapper can commit the transaction and start a new one
 	 */
-/*	if ((i = libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip, 0)))
+/*	if ((i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip, 0)))
 		do_error(_("%d - couldn't iget root inode to make %s\n"),
 			i, ORPHANAGE);*/
 
-	error = libxfs_inode_alloc(&tp, pip, mode|S_IFDIR,
+	error = -libxfs_inode_alloc(&tp, pip, mode|S_IFDIR,
 					1, 0, &zerocr, &zerofsx, &ip);
 	if (error) {
 		do_error(_("%s inode allocation failed %d\n"),
@@ -1030,7 +1030,7 @@ mk_orphanage(xfs_mount_t *mp)
 	/*
 	 * create the actual entry
 	 */
-	error = libxfs_dir_createname(tp, pip, &xname, ip->i_ino, &first,
+	error = -libxfs_dir_createname(tp, pip, &xname, ip->i_ino, &first,
 					&flist, nres);
 	if (error) 
 		do_error(
@@ -1052,7 +1052,7 @@ mk_orphanage(xfs_mount_t *mp)
 	libxfs_dir_init(tp, ip, pip);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-	error = libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, &committed);
 	if (error) {
 		do_error(_("%s directory creation failed -- bmapf error %d\n"),
 			ORPHANAGE, error);
@@ -1095,7 +1095,7 @@ mv_orphanage(
 	xname.len = snprintf((char *)fname, sizeof(fname), "%llu",
 				(unsigned long long)ino);
 
-	err = libxfs_iget(mp, NULL, orphanage_ino, 0, &orphanage_ip, 0);
+	err = -libxfs_iget(mp, NULL, orphanage_ino, 0, &orphanage_ip, 0);
 	if (err)
 		do_error(_("%d - couldn't iget orphanage inode\n"), err);
 	/*
@@ -1109,7 +1109,7 @@ mv_orphanage(
 
 	tp = libxfs_trans_alloc(mp, 0);
 
-	if ((err = libxfs_iget(mp, NULL, ino, 0, &ino_p, 0)))
+	if ((err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, 0)))
 		do_error(_("%d - couldn't iget disconnected inode\n"), err);
 
 	xname.type = xfs_mode_to_ftype[(ino_p->i_d.di_mode & S_IFMT)>>S_SHIFT];
@@ -1122,12 +1122,12 @@ mv_orphanage(
 					irec->ino_startnum;
 		nres = XFS_DIRENTER_SPACE_RES(mp, fnamelen) +
 		       XFS_DIRENTER_SPACE_RES(mp, 2);
-		err = libxfs_dir_lookup(tp, ino_p, &xfs_name_dotdot,
+		err = -libxfs_dir_lookup(tp, ino_p, &xfs_name_dotdot,
 					&entry_ino_num, NULL);
 		if (err) {
 			ASSERT(err == ENOENT);
 
-			err = libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
+			err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
 						   nres, 0);
 			if (err)
 				do_error(
@@ -1138,7 +1138,7 @@ mv_orphanage(
 			libxfs_trans_ijoin(tp, ino_p, 0);
 
 			xfs_bmap_init(&flist, &first);
-			err = libxfs_dir_createname(tp, orphanage_ip, &xname,
+			err = -libxfs_dir_createname(tp, orphanage_ip, &xname,
 						ino, &first, &flist, nres);
 			if (err)
 				do_error(
@@ -1151,7 +1151,7 @@ mv_orphanage(
 				orphanage_ip->i_d.di_nlink++;
 			libxfs_trans_log_inode(tp, orphanage_ip, XFS_ILOG_CORE);
 
-			err = libxfs_dir_createname(tp, ino_p, &xfs_name_dotdot,
+			err = -libxfs_dir_createname(tp, ino_p, &xfs_name_dotdot,
 					orphanage_ino, &first, &flist, nres);
 			if (err)
 				do_error(
@@ -1161,7 +1161,7 @@ mv_orphanage(
 			ino_p->i_d.di_nlink++;
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
-			err = libxfs_bmap_finish(&tp, &flist, &committed);
+			err = -libxfs_bmap_finish(&tp, &flist, &committed);
 			if (err)
 				do_error(
 	_("bmap finish failed (err - %d), filesystem may be out of space\n"),
@@ -1170,7 +1170,7 @@ mv_orphanage(
 			libxfs_trans_commit(tp,
 				XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
 		} else  {
-			err = libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
+			err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
 						   nres, 0);
 			if (err)
 				do_error(
@@ -1182,7 +1182,7 @@ mv_orphanage(
 
 			xfs_bmap_init(&flist, &first);
 
-			err = libxfs_dir_createname(tp, orphanage_ip, &xname,
+			err = -libxfs_dir_createname(tp, orphanage_ip, &xname,
 						ino, &first, &flist, nres);
 			if (err)
 				do_error(
@@ -1200,7 +1200,7 @@ mv_orphanage(
 			 * to us.  that'll pop a libxfs/kernel ASSERT.
 			 */
 			if (entry_ino_num != orphanage_ino)  {
-				err = libxfs_dir_replace(tp, ino_p,
+				err = -libxfs_dir_replace(tp, ino_p,
 						&xfs_name_dotdot, orphanage_ino,
 						&first, &flist, nres);
 				if (err)
@@ -1209,7 +1209,7 @@ mv_orphanage(
 						err);
 			}
 
-			err = libxfs_bmap_finish(&tp, &flist, &committed);
+			err = -libxfs_bmap_finish(&tp, &flist, &committed);
 			if (err)
 				do_error(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1227,7 +1227,7 @@ mv_orphanage(
 		 * also accounted for in the create
 		 */
 		nres = XFS_DIRENTER_SPACE_RES(mp, xname.len);
-		err = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
+		err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
 					   nres, 0);
 		if (err)
 			do_error(
@@ -1238,7 +1238,7 @@ mv_orphanage(
 		libxfs_trans_ijoin(tp, ino_p, 0);
 
 		xfs_bmap_init(&flist, &first);
-		err = libxfs_dir_createname(tp, orphanage_ip, &xname, ino,
+		err = -libxfs_dir_createname(tp, orphanage_ip, &xname, ino,
 						&first, &flist, nres);
 		if (err)
 			do_error(
@@ -1249,7 +1249,7 @@ mv_orphanage(
 		ino_p->i_d.di_nlink = 1;
 		libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
-		err = libxfs_bmap_finish(&tp, &flist, &committed);
+		err = -libxfs_bmap_finish(&tp, &flist, &committed);
 		if (err)
 			do_error(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1326,17 +1326,17 @@ longform_dir2_rebuild(
 
 	tp = libxfs_trans_alloc(mp, 0);
 	nres = XFS_REMOVE_SPACE_RES(mp);
-	error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
+	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
 	if (error)
 		res_failed(error);
 	libxfs_trans_ijoin(tp, ip, 0);
 
-	if ((error = libxfs_bmap_last_offset(ip, &lastblock, XFS_DATA_FORK)))
+	if ((error = -libxfs_bmap_last_offset(ip, &lastblock, XFS_DATA_FORK)))
 		do_error(_("xfs_bmap_last_offset failed -- error - %d\n"),
 			error);
 
 	/* free all data, leaf, node and freespace blocks */
-	error = libxfs_bunmapi(tp, ip, 0, lastblock, XFS_BMAPI_METADATA, 0,
+	error = -libxfs_bunmapi(tp, ip, 0, lastblock, XFS_BMAPI_METADATA, 0,
 				&firstblock, &flist, &done);
 	if (error) {
 		do_warn(_("xfs_bunmapi failed -- error - %d\n"), error);
@@ -1351,7 +1351,7 @@ longform_dir2_rebuild(
 		goto out_bmap_cancel;
 	}
 
-	error = libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, &committed);
 
 	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
 
@@ -1369,7 +1369,7 @@ longform_dir2_rebuild(
 
 		tp = libxfs_trans_alloc(mp, 0);
 		nres = XFS_CREATE_SPACE_RES(mp, p->name.len);
-		error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_create,
+		error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_create,
 					     nres, 0);
 		if (error)
 			res_failed(error);
@@ -1377,7 +1377,7 @@ longform_dir2_rebuild(
 		libxfs_trans_ijoin(tp, ip, 0);
 
 		xfs_bmap_init(&flist, &firstblock);
-		error = libxfs_dir_createname(tp, ip, &p->name, p->inum,
+		error = -libxfs_dir_createname(tp, ip, &p->name, p->inum,
 						&firstblock, &flist, nres);
 		if (error) {
 			do_warn(
@@ -1386,7 +1386,7 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 			goto out_bmap_cancel;
 		}
 
-		error = libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, &committed);
 		if (error) {
 			do_warn(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1428,7 +1428,7 @@ dir2_kill_block(
 
 	tp = libxfs_trans_alloc(mp, 0);
 	nres = XFS_REMOVE_SPACE_RES(mp);
-	error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
+	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
 	if (error)
 		res_failed(error);
 	libxfs_trans_ijoin(tp, ip, 0);
@@ -1441,9 +1441,9 @@ dir2_kill_block(
 	args.flist = &flist;
 	args.whichfork = XFS_DATA_FORK;
 	if (da_bno >= mp->m_dir_geo->leafblk && da_bno < mp->m_dir_geo->freeblk)
-		error = libxfs_da_shrink_inode(&args, da_bno, bp);
+		error = -libxfs_da_shrink_inode(&args, da_bno, bp);
 	else
-		error = libxfs_dir2_shrink_inode(&args,
+		error = -libxfs_dir2_shrink_inode(&args,
 				xfs_dir2_da_to_db(mp->m_dir_geo, da_bno), bp);
 	if (error)
 		do_error(_("shrink_inode failed inode %" PRIu64 " block %u\n"),
@@ -1618,7 +1618,7 @@ longform_dir2_entry_check_data(
 		freetab->nents = db + 1;
 
 	tp = libxfs_trans_alloc(mp, 0);
-	error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, 0, 0);
+	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, 0, 0);
 	if (error)
 		res_failed(error);
 	da.trans = tp;
@@ -2858,7 +2858,7 @@ process_dir_inode(
 
 	ASSERT(!is_inode_refchecked(irec, ino_offset) || dotdot_update);
 
-	error = libxfs_iget(mp, NULL, ino, 0, &ip, 0);
+	error = -libxfs_iget(mp, NULL, ino, 0, &ip, 0);
 	if (error) {
 		if (!no_modify)
 			do_error(
@@ -2929,7 +2929,7 @@ process_dir_inode(
 			 * new define in ourselves.
 			 */
 			nres = no_modify ? 0 : XFS_REMOVE_SPACE_RES(mp);
-			error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
+			error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
 						     nres, 0);
 			if (error)
 				res_failed(error);
@@ -2977,7 +2977,7 @@ process_dir_inode(
 		ASSERT(tp != NULL);
 
 		nres = XFS_MKDIR_SPACE_RES(mp, 2);
-		error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
+		error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
 		if (error)
 			res_failed(error);
 
@@ -2985,7 +2985,7 @@ process_dir_inode(
 
 		xfs_bmap_init(&flist, &first);
 
-		error = libxfs_dir_createname(tp, ip, &xfs_name_dotdot,
+		error = -libxfs_dir_createname(tp, ip, &xfs_name_dotdot,
 					ip->i_ino, &first, &flist, nres);
 		if (error)
 			do_error(
@@ -2993,7 +2993,7 @@ process_dir_inode(
 
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-		error = libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, &committed);
 		ASSERT(error == 0);
 		libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES |
 							XFS_TRANS_SYNC);
@@ -3037,7 +3037,7 @@ process_dir_inode(
 			ASSERT(tp != NULL);
 
 			nres = XFS_MKDIR_SPACE_RES(mp, 1);
-			error = libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir,
+			error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir,
 						     nres, 0);
 			if (error)
 				res_failed(error);
@@ -3046,7 +3046,7 @@ process_dir_inode(
 
 			xfs_bmap_init(&flist, &first);
 
-			error = libxfs_dir_createname(tp, ip, &xfs_name_dot,
+			error = -libxfs_dir_createname(tp, ip, &xfs_name_dot,
 					ip->i_ino, &first, &flist, nres);
 			if (error)
 				do_error(
@@ -3055,7 +3055,7 @@ process_dir_inode(
 
 			libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-			error = libxfs_bmap_finish(&tp, &flist, &committed);
+			error = -libxfs_bmap_finish(&tp, &flist, &committed);
 			ASSERT(error == 0);
 			libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES
 					|XFS_TRANS_SYNC);
