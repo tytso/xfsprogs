@@ -148,7 +148,7 @@ fa_cfileoffd(
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
-	nex = nb = next == TYP_DIR2 ? mp->m_dirblkfsbs : 1;
+	nex = nb = next == TYP_DIR2 ? mp->m_dir_geo->fsbcount : 1;
 	bmp = malloc(nb * sizeof(*bmp));
 	bmap(bno, nb, XFS_DATA_FORK, &nex, bmp);
 	if (nex == 0) {
@@ -180,7 +180,7 @@ fa_cfsblock(
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
-	nb = next == TYP_DIR2 ? mp->m_dirblkfsbs : 1;
+	nb = next == TYP_DIR2 ? mp->m_dir_geo->fsbcount : 1;
 	ASSERT(typtab[next].typnm == next);
 	set_cur(&typtab[next], XFS_FSB_TO_DADDR(mp, bno), nb * blkbb,
 		DB_RING_ADD, NULL);
@@ -232,7 +232,7 @@ fa_dfiloffd(
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
-	nex = nb = next == TYP_DIR2 ? mp->m_dirblkfsbs : 1;
+	nex = nb = next == TYP_DIR2 ? mp->m_dir_geo->fsbcount : 1;
 	bmp = malloc(nb * sizeof(*bmp));
 	bmap(bno, nb, XFS_DATA_FORK, &nex, bmp);
 	if (nex == 0) {
@@ -285,9 +285,9 @@ fa_dirblock(
 		dbprintf(_("null directory block number, cannot set new addr\n"));
 		return;
 	}
-	nex = mp->m_dirblkfsbs;
+	nex = mp->m_dir_geo->fsbcount;
 	bmp = malloc(nex * sizeof(*bmp));
-	bmap(bno, mp->m_dirblkfsbs, XFS_DATA_FORK, &nex, bmp);
+	bmap(bno, mp->m_dir_geo->fsbcount, XFS_DATA_FORK, &nex, bmp);
 	if (nex == 0) {
 		dbprintf(_("directory block is unmapped\n"));
 		free(bmp);
@@ -298,7 +298,7 @@ fa_dirblock(
 	if (nex > 1)
 		make_bbmap(&bbmap, nex, bmp);
 	set_cur(&typtab[next], (__int64_t)XFS_FSB_TO_DADDR(mp, dfsbno),
-		XFS_FSB_TO_BB(mp, mp->m_dirblkfsbs), DB_RING_ADD,
+		XFS_FSB_TO_BB(mp, mp->m_dir_geo->fsbcount), DB_RING_ADD,
 		nex > 1 ? &bbmap : NULL);
 	free(bmp);
 }

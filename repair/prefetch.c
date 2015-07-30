@@ -189,7 +189,7 @@ pf_read_bmbt_reclist(
 			goto out_free;
 
 		if (!args->dirs_only && ((irec.br_startoff +
-				irec.br_blockcount) >= mp->m_dirfreeblk))
+				irec.br_blockcount) >= mp->m_dir_geo->freeblk))
 			break;	/* only Phase 6 reads the free blocks */
 
 		op = irec.br_startoff;
@@ -200,8 +200,8 @@ pf_read_bmbt_reclist(
 
 			pftrace("queuing dir extent in AG %d", args->agno);
 
-			if (len + irec.br_blockcount >= mp->m_dirblkfsbs)
-				bm_len = mp->m_dirblkfsbs - len;
+			if (len + irec.br_blockcount >= mp->m_dir_geo->fsbcount)
+				bm_len = mp->m_dir_geo->fsbcount - len;
 			else
 				bm_len = irec.br_blockcount;
 			len += bm_len;
@@ -211,7 +211,7 @@ pf_read_bmbt_reclist(
 			map[nmaps].bm_len = XFS_FSB_TO_BB(mp, bm_len);
 			nmaps++;
 
-			if (len == mp->m_dirblkfsbs) {
+			if (len == mp->m_dir_geo->fsbcount) {
 				pf_queue_io(args, map, nmaps, B_DIR_META);
 				len = 0;
 				nmaps = 0;
@@ -357,7 +357,7 @@ pf_read_btinode(
 		return;
 
 	dsize = XFS_DFORK_DSIZE(dino, mp);
-	pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(mp, dsize, 0));
+	pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(dsize, 0));
 
 	for (i = 0; i < numrecs; i++) {
 		dbno = be64_to_cpu(pp[i]);
@@ -680,7 +680,7 @@ pf_queuing_worker(
 	int			i;
 	int			err;
 
-	blks_per_cluster =  XFS_INODE_CLUSTER_SIZE(mp) >> mp->m_sb.sb_blocklog;
+	blks_per_cluster = mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog;
 	if (blks_per_cluster == 0)
 		blks_per_cluster = 1;
 
@@ -709,7 +709,7 @@ pf_queuing_worker(
 		cur_irec = irec;
 
 		num_inos = XFS_INODES_PER_CHUNK;
-		while (num_inos < XFS_IALLOC_INODES(mp) && irec != NULL) {
+		while (num_inos < mp->m_ialloc_inos && irec != NULL) {
 			irec = next_ino_rec(irec);
 			num_inos += XFS_INODES_PER_CHUNK;
 		}
@@ -747,7 +747,7 @@ pf_queuing_worker(
 								 : B_INODE);
 			bno += blks_per_cluster;
 			num_inos += inodes_per_cluster;
-		} while (num_inos < XFS_IALLOC_INODES(mp));
+		} while (num_inos < mp->m_ialloc_inos);
 	}
 
 	pthread_mutex_lock(&args->lock);
@@ -842,9 +842,10 @@ start_inode_prefetch(
 	 */
 
 	max_queue = libxfs_bcache->c_maxcount / thread_count / 8;
-	if (XFS_INODE_CLUSTER_SIZE(mp) > mp->m_sb.sb_blocksize)
-		max_queue = max_queue * (XFS_INODE_CLUSTER_SIZE(mp) >>
-				mp->m_sb.sb_blocklog) / XFS_IALLOC_BLOCKS(mp);
+	if (mp->m_inode_cluster_size > mp->m_sb.sb_blocksize)
+		max_queue = max_queue *
+			(mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog) /
+			mp->m_ialloc_blks;
 
 	sem_init(&args->ra_count, 0, max_queue);
 

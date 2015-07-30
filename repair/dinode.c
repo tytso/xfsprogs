@@ -588,7 +588,7 @@ process_bmbt_reclist_int(
 		ftype = ftype_regular;
 
 	for (i = 0; i < *numrecs; i++) {
-		libxfs_bmbt_disk_get_all(rp + i, &irec);
+		libxfs_bmbt_disk_get_all((rp +i), &irec);
 		if (i == 0)
 			*last_key = *first_key = irec.br_startoff;
 		else
@@ -950,7 +950,7 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 	init_bm_cursor(&cursor, level + 1);
 
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
-		xfs_bmdr_maxrecs(mp, XFS_DFORK_SIZE(dip, mp, whichfork), 0));
+		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	pkey = XFS_BMDR_KEY_ADDR(dib, 1);
 	last_key = NULLDFILOFF;
 
@@ -1192,8 +1192,7 @@ _("bad number of extents (%d) in symlink %" PRIu64 " data fork\n"),
 	expected_offset = 0;
 
 	for (i = 0; i < numrecs; i++)  {
-		libxfs_bmbt_disk_get_all(rp + i, &irec);
-
+		libxfs_bmbt_disk_get_all((rp +i), &irec);
 		if (irec.br_startoff != expected_offset)  {
 			do_warn(
 _("bad extent #%d offset (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
@@ -1298,8 +1297,8 @@ _("Bad symlink buffer CRC, block %" PRIu64 ", inode %" PRIu64 ".\n"
 
 		src = bp->b_addr;
 		if (xfs_sb_version_hascrc(&mp->m_sb)) {
-			if (!libxfs_symlink_hdr_ok(mp, lino, offset,
-						byte_cnt, bp)) {
+			if (!libxfs_symlink_hdr_ok(lino, offset,
+						   byte_cnt, bp)) {
 				do_warn(
 _("bad symlink header ino %" PRIu64 ", file block %d, disk block %" PRIu64 "\n"),
 					lino, i, fsbno);

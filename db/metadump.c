@@ -1123,7 +1123,7 @@ process_sf_dir(
 			namelen = ino_dir_size - ((char *)&sfep->name[0] -
 					 (char *)sfp);
 		} else if ((char *)sfep - (char *)sfp +
-				xfs_dir3_sf_entsize(mp, sfp, sfep->namelen) >
+				M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen) >
 				ino_dir_size) {
 			if (show_warnings)
 				print_warning("entry length in dir inode %llu "
@@ -1136,11 +1136,11 @@ process_sf_dir(
 
 		if (obfuscate)
 			generate_obfuscated_name(
-					 xfs_dir3_sfe_get_ino(mp, sfp, sfep),
+					 M_DIROPS(mp)->sf_get_ino(sfp, sfep),
 					 namelen, &sfep->name[0]);
 
 		sfep = (xfs_dir2_sf_entry_t *)((char *)sfep +
-				xfs_dir3_sf_entsize(mp, sfp, namelen));
+				M_DIROPS(mp)->sf_entsize(sfp, namelen));
 	}
 
 	/* zero stale data in rest of space in data fork, if any */
@@ -1301,7 +1301,7 @@ process_dir_data_block(
 		xfs_dir2_leaf_entry_t	*blp;
 		xfs_dir2_block_tail_t	*btp;
 
-		btp = xfs_dir2_block_tail_p(mp, datahdr);
+		btp = xfs_dir2_block_tail_p(mp->m_dir_geo, datahdr);
 		blp = xfs_dir2_block_leaf_p(btp);
 		if ((char *)blp > (char *)btp)
 			blp = (xfs_dir2_leaf_entry_t *)btp;
@@ -1312,7 +1312,7 @@ process_dir_data_block(
 		else
 			wantmagic = XFS_DIR2_BLOCK_MAGIC;
 	} else { /* leaf/node format */
-		end_of_data = mp->m_dirblkfsbs << mp->m_sb.sb_blocklog;
+		end_of_data = mp->m_dir_geo->fsbcount << mp->m_sb.sb_blocklog;
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			wantmagic = XFS_DIR3_DATA_MAGIC;
 		else
@@ -1327,9 +1327,9 @@ process_dir_data_block(
 		return;
 	}
 
-	dir_offset = xfs_dir3_data_entry_offset(datahdr);
+	dir_offset = M_DIROPS(mp)->data_entry_offset;
 	ptr = block + dir_offset;
-	endptr = block + mp->m_dirblksize;
+	endptr = block + mp->m_dir_geo->blksize;
 
 	while (ptr < endptr && dir_offset < end_of_data) {
 		xfs_dir2_data_entry_t	*dep;
@@ -1372,7 +1372,7 @@ process_dir_data_block(
 		}
 
 		dep = (xfs_dir2_data_entry_t *)ptr;
-		length = xfs_dir3_data_entsize(mp, dep->namelen);
+		length = M_DIROPS(mp)->data_entsize(dep->namelen);
 
 		if (dir_offset + length > end_of_data ||
 		    ptr + length > endptr) {
@@ -1382,7 +1382,7 @@ process_dir_data_block(
 					(long long)cur_ino);
 			return;
 		}
-		if (be16_to_cpu(*xfs_dir3_data_entry_tag_p(mp, dep)) !=
+		if (be16_to_cpu(*M_DIROPS(mp)->data_entry_tag_p(dep)) !=
 				dir_offset)
 			return;
 
@@ -1395,7 +1395,7 @@ process_dir_data_block(
 		if (zero_stale_data) {
 			/* 1 byte for ftype; don't bother with conditional */
 			int zlen =
-				(char *)xfs_dir3_data_entry_tag_p(mp, dep) -
+				(char *)M_DIROPS(mp)->data_entry_tag_p(dep) -
 				(char *)&dep->name[dep->namelen] - 1;
 			if (zlen > 0) {
 				memset(&dep->name[dep->namelen] + 1, 0, zlen);
@@ -1445,7 +1445,7 @@ add_remote_vals(
 		attr_data.remote_vals[attr_data.remote_val_count] = blockidx;
 		attr_data.remote_val_count++;
 		blockidx++;
-		length -= XFS_LBSIZE(mp);
+		length -= mp->m_sb.sb_blocksize;
 	}
 
 	if (attr_data.remote_val_count >= MAX_REMOTE_VALS) {
@@ -1509,7 +1509,7 @@ process_attr_block(
 		if (!first_name || xfs_attr3_leaf_name(leaf, i) < first_name)
 			first_name = xfs_attr3_leaf_name(leaf, i);
 
-		if (be16_to_cpu(entry->nameidx) > XFS_LBSIZE(mp)) {
+		if (be16_to_cpu(entry->nameidx) > mp->m_sb.sb_blocksize) {
 			if (show_warnings)
 				print_warning(
 				"invalid attr nameidx in inode %llu",
@@ -1617,8 +1617,8 @@ process_single_fsb_objects(
 				struct xfs_da3_icnode_hdr hdr;
 				int used;
 
-				xfs_da3_node_hdr_from_disk(&hdr, node);
-				used = xfs_da3_node_hdr_size(node);
+				M_DIROPS(mp)->node_hdr_from_disk(&hdr, node);
+				used = M_DIROPS(mp)->node_hdr_size;
 
 				used += hdr.count
 					* sizeof(struct xfs_da_node_entry);
@@ -1635,11 +1635,11 @@ process_single_fsb_objects(
 		dp = iocur_top->data;
 		switch (btype) {
 		case TYP_DIR2:
-			if (o >= mp->m_dirleafblk)
+			if (o >= mp->m_dir_geo->leafblk)
 				break;
 
 			process_dir_data_block(dp, o,
-						 last == mp->m_dirblkfsbs);
+					 last == mp->m_dir_geo->fsbcount);
 			iocur_top->need_crc = 1;
 			break;
 		case TYP_SYMLINK:
@@ -1694,8 +1694,8 @@ process_multi_fsb_objects(
 	while (c > 0) {
 		unsigned int	bm_len;
 
-		if (mfsb_length + c >= mp->m_dirblkfsbs) {
-			bm_len = mp->m_dirblkfsbs - mfsb_length;
+		if (mfsb_length + c >= mp->m_dir_geo->fsbcount) {
+			bm_len = mp->m_dir_geo->fsbcount - mfsb_length;
 			mfsb_length = 0;
 		} else {
 			mfsb_length += c;
@@ -1722,13 +1722,13 @@ process_multi_fsb_objects(
 			}
 
 			if ((!obfuscate && !zero_stale_data) ||
-			     o >= mp->m_dirleafblk) {
+			     o >= mp->m_dir_geo->leafblk) {
 				ret = write_buf(iocur_top);
 				goto out_pop;
 			}
 
 			process_dir_data_block(iocur_top->data, o,
-					       last == mp->m_dirblkfsbs);
+					       last == mp->m_dir_geo->fsbcount);
 			iocur_top->need_crc = 1;
 			ret = write_buf(iocur_top);
 out_pop:
@@ -1822,7 +1822,7 @@ process_bmbt_reclist(
 		}
 
 		/* multi-extent blocks require special handling */
-		if (btype != TYP_DIR2 || mp->m_dirblkfsbs == 1) {
+		if (btype != TYP_DIR2 || mp->m_dir_geo->fsbcount == 1) {
 			error = process_single_fsb_objects(o, s, c, btype, last);
 		} else {
 			error = process_multi_fsb_objects(o, s, c, btype, last);
@@ -1924,7 +1924,7 @@ process_btinode(
 					    nrecs, itype);
 	}
 
-	maxrecs = xfs_bmdr_maxrecs(mp, XFS_DFORK_SIZE(dip, mp, whichfork), 0);
+	maxrecs = xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0);
 	if (nrecs > maxrecs) {
 		if (show_warnings)
 			print_warning("invalid numrecs (%u) in inode %lld %s "
@@ -2133,7 +2133,7 @@ copy_inode_chunk(
 
 	push_cur();
 	set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, agbno),
-			XFS_FSB_TO_BB(mp, XFS_IALLOC_BLOCKS(mp)),
+			XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
 			DB_RING_IGN, NULL);
 	if (iocur_top->data == NULL) {
 		print_warning("cannot read inode block %u/%u", agno, agbno);

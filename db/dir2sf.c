@@ -184,8 +184,8 @@ dir2_sf_entry_size(
 	sf = (struct xfs_dir2_sf_hdr *)((char *)obj + byteize(startoff));
 	e = xfs_dir2_sf_firstentry(sf);
 	for (i = 0; i < idx; i++)
-		e = xfs_dir3_sf_nextentry(mp, sf, e);
-	return bitize((int)xfs_dir3_sf_entsize(mp, sf, e->namelen));
+		e = M_DIROPS(mp)->sf_nextentry(sf, e);
+	return bitize((int)M_DIROPS(mp)->sf_entsize(sf, e->namelen));
 }
 
 /*ARGSUSED*/
@@ -229,7 +229,7 @@ dir2_sf_list_offset(
 	sf = (struct xfs_dir2_sf_hdr *)((char *)obj + byteize(startoff));
 	e = xfs_dir2_sf_firstentry(sf);
 	for (i = 0; i < idx; i++)
-		e = xfs_dir3_sf_nextentry(mp, sf, e);
+		e = M_DIROPS(mp)->sf_nextentry(sf, e);
 	return bitize((int)((char *)e - (char *)sf));
 }
 
@@ -249,7 +249,7 @@ dir2sf_size(
 	sf = (struct xfs_dir2_sf_hdr *)((char *)obj + byteize(startoff));
 	e = xfs_dir2_sf_firstentry(sf);
 	for (i = 0; i < sf->count; i++)
-		e = xfs_dir3_sf_nextentry(mp, sf, e);
+		e = M_DIROPS(mp)->sf_nextentry(sf, e);
 	return bitize((int)((char *)e - (char *)sf));
 }
 

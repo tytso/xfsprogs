@@ -18,13 +18,27 @@
  */
 #include "xfs.h"
 
+/*
+ * XXX: kernel implementation causes ndquots calc to go real
+ * bad. Just leaving the existing userspace calc here right now.
+ */
 int
 xfs_calc_dquots_per_chunk(
-	struct xfs_mount	*mp,
 	unsigned int		nbblks)	/* basic block units */
 {
+
 	ASSERT(nbblks > 0);
 	return BBTOB(nbblks) / sizeof(xfs_dqblk_t);
+
+#if 0	/* kernel code that goes wrong in userspace! */
+	unsigned int	ndquots;
+
+	ASSERT(nbblks > 0);
+	ndquots = BBTOB(nbblks);
+	do_div(ndquots, sizeof(xfs_dqblk_t));
+
+	return ndquots;
+#endif
 }
 
 /*
@@ -174,8 +188,8 @@ xfs_dquot_buf_verify_crc(
 	if (mp->m_quotainfo)
 		ndquots = mp->m_quotainfo->qi_dqperchunk;
 	else
-		ndquots = xfs_calc_dquots_per_chunk(mp,
-					XFS_BB_TO_FSB(mp, bp->b_length));
+		ndquots = xfs_calc_dquots_per_chunk(bp->b_length);
+//					XFS_BB_TO_FSB(mp, bp->b_length));
 
 	for (i = 0; i < ndquots; i++, d++) {
 		if (!xfs_verify_cksum((char *)d, sizeof(struct xfs_dqblk),
@@ -205,7 +219,7 @@ xfs_dquot_buf_verify(
 	if (mp->m_quotainfo)
 		ndquots = mp->m_quotainfo->qi_dqperchunk;
 	else
-		ndquots = xfs_calc_dquots_per_chunk(mp, bp->b_length);
+		ndquots = xfs_calc_dquots_per_chunk(bp->b_length);
 
 	/*
 	 * On the first read of the buffer, verify that each dquot is valid.
@@ -251,7 +265,7 @@ xfs_dquot_buf_read_verify(
  * the buffer after the update is done. This ensures that the dquot in the
  * buffer always has an up-to-date CRC value.
  */
-void
+static void
 xfs_dquot_buf_write_verify(
 	struct xfs_buf	*bp)
 {

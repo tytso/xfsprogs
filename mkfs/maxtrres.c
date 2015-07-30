@@ -66,7 +66,8 @@ max_trans_res(
 	sbp->sb_versionnum =
 			(crcs_enabled ? XFS_SB_VERSION_5 : XFS_SB_VERSION_4) |
 			(dirversion == 2 ? XFS_SB_VERSION_DIRV2BIT : 0) |
-			(logversion > 1 ? XFS_SB_VERSION_LOGV2BIT : 0);
+			(logversion > 1 ? XFS_SB_VERSION_LOGV2BIT : 0) |
+			XFS_DFL_SB_VERSION_BITS;
 
 	libxfs_mount(&mount, sbp, 0,0,0,0);
 	maxfsb = xfs_log_calc_minimum_size(&mount);

@@ -121,6 +121,11 @@ parse_sb_version(xfs_sb_t *sb)
 		return 1;
 	}
 
+	if (sb->sb_versionnum & XFS_SB_VERSION_SHAREDBIT) {
+		do_warn(_("Shared Version bit set. Not supported. Ever.\n"));
+		return 1;
+	}
+
 	/*
 	 * ok, check to make sure that the sb isn't newer
 	 * than we are

@@ -27,6 +27,31 @@ struct xfs_trans;
 extern kmem_zone_t	*xfs_btree_cur_zone;
 
 /*
+ * Generic key, ptr and record wrapper structures.
+ *
+ * These are disk format structures, and are converted where necessary
+ * by the btree specific code that needs to interpret them.
+ */
+union xfs_btree_ptr {
+	__be32			s;	/* short form ptr */
+	__be64			l;	/* long form ptr */
+};
+
+union xfs_btree_key {
+	xfs_bmbt_key_t		bmbt;
+	xfs_bmdr_key_t		bmbr;	/* bmbt root block */
+	xfs_alloc_key_t		alloc;
+	xfs_inobt_key_t		inobt;
+};
+
+union xfs_btree_rec {
+	xfs_bmbt_rec_t		bmbt;
+	xfs_bmdr_rec_t		bmbr;	/* bmbt root block */
+	xfs_alloc_rec_t		alloc;
+	xfs_inobt_rec_t		inobt;
+};
+
+/*
  * This nonsense is to make -wlint happy.
  */
 #define	XFS_LOOKUP_EQ	((xfs_lookup_t)XFS_LOOKUP_EQi)
@@ -107,7 +132,7 @@ struct xfs_btree_ops {
 	int	(*alloc_block)(struct xfs_btree_cur *cur,
 			       union xfs_btree_ptr *start_bno,
 			       union xfs_btree_ptr *new_bno,
-			       int length, int *stat);
+			       int *stat);
 	int	(*free_block)(struct xfs_btree_cur *cur, struct xfs_buf *bp);
 
 	/* update last record information */
@@ -149,25 +174,6 @@ struct xfs_btree_ops {
 	int	(*recs_inorder)(struct xfs_btree_cur *cur,
 				union xfs_btree_rec *r1,
 				union xfs_btree_rec *r2);
-#endif
-
-	/* btree tracing */
-#ifdef XFS_BTREE_TRACE
-	void		(*trace_enter)(struct xfs_btree_cur *, const char *,
-				       char *, int, int, __psunsigned_t,
-				       __psunsigned_t, __psunsigned_t,
-				       __psunsigned_t, __psunsigned_t,
-				       __psunsigned_t, __psunsigned_t,
-				       __psunsigned_t, __psunsigned_t,
-				       __psunsigned_t, __psunsigned_t);
-	void		(*trace_cursor)(struct xfs_btree_cur *, __uint32_t *,
-					__uint64_t *, __uint64_t *);
-	void		(*trace_key)(struct xfs_btree_cur *,
-				     union xfs_btree_key *, __uint64_t *,
-				     __uint64_t *);
-	void		(*trace_record)(struct xfs_btree_cur *,
-					union xfs_btree_rec *, __uint64_t *,
-					__uint64_t *, __uint64_t *);
 #endif
 };
 
@@ -439,5 +445,24 @@ static inline int xfs_btree_get_level(struct xfs_btree_block *block)
 #define	XFS_FSB_SANITY_CHECK(mp,fsb)	\
 	(XFS_FSB_TO_AGNO(mp, fsb) < mp->m_sb.sb_agcount && \
 		XFS_FSB_TO_AGBNO(mp, fsb) < mp->m_sb.sb_agblocks)
+
+/*
+ * Trace hooks.  Currently not implemented as they need to be ported
+ * over to the generic tracing functionality, which is some effort.
+ *
+ * i,j = integer (32 bit)
+ * b = btree block buffer (xfs_buf_t)
+ * p = btree ptr
+ * r = btree record
+ * k = btree key
+ */
+#define	XFS_BTREE_TRACE_ARGBI(c, b, i)
+#define	XFS_BTREE_TRACE_ARGBII(c, b, i, j)
+#define	XFS_BTREE_TRACE_ARGI(c, i)
+#define	XFS_BTREE_TRACE_ARGIPK(c, i, p, s)
+#define	XFS_BTREE_TRACE_ARGIPR(c, i, p, r)
+#define	XFS_BTREE_TRACE_ARGIK(c, i, k)
+#define XFS_BTREE_TRACE_ARGR(c, r)
+#define	XFS_BTREE_TRACE_CURSOR(c, t)
 
 #endif	/* __XFS_BTREE_H__ */

@@ -537,14 +537,11 @@ xfs_btree_get_bufl(
 	xfs_fsblock_t	fsbno,		/* file system block number */
 	uint		lock)		/* lock flags for get_buf */
 {
-	xfs_buf_t	*bp;		/* buffer pointer (return value) */
 	xfs_daddr_t		d;		/* real disk block address */
 
 	ASSERT(fsbno != NULLFSBLOCK);
 	d = XFS_FSB_TO_DADDR(mp, fsbno);
-	bp = xfs_trans_get_buf(tp, mp->m_ddev_targp, d, mp->m_bsize, lock);
-	ASSERT(!xfs_buf_geterror(bp));
-	return bp;
+	return xfs_trans_get_buf(tp, mp->m_ddev_targp, d, mp->m_bsize, lock);
 }
 
 /*
@@ -559,15 +556,12 @@ xfs_btree_get_bufs(
 	xfs_agblock_t	agbno,		/* allocation group block number */
 	uint		lock)		/* lock flags for get_buf */
 {
-	xfs_buf_t	*bp;		/* buffer pointer (return value) */
 	xfs_daddr_t		d;		/* real disk block address */
 
 	ASSERT(agno != NULLAGNUMBER);
 	ASSERT(agbno != NULLAGBLOCK);
 	d = XFS_AGB_TO_DADDR(mp, agno, agbno);
-	bp = xfs_trans_get_buf(tp, mp->m_ddev_targp, d, mp->m_bsize, lock);
-	ASSERT(!xfs_buf_geterror(bp));
-	return bp;
+	return xfs_trans_get_buf(tp, mp->m_ddev_targp, d, mp->m_bsize, lock);
 }
 
 /*
@@ -707,7 +701,6 @@ xfs_btree_read_bufl(
 				   mp->m_bsize, lock, &bp, ops);
 	if (error)
 		return error;
-	ASSERT(!xfs_buf_geterror(bp));
 	if (bp)
 		xfs_buf_set_ref(bp, refval);
 	*bpp = bp;
@@ -1145,7 +1138,6 @@ STATIC int
 xfs_btree_read_buf_block(
 	struct xfs_btree_cur	*cur,
 	union xfs_btree_ptr	*ptr,
-	int			level,
 	int			flags,
 	struct xfs_btree_block	**block,
 	struct xfs_buf		**bpp)
@@ -1164,7 +1156,6 @@ xfs_btree_read_buf_block(
 	if (error)
 		return error;
 
-	ASSERT(!xfs_buf_geterror(*bpp));
 	xfs_btree_set_refs(cur, *bpp);
 	*block = XFS_BUF_TO_BLOCK(*bpp);
 	return 0;
@@ -1503,8 +1494,8 @@ xfs_btree_increment(
 		union xfs_btree_ptr	*ptrp;
 
 		ptrp = xfs_btree_ptr_addr(cur, cur->bc_ptrs[lev], block);
-		error = xfs_btree_read_buf_block(cur, ptrp, --lev,
-							0, &block, &bp);
+		--lev;
+		error = xfs_btree_read_buf_block(cur, ptrp, 0, &block, &bp);
 		if (error)
 			goto error0;
 
@@ -1602,8 +1593,8 @@ xfs_btree_decrement(
 		union xfs_btree_ptr	*ptrp;
 
 		ptrp = xfs_btree_ptr_addr(cur, cur->bc_ptrs[lev], block);
-		error = xfs_btree_read_buf_block(cur, ptrp, --lev,
-							0, &block, &bp);
+		--lev;
+		error = xfs_btree_read_buf_block(cur, ptrp, 0, &block, &bp);
 		if (error)
 			goto error0;
 		xfs_btree_setbuf(cur, lev, bp);
@@ -1653,7 +1644,7 @@ xfs_btree_lookup_get_block(
 		return 0;
 	}
 
-	error = xfs_btree_read_buf_block(cur, pp, level, 0, blkp, &bp);
+	error = xfs_btree_read_buf_block(cur, pp, 0, blkp, &bp);
 	if (error)
 		return error;
 
@@ -2004,7 +1995,7 @@ xfs_btree_lshift(
 		goto out0;
 
 	/* Set up the left neighbor as "left". */
-	error = xfs_btree_read_buf_block(cur, &lptr, level, 0, &left, &lbp);
+	error = xfs_btree_read_buf_block(cur, &lptr, 0, &left, &lbp);
 	if (error)
 		goto error0;
 
@@ -2188,7 +2179,7 @@ xfs_btree_rshift(
 		goto out0;
 
 	/* Set up the right neighbor as "right". */
-	error = xfs_btree_read_buf_block(cur, &rptr, level, 0, &right, &rbp);
+	error = xfs_btree_read_buf_block(cur, &rptr, 0, &right, &rbp);
 	if (error)
 		goto error0;
 
@@ -2316,7 +2307,7 @@ error1:
  * record (to be inserted into parent).
  */
 STATIC int					/* error */
-xfs_btree_split(
+__xfs_btree_split(
 	struct xfs_btree_cur	*cur,
 	int			level,
 	union xfs_btree_ptr	*ptrp,
@@ -2358,7 +2349,7 @@ xfs_btree_split(
 	xfs_btree_buf_to_ptr(cur, lbp, &lptr);
 
 	/* Allocate the new block. If we can't do it, we're toast. Give up. */
-	error = cur->bc_ops->alloc_block(cur, &lptr, &rptr, 1, stat);
+	error = cur->bc_ops->alloc_block(cur, &lptr, &rptr, stat);
 	if (error)
 		goto error0;
 	if (*stat == 0)
@@ -2456,7 +2447,7 @@ xfs_btree_split(
 	 * point back to right instead of to left.
 	 */
 	if (!xfs_btree_ptr_is_null(cur, &rrptr)) {
-		error = xfs_btree_read_buf_block(cur, &rrptr, level,
+		error = xfs_btree_read_buf_block(cur, &rrptr,
 							0, &rrblock, &rrbp);
 		if (error)
 			goto error0;
@@ -2496,6 +2487,92 @@ error0:
 	return error;
 }
 
+/* XXX: kernel only code here! */
+#ifdef KERNEL
+struct xfs_btree_split_args {
+	struct xfs_btree_cur	*cur;
+	int			level;
+	union xfs_btree_ptr	*ptrp;
+	union xfs_btree_key	*key;
+	struct xfs_btree_cur	**curp;
+	int			*stat;		/* success/failure */
+	int			result;
+	bool			kswapd;	/* allocation in kswapd context */
+	struct completion	*done;
+	struct work_struct	work;
+};
+
+/*
+ * Stack switching interfaces for allocation
+ */
+static void
+xfs_btree_split_worker(
+	struct work_struct	*work)
+{
+	struct xfs_btree_split_args	*args = container_of(work,
+						struct xfs_btree_split_args, work);
+	unsigned long		pflags;
+	unsigned long		new_pflags = PF_FSTRANS;
+
+	/*
+	 * we are in a transaction context here, but may also be doing work
+	 * in kswapd context, and hence we may need to inherit that state
+	 * temporarily to ensure that we don't block waiting for memory reclaim
+	 * in any way.
+	 */
+	if (args->kswapd)
+		new_pflags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
+
+	current_set_flags_nested(&pflags, new_pflags);
+
+	args->result = __xfs_btree_split(args->cur, args->level, args->ptrp,
+					 args->key, args->curp, args->stat);
+	complete(args->done);
+
+	current_restore_flags_nested(&pflags, new_pflags);
+}
+#endif
+
+/*
+ * BMBT split requests often come in with little stack to work on. Push
+ * them off to a worker thread so there is lots of stack to use. For the other
+ * btree types, just call directly to avoid the context switch overhead here.
+ */
+STATIC int					/* error */
+xfs_btree_split(
+	struct xfs_btree_cur	*cur,
+	int			level,
+	union xfs_btree_ptr	*ptrp,
+	union xfs_btree_key	*key,
+	struct xfs_btree_cur	**curp,
+	int			*stat)		/* success/failure */
+{
+#ifdef KERNEL
+	struct xfs_btree_split_args	args;
+	DECLARE_COMPLETION_ONSTACK(done);
+
+	if (cur->bc_btnum != XFS_BTNUM_BMAP)
+#endif
+		return __xfs_btree_split(cur, level, ptrp, key, curp, stat);
+
+#ifdef KERNEL
+	args.cur = cur;
+	args.level = level;
+	args.ptrp = ptrp;
+	args.key = key;
+	args.curp = curp;
+	args.stat = stat;
+	args.done = &done;
+	args.kswapd = current_is_kswapd();
+	INIT_WORK_ONSTACK(&args.work, xfs_btree_split_worker);
+	queue_work(xfs_alloc_wq, &args.work);
+	wait_for_completion(&done);
+	destroy_work_on_stack(&args.work);
+	return args.result;
+#endif
+}
+
+
 /*
  * Copy the old inode root contents into a real block and make the
  * broot point to it.
@@ -2531,7 +2608,7 @@ xfs_btree_new_iroot(
 	pp = xfs_btree_ptr_addr(cur, 1, block);
 
 	/* Allocate the new block. If we can't do it, we're toast. Give up. */
-	error = cur->bc_ops->alloc_block(cur, pp, &nptr, 1, stat);
+	error = cur->bc_ops->alloc_block(cur, pp, &nptr, stat);
 	if (error)
 		goto error0;
 	if (*stat == 0) {
@@ -2635,7 +2712,7 @@ xfs_btree_new_root(
 	cur->bc_ops->init_ptr_from_cur(cur, &rptr);
 
 	/* Allocate the new block. If we can't do it, we're toast. Give up. */
-	error = cur->bc_ops->alloc_block(cur, &rptr, &lptr, 1, stat);
+	error = cur->bc_ops->alloc_block(cur, &rptr, &lptr, stat);
 	if (error)
 		goto error0;
 	if (*stat == 0)
@@ -2670,8 +2747,7 @@ xfs_btree_new_root(
 		lbp = bp;
 		xfs_btree_buf_to_ptr(cur, lbp, &lptr);
 		left = block;
-		error = xfs_btree_read_buf_block(cur, &rptr,
-					cur->bc_nlevels - 1, 0, &right, &rbp);
+		error = xfs_btree_read_buf_block(cur, &rptr, 0, &right, &rbp);
 		if (error)
 			goto error0;
 		bp = rbp;
@@ -2682,8 +2758,7 @@ xfs_btree_new_root(
 		xfs_btree_buf_to_ptr(cur, rbp, &rptr);
 		right = block;
 		xfs_btree_get_sibling(cur, right, &lptr, XFS_BB_LEFTSIB);
-		error = xfs_btree_read_buf_block(cur, &lptr,
-					cur->bc_nlevels - 1, 0, &left, &lbp);
+		error = xfs_btree_read_buf_block(cur, &lptr, 0, &left, &lbp);
 		if (error)
 			goto error0;
 		bp = lbp;
@@ -3635,8 +3710,7 @@ xfs_btree_delrec(
 		rptr = cptr;
 		right = block;
 		rbp = bp;
-		error = xfs_btree_read_buf_block(cur, &lptr, level,
-							0, &left, &lbp);
+		error = xfs_btree_read_buf_block(cur, &lptr, 0, &left, &lbp);
 		if (error)
 			goto error0;
 
@@ -3653,8 +3727,7 @@ xfs_btree_delrec(
 		lptr = cptr;
 		left = block;
 		lbp = bp;
-		error = xfs_btree_read_buf_block(cur, &rptr, level,
-							0, &right, &rbp);
+		error = xfs_btree_read_buf_block(cur, &rptr, 0, &right, &rbp);
 		if (error)
 			goto error0;
 
@@ -3726,8 +3799,7 @@ xfs_btree_delrec(
 	/* If there is a right sibling, point it to the remaining block. */
 	xfs_btree_get_sibling(cur, left, &cptr, XFS_BB_RIGHTSIB);
 	if (!xfs_btree_ptr_is_null(cur, &cptr)) {
-		error = xfs_btree_read_buf_block(cur, &cptr, level,
-							0, &rrblock, &rrbp);
+		error = xfs_btree_read_buf_block(cur, &cptr, 0, &rrblock, &rrbp);
 		if (error)
 			goto error0;
 		xfs_btree_set_sibling(cur, rrblock, &lptr, XFS_BB_LEFTSIB);

@@ -256,7 +256,7 @@ process_btinode(
 		return;
 	}
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
-		xfs_bmdr_maxrecs(mp, XFS_DFORK_SIZE(dip, mp, whichfork), 0));
+		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
 		scan_lbtree(be64_to_cpu(pp[i]), be16_to_cpu(dib->bb_level), 
 			scanfunc_bmap, extmapp,
@@ -484,7 +484,7 @@ scanfunc_ino(
 			set_cur(&typtab[TYP_INODE],
 				XFS_AGB_TO_DADDR(mp, seqno,
 						 XFS_AGINO_TO_AGBNO(mp, agino)),
-				XFS_FSB_TO_BB(mp, XFS_IALLOC_BLOCKS(mp)),
+				XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
 				DB_RING_IGN, NULL);
 			if (iocur_top->data == NULL) {
 				dbprintf(_("can't read inode block %u/%u\n"),

@@ -17,6 +17,8 @@
  */
 #include <xfs.h>
 
+struct workqueue_struct *xfs_alloc_wq;
+
 #define XFS_ABSDIFF(a,b)	(((a) <= (b)) ? ((b) - (a)) : ((a) - (b)))
 
 #define	XFSA_FIXUP_BNO_OK	1
@@ -235,16 +237,14 @@ xfs_alloc_fix_len(
 	k = rlen % args->prod;
 	if (k == args->mod)
 		return;
-	if (k > args->mod) {
-		if ((int)(rlen = rlen - k - args->mod) < (int)args->minlen)
-			return;
-	} else {
-		if ((int)(rlen = rlen - args->prod - (args->mod - k)) <
-		    (int)args->minlen)
-			return;
-	}
-	ASSERT(rlen >= args->minlen);
-	ASSERT(rlen <= args->maxlen);
+	if (k > args->mod)
+		rlen = rlen - (k - args->mod);
+	else
+		rlen = rlen - args->prod + (args->mod - k);
+	if ((int)rlen < (int)args->minlen)
+		return;
+	ASSERT(rlen >= args->minlen && rlen <= args->maxlen);
+	ASSERT(rlen % args->prod == args->mod);
 	args->len = rlen;
 }
 
@@ -519,7 +519,6 @@ xfs_alloc_read_agfl(
 			XFS_FSS_TO_BB(mp, 1), 0, &bp, &xfs_agfl_buf_ops);
 	if (error)
 		return error;
-	ASSERT(!xfs_buf_geterror(bp));
 	xfs_buf_set_ref(bp, XFS_AGFL_REF);
 	*bpp = bp;
 	return 0;
@@ -1817,10 +1816,8 @@ xfs_alloc_longest_free_extent(
 /*
  * Decide whether to use this allocation group for this allocation.
  * If so, fix up the btree freelist's size.
- *
- * Note: This is public so mkfs can call it
  */
-int				/* error */
+int			/* error */
 xfs_alloc_fix_freelist(
 	xfs_alloc_arg_t	*args,	/* allocation argument structure */
 	int		flags)	/* XFS_ALLOC_FLAG_... */
@@ -2267,6 +2264,8 @@ xfs_read_agf(
 {
 	int		error;
 
+	trace_xfs_read_agf(mp, agno);
+
 	ASSERT(agno != NULLAGNUMBER);
 	error = xfs_trans_read_buf(
 			mp, tp, mp->m_ddev_targp,
@@ -2297,8 +2296,9 @@ xfs_alloc_read_agf(
 	struct xfs_perag	*pag;		/* per allocation group data */
 	int			error;
 
-	ASSERT(agno != NULLAGNUMBER);
+	trace_xfs_alloc_read_agf(mp, agno);
 
+	ASSERT(agno != NULLAGNUMBER);
 	error = xfs_read_agf(mp, tp, agno,
 			(flags & XFS_ALLOC_FLAG_TRYLOCK) ? XBF_TRYLOCK : 0,
 			bpp);
@@ -2321,6 +2321,8 @@ xfs_alloc_read_agf(
 			be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNTi]);
 		spin_lock_init(&pag->pagb_lock);
 		pag->pagb_count = 0;
+		/* XXX: pagb_tree doesn't exist in userspace */
+		//pag->pagb_tree = RB_ROOT;
 		pag->pagf_init = 1;
 	}
 #ifdef DEBUG

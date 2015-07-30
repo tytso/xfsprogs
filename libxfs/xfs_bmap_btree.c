@@ -63,7 +63,7 @@ xfs_bmdr_to_bmbt(
 	rblock->bb_level = dblock->bb_level;
 	ASSERT(be16_to_cpu(rblock->bb_level) > 0);
 	rblock->bb_numrecs = dblock->bb_numrecs;
-	dmxr = xfs_bmdr_maxrecs(mp, dblocklen, 0);
+	dmxr = xfs_bmdr_maxrecs(dblocklen, 0);
 	fkp = XFS_BMDR_KEY_ADDR(dblock, 1);
 	tkp = XFS_BMBT_KEY_ADDR(mp, rblock, 1);
 	fpp = XFS_BMDR_PTR_ADDR(dblock, 1, dmxr);
@@ -422,7 +422,7 @@ xfs_bmbt_to_bmdr(
 	ASSERT(rblock->bb_level != 0);
 	dblock->bb_level = rblock->bb_level;
 	dblock->bb_numrecs = rblock->bb_numrecs;
-	dmxr = xfs_bmdr_maxrecs(mp, dblocklen, 0);
+	dmxr = xfs_bmdr_maxrecs(dblocklen, 0);
 	fkp = XFS_BMBT_KEY_ADDR(mp, rblock, 1);
 	tkp = XFS_BMDR_KEY_ADDR(dblock, 1);
 	fpp = XFS_BMAP_BROOT_PTR_ADDR(mp, rblock, 1, rblocklen);
@@ -498,7 +498,6 @@ xfs_bmbt_alloc_block(
 	struct xfs_btree_cur	*cur,
 	union xfs_btree_ptr	*start,
 	union xfs_btree_ptr	*new,
-	int			length,
 	int			*stat)
 {
 	xfs_alloc_arg_t		args;		/* block allocation args */
@@ -651,8 +650,7 @@ xfs_bmbt_get_dmaxrecs(
 {
 	if (level != cur->bc_nlevels - 1)
 		return cur->bc_mp->m_bmap_dmxr[level != 0];
-	return xfs_bmdr_maxrecs(cur->bc_mp, cur->bc_private.b.forksize,
-				level == 0);
+	return xfs_bmdr_maxrecs(cur->bc_private.b.forksize, level == 0);
 }
 
 STATIC void
@@ -812,95 +810,6 @@ xfs_bmbt_recs_inorder(
 }
 #endif	/* DEBUG */
 
-#ifdef XFS_BTREE_TRACE
-ktrace_t	*xfs_bmbt_trace_buf;
-
-STATIC void
-xfs_bmbt_trace_enter(
-	struct xfs_btree_cur	*cur,
-	const char		*func,
-	char			*s,
-	int			type,
-	int			line,
-	__psunsigned_t		a0,
-	__psunsigned_t		a1,
-	__psunsigned_t		a2,
-	__psunsigned_t		a3,
-	__psunsigned_t		a4,
-	__psunsigned_t		a5,
-	__psunsigned_t		a6,
-	__psunsigned_t		a7,
-	__psunsigned_t		a8,
-	__psunsigned_t		a9,
-	__psunsigned_t		a10)
-{
-	struct xfs_inode	*ip = cur->bc_private.b.ip;
-	int			whichfork = cur->bc_private.b.whichfork;
-
-	ktrace_enter(xfs_bmbt_trace_buf,
-		(void *)((__psint_t)type | (whichfork << 8) | (line << 16)),
-		(void *)func, (void *)s, (void *)ip, (void *)cur,
-		(void *)a0, (void *)a1, (void *)a2, (void *)a3,
-		(void *)a4, (void *)a5, (void *)a6, (void *)a7,
-		(void *)a8, (void *)a9, (void *)a10);
-}
-
-STATIC void
-xfs_bmbt_trace_cursor(
-	struct xfs_btree_cur	*cur,
-	__uint32_t		*s0,
-	__uint64_t		*l0,
-	__uint64_t		*l1)
-{
-	struct xfs_bmbt_rec_host r;
-
-	xfs_bmbt_set_all(&r, &cur->bc_rec.b);
-
-	*s0 = (cur->bc_nlevels << 24) |
-	      (cur->bc_private.b.flags << 16) |
-	       cur->bc_private.b.allocated;
-	*l0 = r.l0;
-	*l1 = r.l1;
-}
-
-STATIC void
-xfs_bmbt_trace_key(
-	struct xfs_btree_cur	*cur,
-	union xfs_btree_key	*key,
-	__uint64_t		*l0,
-	__uint64_t		*l1)
-{
-	*l0 = be64_to_cpu(key->bmbt.br_startoff);
-	*l1 = 0;
-}
-
-STATIC void
-xfs_bmbt_trace_record(
-	struct xfs_btree_cur	*cur,
-	union xfs_btree_rec	*rec,
-	__uint64_t		*l0,
-	__uint64_t		*l1,
-	__uint64_t		*l2)
-{
-	struct xfs_bmbt_irec	irec;
-
-	xfs_bmbt_disk_get_all(&rec->bmbt, &irec);
-	*l0 = irec.br_startoff;
-	*l1 = irec.br_startblock;
-	*l2 = irec.br_blockcount;
-}
-#endif /* XFS_BTREE_TRACE */
-
-/* Endian flipping versions of the bmbt extraction functions */
-void
-xfs_bmbt_disk_get_all(
-	xfs_bmbt_rec_t	*r,
-	xfs_bmbt_irec_t *s)
-{
-	__xfs_bmbt_get_all(get_unaligned_be64(&r->l0),
-				get_unaligned_be64(&r->l1), s);
-}
-
 static const struct xfs_btree_ops xfs_bmbt_ops = {
 	.rec_len		= sizeof(xfs_bmbt_rec_t),
 	.key_len		= sizeof(xfs_bmbt_key_t),
@@ -921,13 +830,6 @@ static const struct xfs_btree_ops xfs_bmbt_ops = {
 #if defined(DEBUG) || defined(XFS_WARN)
 	.keys_inorder		= xfs_bmbt_keys_inorder,
 	.recs_inorder		= xfs_bmbt_recs_inorder,
-#endif
-
-#ifdef XFS_BTREE_TRACE
-	.trace_enter		= xfs_bmbt_trace_enter,
-	.trace_cursor		= xfs_bmbt_trace_cursor,
-	.trace_key		= xfs_bmbt_trace_key,
-	.trace_record		= xfs_bmbt_trace_record,
 #endif
 };
 
@@ -989,7 +891,6 @@ xfs_bmbt_maxrecs(
  */
 int
 xfs_bmdr_maxrecs(
-	struct xfs_mount	*mp,
 	int			blocklen,
 	int			leaf)
 {
@@ -1001,7 +902,7 @@ xfs_bmdr_maxrecs(
 }
 
 /*
- * Change the owner of a btree format fork of the inode passed in. Change it to
+ * Change the owner of a btree format fork fo the inode passed in. Change it to
  * the owner of that is passed in so that we can change owners before or after
  * we switch forks between inodes. The operation that the caller is doing will
  * determine whether is needs to change owner before or after the switch.

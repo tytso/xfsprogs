@@ -109,7 +109,7 @@
 #define xfs_bunmapi			libxfs_bunmapi
 
 /* xfs_bmap_btree.h */
-#define xfs_bmbt_disk_get_all		libxfs_bmbt_disk_get_all
+#define xfs_bmbt_get_all		libxfs_bmbt_get_all
 
 /* xfs_da_btree.h */
 #define xfs_da_brelse			libxfs_da_brelse
@@ -376,6 +376,8 @@ roundup_64(__uint64_t x, __uint32_t y)
 #define XFS_MOUNT_WSYNC			0	/* ignored in userspace */
 #define XFS_MOUNT_NOALIGN		0	/* ignored in userspace */
 #define XFS_MOUNT_IKEEP			0	/* ignored in userspace */
+#define XFS_MOUNT_SWALLOC		0	/* ignored in userspace */
+#define XFS_MOUNT_RDONLY		0	/* ignored in userspace */
 
 #define xfs_icsb_modify_counters(mp, field, delta, rsvd) \
 	xfs_mod_incore_sb(mp, field, delta, rsvd)
@@ -423,9 +425,12 @@ roundup_64(__uint64_t x, __uint32_t y)
 #define xfs_ilock(ip,mode)				((void) 0)
 #define xfs_ilock_nowait(ip,mode)			((void) 0)
 #define xfs_ilock_demote(ip,mode)			((void) 0)
-#define xfs_iunlock(ip,mode)				((void) 0)
-#define xfs_ilock_map_shared(ip,mode)			((void) 0)
-#define xfs_iunlock_map_shared(ip,mode)			((void) 0)
+#define xfs_ilock_data_map_shared(ip)			(0)
+#define xfs_ilock_attr_map_shared(ip)			(0)
+#define xfs_iunlock(ip,mode)				({	\
+	typeof(mode) __mode = mode;				\
+	__mode = __mode; /* no set-but-unused warning */	\
+})
 #define __xfs_flock(ip)					((void) 0)
 
 /* space allocation */
@@ -478,9 +483,6 @@ int xfs_attr_rmtval_get(struct xfs_da_args *);
 void xfs_bmap_del_free(xfs_bmap_free_t *, xfs_bmap_free_item_t *,
 			xfs_bmap_free_item_t *);
 
-/* xfs_inode.c */
-void xfs_iflush_fork(xfs_inode_t *, xfs_dinode_t *, xfs_inode_log_item_t *,
-			int, xfs_buf_t *);
 /*
  * For regular files we only update the on-disk filesize when actually
  * writing data back to disk.  Until then only the copy in the VFS inode

@@ -1125,6 +1125,14 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 		return error;
 	}
 
+	/*
+	 * set up the inode ops structure that the libxfs code relies on
+	 */
+	if (S_ISDIR(ip->i_d.di_mode))
+		ip->d_ops = mp->m_dir_inode_ops;
+	else
+		ip->d_ops = mp->m_nondir_inode_ops;
+
 	*ipp = ip;
 	return 0;
 }

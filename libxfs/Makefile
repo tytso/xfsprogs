@@ -23,6 +23,7 @@ CFILES = cache.c \
 	xfs_bmap_btree.c \
 	xfs_btree.c \
 	xfs_da_btree.c \
+	xfs_da_format.c \
 	xfs_dir2.c \
 	xfs_dir2_block.c \
 	xfs_dir2_data.c \

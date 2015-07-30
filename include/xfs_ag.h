@@ -160,7 +160,9 @@ typedef struct xfs_agi {
 	 * still being referenced.
 	 */
 	__be32		agi_unlinked[XFS_AGI_UNLINKED_BUCKETS];
-
+	/*
+	 * This marks the end of logging region 1 and start of logging region 2.
+	 */
 	uuid_t		agi_uuid;	/* uuid of filesystem */
 	__be32		agi_crc;	/* crc of agi sector */
 	__be32		agi_pad32;

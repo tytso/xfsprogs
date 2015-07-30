@@ -51,7 +51,6 @@ xfs_rtbuf_get(
 				   mp->m_bsize, 0, &bp, NULL);
 	if (error)
 		return error;
-	ASSERT(!xfs_buf_geterror(bp));
 	*bpp = bp;
 	return 0;
 }
@@ -488,7 +487,7 @@ xfs_rtmodify_range(
 	xfs_rtword_t	*first;		/* first used word in the buffer */
 	int		i;		/* current bit number rel. to start */
 	int		lastbit;	/* last useful bit in word */
-	xfs_rtword_t	mask;		/* mask of relevant bits for value */
+	xfs_rtword_t	mask;		/* mask o frelevant bits for value */
 	int		word;		/* word number in the buffer */
 
 	/*

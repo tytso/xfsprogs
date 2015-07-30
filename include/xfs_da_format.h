@@ -19,10 +19,6 @@
 #ifndef __XFS_DA_FORMAT_H__
 #define __XFS_DA_FORMAT_H__
 
-/*========================================================================
- * Directory Structure when greater than XFS_LBSIZE(mp) bytes.
- *========================================================================*/
-
 /*
  * This structure is common to both leaf nodes and non-leaf nodes in the Btree.
  *
@@ -121,43 +117,6 @@ struct xfs_da3_icnode_hdr {
 	__uint16_t	count;
 	__uint16_t	level;
 };
-
-extern void xfs_da3_node_hdr_from_disk(struct xfs_da3_icnode_hdr *to,
-				       struct xfs_da_intnode *from);
-extern void xfs_da3_node_hdr_to_disk(struct xfs_da_intnode *to,
-				     struct xfs_da3_icnode_hdr *from);
-
-static inline int
-__xfs_da3_node_hdr_size(bool v3)
-{
-	if (v3)
-		return sizeof(struct xfs_da3_node_hdr);
-	return sizeof(struct xfs_da_node_hdr);
-}
-static inline int
-xfs_da3_node_hdr_size(struct xfs_da_intnode *dap)
-{
-	bool	v3 = dap->hdr.info.magic == cpu_to_be16(XFS_DA3_NODE_MAGIC);
-
-	return __xfs_da3_node_hdr_size(v3);
-}
-
-static inline struct xfs_da_node_entry *
-xfs_da3_node_tree_p(struct xfs_da_intnode *dap)
-{
-	if (dap->hdr.info.magic == cpu_to_be16(XFS_DA3_NODE_MAGIC)) {
-		struct xfs_da3_intnode *dap3 = (struct xfs_da3_intnode *)dap;
-		return dap3->__btree;
-	}
-	return dap->__btree;
-}
-
-extern void xfs_da3_intnode_from_disk(struct xfs_da3_icnode_hdr *to,
-				      struct xfs_da_intnode *from);
-extern void xfs_da3_intnode_to_disk(struct xfs_da_intnode *to,
-				    struct xfs_da3_icnode_hdr *from);
-
-#define	XFS_LBSIZE(mp)	(mp)->m_sb.sb_blocksize
 
 /*
  * Directory version 2.
@@ -329,79 +288,6 @@ xfs_dir2_sf_firstentry(struct xfs_dir2_sf_hdr *hdr)
 		((char *)hdr + xfs_dir2_sf_hdr_size(hdr->i8count));
 }
 
-static inline int
-xfs_dir3_sf_entsize(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	int			len)
-{
-	int count = sizeof(struct xfs_dir2_sf_entry); 	/* namelen + offset */
-
-	count += len;					/* name */
-	count += hdr->i8count ? sizeof(xfs_dir2_ino8_t) :
-				sizeof(xfs_dir2_ino4_t); /* ino # */
-	if (xfs_sb_version_hasftype(&mp->m_sb))
-		count += sizeof(__uint8_t);		/* file type */
-	return count;
-}
-
-static inline struct xfs_dir2_sf_entry *
-xfs_dir3_sf_nextentry(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	struct xfs_dir2_sf_entry *sfep)
-{
-	return (struct xfs_dir2_sf_entry *)
-		((char *)sfep + xfs_dir3_sf_entsize(mp, hdr, sfep->namelen));
-}
-
-/*
- * in dir3 shortform directories, the file type field is stored at a variable
- * offset after the inode number. Because it's only a single byte, endian
- * conversion is not necessary.
- */
-static inline __uint8_t *
-xfs_dir3_sfe_ftypep(
-	struct xfs_dir2_sf_hdr	*hdr,
-	struct xfs_dir2_sf_entry *sfep)
-{
-	return (__uint8_t *)&sfep->name[sfep->namelen];
-}
-
-static inline __uint8_t
-xfs_dir3_sfe_get_ftype(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	struct xfs_dir2_sf_entry *sfep)
-{
-	__uint8_t	*ftp;
-
-	if (!xfs_sb_version_hasftype(&mp->m_sb))
-		return XFS_DIR3_FT_UNKNOWN;
-
-	ftp = xfs_dir3_sfe_ftypep(hdr, sfep);
-	if (*ftp >= XFS_DIR3_FT_MAX)
-		return XFS_DIR3_FT_UNKNOWN;
-	return *ftp;
-}
-
-static inline void
-xfs_dir3_sfe_put_ftype(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	struct xfs_dir2_sf_entry *sfep,
-	__uint8_t		ftype)
-{
-	__uint8_t	*ftp;
-
-	ASSERT(ftype < XFS_DIR3_FT_MAX);
-
-	if (!xfs_sb_version_hasftype(&mp->m_sb))
-		return;
-	ftp = xfs_dir3_sfe_ftypep(hdr, sfep);
-	*ftp = ftype;
-}
-
 /*
  * Data block structures.
  *
@@ -438,8 +324,6 @@ xfs_dir3_sfe_put_ftype(
 #define	XFS_DIR2_SPACE_SIZE	(1ULL << (32 + XFS_DIR2_DATA_ALIGN_LOG))
 #define	XFS_DIR2_DATA_SPACE	0
 #define	XFS_DIR2_DATA_OFFSET	(XFS_DIR2_DATA_SPACE * XFS_DIR2_SPACE_SIZE)
-#define	XFS_DIR2_DATA_FIRSTDB(mp)	\
-	xfs_dir2_byte_to_db(mp, XFS_DIR2_DATA_OFFSET)
 
 /*
  * Describe a free area in the data block.
@@ -485,17 +369,6 @@ struct xfs_dir3_data_hdr {
 
 #define XFS_DIR3_DATA_CRC_OFF  offsetof(struct xfs_dir3_data_hdr, hdr.crc)
 
-static inline struct xfs_dir2_data_free *
-xfs_dir3_data_bestfree_p(struct xfs_dir2_data_hdr *hdr)
-{
-	if (hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	    hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC)) {
-		struct xfs_dir3_data_hdr *hdr3 = (struct xfs_dir3_data_hdr *)hdr;
-		return hdr3->best_free;
-	}
-	return hdr->bestfree;
-}
-
 /*
  * Active entry in a data block.
  *
@@ -529,71 +402,6 @@ typedef struct xfs_dir2_data_unused {
 } xfs_dir2_data_unused_t;
 
 /*
- * Size of a data entry.
- */
-static inline int
-__xfs_dir3_data_entsize(
-	bool	ftype,
-	int	n)
-{
-	int	size = offsetof(struct xfs_dir2_data_entry, name[0]);
-
-	size += n;
-	size += sizeof(xfs_dir2_data_off_t);
-	if (ftype)
-		size += sizeof(__uint8_t);
-	return roundup(size, XFS_DIR2_DATA_ALIGN);
-}
-static inline int
-xfs_dir3_data_entsize(
-	struct xfs_mount	*mp,
-	int			n)
-{
-	bool ftype = xfs_sb_version_hasftype(&mp->m_sb) ? true : false;
-	return __xfs_dir3_data_entsize(ftype, n);
-}
-
-static inline __uint8_t
-xfs_dir3_dirent_get_ftype(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_entry *dep)
-{
-	if (xfs_sb_version_hasftype(&mp->m_sb)) {
-		__uint8_t	type = dep->name[dep->namelen];
-
-		if (type < XFS_DIR3_FT_MAX)
-			return type;
-
-	}
-	return XFS_DIR3_FT_UNKNOWN;
-}
-
-static inline void
-xfs_dir3_dirent_put_ftype(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_entry *dep,
-	__uint8_t		type)
-{
-	ASSERT(type < XFS_DIR3_FT_MAX);
-	ASSERT(dep->namelen != 0);
-
-	if (xfs_sb_version_hasftype(&mp->m_sb))
-		dep->name[dep->namelen] = type;
-}
-
-/*
- * Pointer to an entry's tag word.
- */
-static inline __be16 *
-xfs_dir3_data_entry_tag_p(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_entry *dep)
-{
-	return (__be16 *)((char *)dep +
-		xfs_dir3_data_entsize(mp, dep->namelen) - sizeof(__be16));
-}
-
-/*
  * Pointer to a freespace's tag word.
  */
 static inline __be16 *
@@ -601,93 +409,6 @@ xfs_dir2_data_unused_tag_p(struct xfs_dir2_data_unused *dup)
 {
 	return (__be16 *)((char *)dup +
 			be16_to_cpu(dup->length) - sizeof(__be16));
-}
-
-static inline size_t
-xfs_dir3_data_hdr_size(bool dir3)
-{
-	if (dir3)
-		return sizeof(struct xfs_dir3_data_hdr);
-	return sizeof(struct xfs_dir2_data_hdr);
-}
-
-static inline size_t
-xfs_dir3_data_entry_offset(struct xfs_dir2_data_hdr *hdr)
-{
-	bool dir3 = hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-		    hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC);
-	return xfs_dir3_data_hdr_size(dir3);
-}
-
-static inline struct xfs_dir2_data_entry *
-xfs_dir3_data_entry_p(struct xfs_dir2_data_hdr *hdr)
-{
-	return (struct xfs_dir2_data_entry *)
-		((char *)hdr + xfs_dir3_data_entry_offset(hdr));
-}
-
-static inline struct xfs_dir2_data_unused *
-xfs_dir3_data_unused_p(struct xfs_dir2_data_hdr *hdr)
-{
-	return (struct xfs_dir2_data_unused *)
-		((char *)hdr + xfs_dir3_data_entry_offset(hdr));
-}
-
-/*
- * Offsets of . and .. in data space (always block 0)
- *
- * XXX: there is scope for significant optimisation of the logic here. Right
- * now we are checking for "dir3 format" over and over again. Ideally we should
- * only do it once for each operation.
- */
-static inline xfs_dir2_data_aoff_t
-xfs_dir3_data_dot_offset(struct xfs_mount *mp)
-{
-	return xfs_dir3_data_hdr_size(xfs_sb_version_hascrc(&mp->m_sb));
-}
-
-static inline xfs_dir2_data_aoff_t
-xfs_dir3_data_dotdot_offset(struct xfs_mount *mp)
-{
-	return xfs_dir3_data_dot_offset(mp) +
-		xfs_dir3_data_entsize(mp, 1);
-}
-
-static inline xfs_dir2_data_aoff_t
-xfs_dir3_data_first_offset(struct xfs_mount *mp)
-{
-	return xfs_dir3_data_dotdot_offset(mp) +
-		xfs_dir3_data_entsize(mp, 2);
-}
-
-/*
- * location of . and .. in data space (always block 0)
- */
-static inline struct xfs_dir2_data_entry *
-xfs_dir3_data_dot_entry_p(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_hdr *hdr)
-{
-	return (struct xfs_dir2_data_entry *)
-		((char *)hdr + xfs_dir3_data_dot_offset(mp));
-}
-
-static inline struct xfs_dir2_data_entry *
-xfs_dir3_data_dotdot_entry_p(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_hdr *hdr)
-{
-	return (struct xfs_dir2_data_entry *)
-		((char *)hdr + xfs_dir3_data_dotdot_offset(mp));
-}
-
-static inline struct xfs_dir2_data_entry *
-xfs_dir3_data_first_entry_p(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_data_hdr *hdr)
-{
-	return (struct xfs_dir2_data_entry *)
-		((char *)hdr + xfs_dir3_data_first_offset(mp));
 }
 
 /*
@@ -727,8 +448,6 @@ xfs_dir3_data_first_entry_p(
  */
 #define	XFS_DIR2_LEAF_SPACE	1
 #define	XFS_DIR2_LEAF_OFFSET	(XFS_DIR2_LEAF_SPACE * XFS_DIR2_SPACE_SIZE)
-#define	XFS_DIR2_LEAF_FIRSTDB(mp)	\
-	xfs_dir2_byte_to_db(mp, XFS_DIR2_LEAF_OFFSET)
 
 /*
  * Leaf block header.
@@ -784,50 +503,6 @@ struct xfs_dir3_leaf {
 
 #define XFS_DIR3_LEAF_CRC_OFF  offsetof(struct xfs_dir3_leaf_hdr, info.crc)
 
-extern void xfs_dir3_leaf_hdr_from_disk(struct xfs_dir3_icleaf_hdr *to,
-					struct xfs_dir2_leaf *from);
-
-static inline int
-xfs_dir3_leaf_hdr_size(struct xfs_dir2_leaf *lp)
-{
-	if (lp->hdr.info.magic == cpu_to_be16(XFS_DIR3_LEAF1_MAGIC) ||
-	    lp->hdr.info.magic == cpu_to_be16(XFS_DIR3_LEAFN_MAGIC))
-		return sizeof(struct xfs_dir3_leaf_hdr);
-	return sizeof(struct xfs_dir2_leaf_hdr);
-}
-
-static inline int
-xfs_dir3_max_leaf_ents(struct xfs_mount *mp, struct xfs_dir2_leaf *lp)
-{
-	return (mp->m_dirblksize - xfs_dir3_leaf_hdr_size(lp)) /
-		(uint)sizeof(struct xfs_dir2_leaf_entry);
-}
-
-/*
- * Get address of the bestcount field in the single-leaf block.
- */
-static inline struct xfs_dir2_leaf_entry *
-xfs_dir3_leaf_ents_p(struct xfs_dir2_leaf *lp)
-{
-	if (lp->hdr.info.magic == cpu_to_be16(XFS_DIR3_LEAF1_MAGIC) ||
-	    lp->hdr.info.magic == cpu_to_be16(XFS_DIR3_LEAFN_MAGIC)) {
-		struct xfs_dir3_leaf *lp3 = (struct xfs_dir3_leaf *)lp;
-		return lp3->__ents;
-	}
-	return lp->__ents;
-}
-
-/*
- * Get address of the bestcount field in the single-leaf block.
- */
-static inline struct xfs_dir2_leaf_tail *
-xfs_dir2_leaf_tail_p(struct xfs_mount *mp, struct xfs_dir2_leaf *lp)
-{
-	return (struct xfs_dir2_leaf_tail *)
-		((char *)lp + mp->m_dirblksize -
-		  sizeof(struct xfs_dir2_leaf_tail));
-}
-
 /*
  * Get address of the bests array in the single-leaf block.
  */
@@ -835,123 +510,6 @@ static inline __be16 *
 xfs_dir2_leaf_bests_p(struct xfs_dir2_leaf_tail *ltp)
 {
 	return (__be16 *)ltp - be32_to_cpu(ltp->bestcount);
-}
-
-/*
- * DB blocks here are logical directory block numbers, not filesystem blocks.
- */
-
-/*
- * Convert dataptr to byte in file space
- */
-static inline xfs_dir2_off_t
-xfs_dir2_dataptr_to_byte(struct xfs_mount *mp, xfs_dir2_dataptr_t dp)
-{
-	return (xfs_dir2_off_t)dp << XFS_DIR2_DATA_ALIGN_LOG;
-}
-
-/*
- * Convert byte in file space to dataptr.  It had better be aligned.
- */
-static inline xfs_dir2_dataptr_t
-xfs_dir2_byte_to_dataptr(struct xfs_mount *mp, xfs_dir2_off_t by)
-{
-	return (xfs_dir2_dataptr_t)(by >> XFS_DIR2_DATA_ALIGN_LOG);
-}
-
-/*
- * Convert byte in space to (DB) block
- */
-static inline xfs_dir2_db_t
-xfs_dir2_byte_to_db(struct xfs_mount *mp, xfs_dir2_off_t by)
-{
-	return (xfs_dir2_db_t)
-		(by >> (mp->m_sb.sb_blocklog + mp->m_sb.sb_dirblklog));
-}
-
-/*
- * Convert dataptr to a block number
- */
-static inline xfs_dir2_db_t
-xfs_dir2_dataptr_to_db(struct xfs_mount *mp, xfs_dir2_dataptr_t dp)
-{
-	return xfs_dir2_byte_to_db(mp, xfs_dir2_dataptr_to_byte(mp, dp));
-}
-
-/*
- * Convert byte in space to offset in a block
- */
-static inline xfs_dir2_data_aoff_t
-xfs_dir2_byte_to_off(struct xfs_mount *mp, xfs_dir2_off_t by)
-{
-	return (xfs_dir2_data_aoff_t)(by &
-		((1 << (mp->m_sb.sb_blocklog + mp->m_sb.sb_dirblklog)) - 1));
-}
-
-/*
- * Convert dataptr to a byte offset in a block
- */
-static inline xfs_dir2_data_aoff_t
-xfs_dir2_dataptr_to_off(struct xfs_mount *mp, xfs_dir2_dataptr_t dp)
-{
-	return xfs_dir2_byte_to_off(mp, xfs_dir2_dataptr_to_byte(mp, dp));
-}
-
-/*
- * Convert block and offset to byte in space
- */
-static inline xfs_dir2_off_t
-xfs_dir2_db_off_to_byte(struct xfs_mount *mp, xfs_dir2_db_t db,
-			xfs_dir2_data_aoff_t o)
-{
-	return ((xfs_dir2_off_t)db <<
-		(mp->m_sb.sb_blocklog + mp->m_sb.sb_dirblklog)) + o;
-}
-
-/*
- * Convert block (DB) to block (dablk)
- */
-static inline xfs_dablk_t
-xfs_dir2_db_to_da(struct xfs_mount *mp, xfs_dir2_db_t db)
-{
-	return (xfs_dablk_t)(db << mp->m_sb.sb_dirblklog);
-}
-
-/*
- * Convert byte in space to (DA) block
- */
-static inline xfs_dablk_t
-xfs_dir2_byte_to_da(struct xfs_mount *mp, xfs_dir2_off_t by)
-{
-	return xfs_dir2_db_to_da(mp, xfs_dir2_byte_to_db(mp, by));
-}
-
-/*
- * Convert block and offset to dataptr
- */
-static inline xfs_dir2_dataptr_t
-xfs_dir2_db_off_to_dataptr(struct xfs_mount *mp, xfs_dir2_db_t db,
-			   xfs_dir2_data_aoff_t o)
-{
-	return xfs_dir2_byte_to_dataptr(mp, xfs_dir2_db_off_to_byte(mp, db, o));
-}
-
-/*
- * Convert block (dablk) to block (DB)
- */
-static inline xfs_dir2_db_t
-xfs_dir2_da_to_db(struct xfs_mount *mp, xfs_dablk_t da)
-{
-	return (xfs_dir2_db_t)(da >> mp->m_sb.sb_dirblklog);
-}
-
-/*
- * Convert block (dablk) to byte offset in space
- */
-static inline xfs_dir2_off_t
-xfs_dir2_da_to_byte(struct xfs_mount *mp, xfs_dablk_t da)
-{
-	return xfs_dir2_db_off_to_byte(mp, xfs_dir2_da_to_db(mp, da), 0);
 }
 
 /*
@@ -963,8 +521,6 @@ xfs_dir2_da_to_byte(struct xfs_mount *mp, xfs_dablk_t da)
  */
 #define	XFS_DIR2_FREE_SPACE	2
 #define	XFS_DIR2_FREE_OFFSET	(XFS_DIR2_FREE_SPACE * XFS_DIR2_SPACE_SIZE)
-#define	XFS_DIR2_FREE_FIRSTDB(mp)	\
-	xfs_dir2_byte_to_db(mp, XFS_DIR2_FREE_OFFSET)
 
 typedef	struct xfs_dir2_free_hdr {
 	__be32			magic;		/* XFS_DIR2_FREE_MAGIC */
@@ -1008,48 +564,6 @@ struct xfs_dir3_icfree_hdr {
 
 };
 
-void xfs_dir3_free_hdr_from_disk(struct xfs_dir3_icfree_hdr *to,
-				 struct xfs_dir2_free *from);
-
-static inline int
-xfs_dir3_free_hdr_size(struct xfs_mount *mp)
-{
-	if (xfs_sb_version_hascrc(&mp->m_sb))
-		return sizeof(struct xfs_dir3_free_hdr);
-	return sizeof(struct xfs_dir2_free_hdr);
-}
-
-static inline int
-xfs_dir3_free_max_bests(struct xfs_mount *mp)
-{
-	return (mp->m_dirblksize - xfs_dir3_free_hdr_size(mp)) /
-		sizeof(xfs_dir2_data_off_t);
-}
-
-static inline __be16 *
-xfs_dir3_free_bests_p(struct xfs_mount *mp, struct xfs_dir2_free *free)
-{
-	return (__be16 *)((char *)free + xfs_dir3_free_hdr_size(mp));
-}
-
-/*
- * Convert data space db to the corresponding free db.
- */
-static inline xfs_dir2_db_t
-xfs_dir2_db_to_fdb(struct xfs_mount *mp, xfs_dir2_db_t db)
-{
-	return XFS_DIR2_FREE_FIRSTDB(mp) + db / xfs_dir3_free_max_bests(mp);
-}
-
-/*
- * Convert data space db to the corresponding index in a free db.
- */
-static inline int
-xfs_dir2_db_to_fdindex(struct xfs_mount *mp, xfs_dir2_db_t db)
-{
-	return db % xfs_dir3_free_max_bests(mp);
-}
-
 /*
  * Single block format.
  *
@@ -1082,16 +596,6 @@ typedef struct xfs_dir2_block_tail {
 } xfs_dir2_block_tail_t;
 
 /*
- * Pointer to the leaf header embedded in a data block (1-block format)
- */
-static inline struct xfs_dir2_block_tail *
-xfs_dir2_block_tail_p(struct xfs_mount *mp, struct xfs_dir2_data_hdr *hdr)
-{
-	return ((struct xfs_dir2_block_tail *)
-		((char *)hdr + mp->m_dirblksize)) - 1;
-}
-
-/*
  * Pointer to the leaf entries embedded in a data block (1-block format)
  */
 static inline struct xfs_dir2_leaf_entry *
@@ -1109,10 +613,6 @@ xfs_dir2_block_leaf_p(struct xfs_dir2_block_tail *btp)
  * then that int is used as the index into the Btree.  Since the hashval
  * of an attribute name may not be unique, we may have duplicate keys.  The
  * internal links in the Btree are logical block offsets into the file.
- *
- *========================================================================
- * Attribute structure when equal to XFS_LBSIZE(mp) bytes.
- *========================================================================
  *
  * Struct leaf_entry's are packed from the top.  Name/values grow from the
  * bottom but are not packed.  The freemap contains run-length-encoded entries

@@ -425,30 +425,4 @@ struct xfs_btree_block {
 #define XFS_BTREE_LBLOCK_CRC_OFF \
 	offsetof(struct xfs_btree_block, bb_u.l.bb_crc)
 
-/*
- * Generic key, ptr and record wrapper structures.
- *
- * These are disk format structures, and are converted where necessary
- * by the btree specific code that needs to interpret them.
- */
-union xfs_btree_ptr {
-	__be32			s;	/* short form ptr */
-	__be64			l;	/* long form ptr */
-};
-
-union xfs_btree_key {
-	xfs_bmbt_key_t		bmbt;
-	xfs_bmdr_key_t		bmbr;	/* bmbt root block */
-	xfs_alloc_key_t		alloc;
-	xfs_inobt_key_t		inobt;
-};
-
-union xfs_btree_rec {
-	xfs_bmbt_rec_t		bmbt;
-	xfs_bmdr_rec_t		bmbr;	/* bmbt root block */
-	xfs_alloc_rec_t		alloc;
-	xfs_inobt_rec_t		inobt;
-};
-
-
 #endif /* __XFS_FORMAT_H__ */

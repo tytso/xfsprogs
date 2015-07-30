@@ -90,7 +90,7 @@ bmap(
 		push_cur();
 		rblock = (xfs_bmdr_block_t *)XFS_DFORK_PTR(dip, whichfork);
 		fsize = XFS_DFORK_SIZE(dip, mp, whichfork);
-		pp = XFS_BMDR_PTR_ADDR(rblock, 1, xfs_bmdr_maxrecs(mp, fsize, 0));
+		pp = XFS_BMDR_PTR_ADDR(rblock, 1, xfs_bmdr_maxrecs(fsize, 0));
 		kp = XFS_BMDR_KEY_ADDR(rblock, 1);
 		bno = select_child(curoffset, kp, pp, 
 					be16_to_cpu(rblock->bb_numrecs));
@@ -276,10 +276,9 @@ convert_extent(
 	xfs_dfilblks_t		*cp,
 	int			*fp)
 {
-	xfs_bmbt_irec_t		irec;
+	struct xfs_bmbt_irec	irec;
 
 	libxfs_bmbt_disk_get_all(rp, &irec);
-
 	*fp = irec.br_state == XFS_EXT_UNWRITTEN;
 	*op = irec.br_startoff;
 	*sp = irec.br_startblock;

@@ -184,8 +184,8 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		}
 
 		node = (xfs_da_intnode_t *)XFS_BUF_PTR(bp);
-		btree = xfs_da3_node_tree_p(node);
-		xfs_da3_node_hdr_from_disk(&nodehdr, node);
+		btree = M_DIROPS(mp)->node_tree_p(node);
+		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
 		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
 		    nodehdr.magic != XFS_DA3_NODE_MAGIC)  {
@@ -196,12 +196,12 @@ traverse_int_dablock(xfs_mount_t	*mp,
 			goto error_out;
 		}
 
-		if (nodehdr.count > mp->m_dir_node_ents)  {
+		if (nodehdr.count > mp->m_attr_geo->node_ents)  {
 			do_warn(_("bad record count in inode %" PRIu64 ", "
 				  "count = %d, max = %d\n"),
 				da_cursor->ino,
 				nodehdr.count,
-				mp->m_dir_node_ents);
+				mp->m_attr_geo->node_ents);
 			libxfs_putbuf(bp);
 			goto error_out;
 		}
@@ -336,8 +336,8 @@ verify_final_da_path(xfs_mount_t	*mp,
 	 */
 	entry = cursor->level[this_level].index;
 	node = (xfs_da_intnode_t *)XFS_BUF_PTR(cursor->level[this_level].bp);
-	btree = xfs_da3_node_tree_p(node);
-	xfs_da3_node_hdr_from_disk(&nodehdr, node);
+	btree = M_DIROPS(mp)->node_tree_p(node);
+	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
 	/*
 	 * check internal block consistency on this level -- ensure
@@ -508,8 +508,8 @@ verify_da_path(xfs_mount_t	*mp,
 	 */
 	entry = cursor->level[this_level].index;
 	node = (xfs_da_intnode_t *)XFS_BUF_PTR(cursor->level[this_level].bp);
-	btree = xfs_da3_node_tree_p(node);
-	xfs_da3_node_hdr_from_disk(&nodehdr, node);
+	btree = M_DIROPS(mp)->node_tree_p(node);
+	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
 	/*
 	 * if this block is out of entries, validate this
@@ -562,8 +562,9 @@ verify_da_path(xfs_mount_t	*mp,
 		}
 
 		newnode = (xfs_da_intnode_t *)XFS_BUF_PTR(bp);
-		btree = xfs_da3_node_tree_p(node);
-		xfs_da3_node_hdr_from_disk(&nodehdr, newnode);
+		btree = M_DIROPS(mp)->node_tree_p(node);
+		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, newnode);
+
 		/*
 		 * verify magic number and back pointer, sanity-check
 		 * entry count, verify level
@@ -583,7 +584,7 @@ verify_da_path(xfs_mount_t	*mp,
 				dabno, fsbno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.count > mp->m_dir_node_ents) {
+		if (nodehdr.count > mp->m_attr_geo->node_ents) {
 			do_warn(
 	_("entry count %d too large in block %u (%" PRIu64 ") for directory inode %" PRIu64 "\n"),
 				nodehdr.count,
@@ -1186,7 +1187,7 @@ process_leaf_attr_block(
 
 	/* does the count look sorta valid? */
 	if (leafhdr.count * sizeof(xfs_attr_leaf_entry_t) + stop >
-							XFS_LBSIZE(mp)) {
+						mp->m_sb.sb_blocksize) {
 		do_warn(
 	_("bad attribute count %d in attr block %u, inode %" PRIu64 "\n"),
 			leafhdr.count, da_bno, ino);
@@ -1201,7 +1202,7 @@ process_leaf_attr_block(
 			i < leafhdr.count; i++, entry++) {
 
 		/* check if index is within some boundary. */
-		if (be16_to_cpu(entry->nameidx) > XFS_LBSIZE(mp)) {
+		if (be16_to_cpu(entry->nameidx) > mp->m_sb.sb_blocksize) {
 			do_warn(
 	_("bad attribute nameidx %d in attr block %u, inode %" PRIu64 "\n"),
 				be16_to_cpu(entry->nameidx), da_bno, ino);

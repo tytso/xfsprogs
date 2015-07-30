@@ -709,18 +709,37 @@ libxfs_mount(
 			return NULL;
 	}
 
-	/* Initialize the appropriate directory manager */
-	if (!xfs_sb_version_hasdirv2(sbp)) {
+	/*
+	 * We automatically convert v1 inodes to v2 inodes now, so if
+	 * the NLINK bit is not set we can't operate on the filesystem.
+	 */
+	if (!(sbp->sb_versionnum & XFS_SB_VERSION_NLINKBIT)) {
+
+		fprintf(stderr, _(
+	"%s: V1 inodes unsupported. Please try an older xfsprogs.\n"),
+				 progname);
+		exit(1);
+	}
+
+	/* Check for supported directory formats */
+	if (!(sbp->sb_versionnum & XFS_SB_VERSION_DIRV2BIT)) {
 
 		fprintf(stderr, _(
 	"%s: V1 directories unsupported. Please try an older xfsprogs.\n"),
 				 progname);
 		exit(1);
 	}
-	xfs_dir_mount(mp);
 
-	/* Initialize cached values for the attribute manager */
-	mp->m_attr_magicpct = (mp->m_sb.sb_blocksize * 37) / 100;
+	/* check for unsupported other features */
+	if (!xfs_sb_good_version(sbp)) {
+		fprintf(stderr, _(
+	"%s: Unsupported features detected. Please try a newer xfsprogs.\n"),
+				 progname);
+		exit(1);
+	}
+
+	xfs_da_mount(mp);
+
 	if (xfs_sb_version_hasattr2(&mp->m_sb))
 		mp->m_flags |= LIBXFS_MOUNT_ATTR2;
 

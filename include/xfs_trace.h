@@ -49,16 +49,20 @@
 #define trace_xfs_log_recover_item_add_cont(a,b,c,d)	((void) 0)
 #define trace_xfs_log_recover_item_add(a,b,c,d)	((void) 0)
 
-#define trace_xfs_btree_corrupt(a,b)	((void) 0)
-#define trace_xfs_da_btree_corrupt(a,b)	((void) 0)
+#define trace_xfs_btree_corrupt(a,b)		((void) 0)
+#define trace_xfs_da_btree_corrupt(a,b)		((void) 0)
 
 #define trace_xfs_free_extent(a,b,c,d,e,f,g)	((void) 0)
-#define trace_xfs_agf(a,b,c,d)		((void) 0)
+#define trace_xfs_agf(a,b,c,d)			((void) 0)
+#define trace_xfs_read_agf(a,b)			((void) 0)
+#define trace_xfs_alloc_read_agf(a,b)		((void) 0)
+#define trace_xfs_read_agi(a,b)			((void) 0)
+#define trace_xfs_ialloc_read_agi(a,b)		((void) 0)
 
 #define trace_xfs_iext_insert(a,b,c,d,e)	((void) 0)
-#define trace_xfs_iext_remove(a,b,c,d)	((void) 0)
+#define trace_xfs_iext_remove(a,b,c,d)		((void) 0)
 
-#define trace_xfs_dir2_grow_inode(a,b)	((void) 0)
+#define trace_xfs_dir2_grow_inode(a,b)		((void) 0)
 #define trace_xfs_dir2_shrink_inode(a,b)	((void) 0)
 
 #define trace_xfs_dir2_leaf_to_node(a)	((void) 0)

@@ -559,7 +559,6 @@ inode_u_sfdir2_count(
 	ASSERT((char *)XFS_DFORK_DPTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_format == XFS_DINODE_FMT_LOCAL &&
 	       (be16_to_cpu(dip->di_mode) & S_IFMT) == S_IFDIR &&
-	       xfs_sb_version_hasdirv2(&mp->m_sb) &&
 	       !xfs_sb_version_hasftype(&mp->m_sb);
 }
 

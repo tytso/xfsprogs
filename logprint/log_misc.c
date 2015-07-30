@@ -623,12 +623,12 @@ xlog_print_dir2_sf(
 	count = sfp->count;
 	sfep = xfs_dir2_sf_firstentry(sfp);
 	for (i = 0; i < count; i++) {
-		ino = xfs_dir3_sfe_get_ino(log->l_mp, sfp, sfep);
+		ino = M_DIROPS(log->l_mp)->sf_get_ino(sfp, sfep);
 		memmove(namebuf, (sfep->name), sfep->namelen);
 		namebuf[sfep->namelen] = '\0';
 		printf(_("%s ino 0x%llx namelen %d\n"),
 		       namebuf, (unsigned long long)ino, sfep->namelen);
-		sfep = xfs_dir3_sf_nextentry(log->l_mp, sfp, sfep);
+		sfep = M_DIROPS(log->l_mp)->sf_nextentry(sfp, sfep);
 	}
 }
 

@@ -1975,7 +1975,7 @@ process_block_dir_v2(
 	int		v;
 	int		x;
 
-	nex = blkmap_getn(blkmap, 0, mp->m_dirblkfsbs, &bmp);
+	nex = blkmap_getn(blkmap, 0, mp->m_dir_geo->fsbcount, &bmp);
 	v = id->ilist || verbose;
 	if (nex == 0) {
 		if (!sflag || v)
@@ -1989,7 +1989,7 @@ process_block_dir_v2(
 	if (nex > 1)
 		make_bbmap(&bbmap, nex, bmp);
 	set_cur(&typtab[TYP_DIR2], XFS_FSB_TO_DADDR(mp, bmp->startblock),
-		mp->m_dirblkfsbs * blkbb, DB_RING_IGN, nex > 1 ? &bbmap : NULL);
+		mp->m_dir_geo->fsbcount * blkbb, DB_RING_IGN, nex > 1 ? &bbmap : NULL);
 	for (x = 0; !v && x < nex; x++) {
 		for (b = bmp[x].startblock;
 		     !v && b < bmp[x].startblock + bmp[x].blockcount;
@@ -2007,7 +2007,7 @@ process_block_dir_v2(
 		return 0;
 	}
 	dir_hash_init();
-	parent = process_data_dir_v2(dot, dotdot, id, v, mp->m_dirdatablk,
+	parent = process_data_dir_v2(dot, dotdot, id, v, mp->m_dir_geo->datablk,
 		NULL);
 	dir_hash_check(id, v);
 	dir_hash_done();
@@ -2138,7 +2138,7 @@ process_btinode(
 		return;
 	}
 	if (be16_to_cpu(dib->bb_numrecs) >
-			xfs_bmdr_maxrecs(mp, XFS_DFORK_SIZE(dip, mp, whichfork),
+			xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork),
 			be16_to_cpu(dib->bb_level) == 0)) {
 		if (!sflag || id->ilist)
 			dbprintf(_("numrecs for ino %lld %s fork bmap root too "
@@ -2156,7 +2156,7 @@ process_btinode(
 		*nex += be16_to_cpu(dib->bb_numrecs);
 		return;
 	} else {
-		pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(mp,
+		pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(
 				XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 		for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
 			scan_lbtree(be64_to_cpu(pp[i]), 
@@ -2224,15 +2224,15 @@ process_data_dir_v2(
 		error++;
 		return NULLFSINO;
 	}
-	db = xfs_dir2_da_to_db(mp, dabno);
-	bf = xfs_dir3_data_bestfree_p(data);
-	ptr = (char *)xfs_dir3_data_unused_p(data);
+	db = xfs_dir2_da_to_db(mp->m_dir_geo, dabno);
+	bf = M_DIROPS(mp)->data_bestfree_p(data);
+	ptr = (char *)M_DIROPS(mp)->data_unused_p(data);
 	if (be32_to_cpu(block->magic) == XFS_DIR2_BLOCK_MAGIC) {
-		btp = xfs_dir2_block_tail_p(mp, block);
+		btp = xfs_dir2_block_tail_p(mp->m_dir_geo, block);
 		lep = xfs_dir2_block_leaf_p(btp);
 		endptr = (char *)lep;
 		if (endptr <= ptr || endptr > (char *)btp) {
-			endptr = (char *)data + mp->m_dirblksize;
+			endptr = (char *)data + mp->m_dir_geo->blksize;
 			lep = NULL;
 			if (!sflag || v)
 				dbprintf(_("bad block directory tail for dir ino "
@@ -2241,7 +2241,7 @@ process_data_dir_v2(
 			error++;
 		}
 	} else
-		endptr = (char *)data + mp->m_dirblksize;
+		endptr = (char *)data + mp->m_dir_geo->blksize;
 	bf_err = lastfree_err = tag_err = 0;
 	count = lastfree = freeseen = 0;
 	if (be16_to_cpu(bf[0].length) == 0) {
@@ -2310,7 +2310,7 @@ process_data_dir_v2(
 					(int)((char *)dep - (char *)data));
 			error++;
 		}
-		tagp = xfs_dir3_data_entry_tag_p(mp, dep);
+		tagp = M_DIROPS(mp)->data_entry_tag_p(dep);
 		if ((char *)tagp >= endptr) {
 			if (!sflag || v)
 				dbprintf(_("dir %lld block %d bad entry at %d\n"),
@@ -2320,12 +2320,12 @@ process_data_dir_v2(
 			break;
 		}
 		tag_err += be16_to_cpu(*tagp) != (char *)dep - (char *)data;
-		addr = xfs_dir2_db_off_to_dataptr(mp, db,
+		addr = xfs_dir2_db_off_to_dataptr(mp->m_dir_geo, db,
 			(char *)dep - (char *)data);
 		xname.name = dep->name;
 		xname.len = dep->namelen;
 		dir_hash_add(mp->m_dirnameops->hashname(&xname), addr);
-		ptr += xfs_dir3_data_entsize(mp, dep->namelen);
+		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
 		count++;
 		lastfree = 0;
 		lino = be64_to_cpu(dep->inumber);
@@ -2374,7 +2374,7 @@ process_data_dir_v2(
 		}
 	}
 	if (be32_to_cpu(data->magic) == XFS_DIR2_BLOCK_MAGIC) {
-		endptr = (char *)data + mp->m_dirblksize;
+		endptr = (char *)data + mp->m_dir_geo->blksize;
 		for (i = stale = 0; lep && i < be32_to_cpu(btp->count); i++) {
 			if ((char *)&lep[i] >= endptr) {
 				if (!sflag || v)
@@ -2447,7 +2447,7 @@ process_data_dir_v2_freefind(
 	xfs_dir2_data_aoff_t	off;
 
 	off = (xfs_dir2_data_aoff_t)((char *)dup - (char *)data);
-	bf = xfs_dir3_data_bestfree_p(data);
+	bf = M_DIROPS(mp)->data_bestfree_p(data);
 	if (be16_to_cpu(dup->length) <
 			be16_to_cpu(bf[XFS_DIR2_DATA_FD_COUNT - 1].length))
 		return NULL;
@@ -2516,11 +2516,11 @@ process_dir_v2(
 	if (size <= XFS_DFORK_DSIZE(dip, mp) &&
 				dip->di_format == XFS_DINODE_FMT_LOCAL)
 		*parent = process_sf_dir_v2(dip, dot, dotdot, id);
-	else if (last == mp->m_dirblkfsbs &&
+	else if (last == mp->m_dir_geo->fsbcount &&
 			(dip->di_format == XFS_DINODE_FMT_EXTENTS ||
 			dip->di_format == XFS_DINODE_FMT_BTREE))
 		*parent = process_block_dir_v2(blkmap, dot, dotdot, id);
-	else if (last >= mp->m_dirleafblk + mp->m_dirblkfsbs &&
+	else if (last >= mp->m_dir_geo->leafblk + mp->m_dir_geo->fsbcount &&
 			(dip->di_format == XFS_DINODE_FMT_EXTENTS ||
 			dip->di_format == XFS_DINODE_FMT_BTREE))
 		*parent = process_leaf_node_dir_v2(blkmap, dot, dotdot, id, size);
@@ -2925,14 +2925,14 @@ process_leaf_node_dir_v2(
 	v2 = verbose || id->ilist;
 	v = parent = 0;
 	dbno = NULLFILEOFF;
-	freetab = malloc(FREETAB_SIZE(dirsize / mp->m_dirblksize));
-	freetab->naents = (int)(dirsize / mp->m_dirblksize);
+	freetab = malloc(FREETAB_SIZE(dirsize / mp->m_dir_geo->blksize));
+	freetab->naents = (int)(dirsize / mp->m_dir_geo->blksize);
 	freetab->nents = 0;
 	for (i = 0; i < freetab->naents; i++)
 		freetab->ents[i] = NULLDATAOFF;
 	dir_hash_init();
 	while ((dbno = blkmap_next_off(blkmap, dbno, &t)) != NULLFILEOFF) {
-		nex = blkmap_getn(blkmap, dbno, mp->m_dirblkfsbs, &bmp);
+		nex = blkmap_getn(blkmap, dbno, mp->m_dir_geo->fsbcount, &bmp);
 		ASSERT(nex > 0);
 		for (v = v2, x = 0; !v && x < nex; x++) {
 			for (b = bmp[x].startblock;
@@ -2948,7 +2948,7 @@ process_leaf_node_dir_v2(
 		if (nex > 1)
 			make_bbmap(&bbmap, nex, bmp);
 		set_cur(&typtab[TYP_DIR2], XFS_FSB_TO_DADDR(mp, bmp->startblock),
-			mp->m_dirblkfsbs * blkbb, DB_RING_IGN,
+			mp->m_dir_geo->fsbcount * blkbb, DB_RING_IGN,
 			nex > 1 ? &bbmap : NULL);
 		free(bmp);
 		if (iocur_top->data == NULL) {
@@ -2958,10 +2958,10 @@ process_leaf_node_dir_v2(
 					(__uint32_t)dbno, id->ino);
 			error++;
 			pop_cur();
-			dbno += mp->m_dirblkfsbs - 1;
+			dbno += mp->m_dir_geo->fsbcount - 1;
 			continue;
 		}
-		if (dbno < mp->m_dirleafblk) {
+		if (dbno < mp->m_dir_geo->leafblk) {
 			lino = process_data_dir_v2(dot, dotdot, id, v,
 				(xfs_dablk_t)dbno, &freetab);
 			if (lino) {
@@ -2974,7 +2974,7 @@ process_leaf_node_dir_v2(
 				} else
 					parent = lino;
 			}
-		} else if (dbno < mp->m_dirfreeblk) {
+		} else if (dbno < mp->m_dir_geo->freeblk) {
 			process_leaf_node_dir_v2_int(id, v, (xfs_dablk_t)dbno,
 				freetab);
 		} else {
@@ -2982,7 +2982,7 @@ process_leaf_node_dir_v2(
 				freetab);
 		}
 		pop_cur();
-		dbno += mp->m_dirblkfsbs - 1;
+		dbno += mp->m_dir_geo->fsbcount - 1;
 	}
 	dir_hash_check(id, v);
 	dir_hash_done();
@@ -2991,7 +2991,7 @@ process_leaf_node_dir_v2(
 			if (!sflag || v)
 				dbprintf(_("missing free index for data block %d "
 					 "in dir ino %lld\n"),
-					xfs_dir2_db_to_da(mp, i), id->ino);
+					xfs_dir2_db_to_da(mp->m_dir_geo, i), id->ino);
 			error++;
 		}
 	}
@@ -3021,9 +3021,9 @@ process_leaf_node_dir_v2_free(
 		error++;
 		return;
 	}
-	maxent = xfs_dir3_free_max_bests(mp);
-	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp, 
-					dabno - mp->m_dirfreeblk) * maxent) {
+	maxent = M_DIROPS(mp)->free_max_bests(mp->m_dir_geo);
+	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo, 
+					dabno - mp->m_dir_geo->freeblk) * maxent) {
 		if (!sflag || v)
 			dbprintf(_("bad free block firstdb %d for dir ino %lld "
 				 "block %d\n"),
@@ -3103,15 +3103,15 @@ process_leaf_node_dir_v2_int(
 					id->ino, dabno);
 			error++;
 		}
-		if (dabno != mp->m_dirleafblk) {
+		if (dabno != mp->m_dir_geo->leafblk) {
 			if (!sflag || v)
 				dbprintf(_("single leaf block for dir ino %lld "
 					 "block %d should be at block %d\n"),
 					id->ino, dabno,
-					(xfs_dablk_t)mp->m_dirleafblk);
+					(xfs_dablk_t)mp->m_dir_geo->leafblk);
 			error++;
 		}
-		ltp = xfs_dir2_leaf_tail_p(mp, leaf);
+		ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
 		lbp = xfs_dir2_leaf_bests_p(ltp);
 		for (i = 0; i < be32_to_cpu(ltp->bestcount); i++) {
 			if (freetab->nents <= i || freetab->ents[i] != 
@@ -3124,7 +3124,7 @@ process_leaf_node_dir_v2_int(
 							NULLDATAOFF :
 							freetab->ents[i],
 						id->ino,
-						xfs_dir2_db_to_da(mp, i),
+						xfs_dir2_db_to_da(mp->m_dir_geo, i),
 						be16_to_cpu(lbp[i]));
 			}
 			if (freetab->nents > i)
@@ -3137,7 +3137,7 @@ process_leaf_node_dir_v2_int(
 		break;
 	case XFS_DA_NODE_MAGIC:
 		node = iocur_top->data;
-		xfs_da3_node_hdr_from_disk(&nodehdr, node);
+		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 		if (nodehdr.level < 1 || nodehdr.level > XFS_DA_NODE_MAXDEPTH) {
 			if (!sflag || v)
 				dbprintf(_("bad node block level %d for dir ino "
@@ -3156,7 +3156,7 @@ process_leaf_node_dir_v2_int(
 		error++;
 		return;
 	}
-	lep = xfs_dir3_leaf_ents_p(leaf);
+	lep = M_DIROPS(mp)->leaf_ents_p(leaf);
 	for (i = stale = 0; i < be16_to_cpu(leaf->hdr.count); i++) {
 		if (be32_to_cpu(lep[i].address) == XFS_DIR2_NULL_DATAPTR)
 			stale++;
@@ -3434,9 +3434,9 @@ process_sf_dir_v2(
 		dbprintf(_("dir %lld entry . %lld\n"), id->ino, id->ino);
 	(*dot)++;
 	sfe = xfs_dir2_sf_firstentry(sf);
-	offset = xfs_dir3_data_first_offset(mp);
+	offset = M_DIROPS(mp)->data_first_offset;
 	for (i = sf->count - 1, i8 = 0; i >= 0; i--) {
-		if ((__psint_t)sfe + xfs_dir3_sf_entsize(mp, sf, sfe->namelen) -
+		if ((__psint_t)sfe + M_DIROPS(mp)->sf_entsize(sf, sfe->namelen) -
 		    (__psint_t)sf > be64_to_cpu(dip->di_size)) {
 			if (!sflag)
 				dbprintf(_("dir %llu bad size in entry at %d\n"),
@@ -3445,7 +3445,7 @@ process_sf_dir_v2(
 			error++;
 			break;
 		}
-		lino = xfs_dir3_sfe_get_ino(mp, sf, sfe);
+		lino = M_DIROPS(mp)->sf_get_ino(sf, sfe);
 		if (lino > XFS_DIR2_MAX_SHORT_INUM)
 			i8++;
 		cid = find_inode(lino, 1);
@@ -3475,8 +3475,8 @@ process_sf_dir_v2(
 		}
 		offset =
 			xfs_dir2_sf_get_offset(sfe) +
-			xfs_dir3_sf_entsize(mp, sf, sfe->namelen);
-		sfe = xfs_dir3_sf_nextentry(mp, sf, sfe);
+			M_DIROPS(mp)->sf_entsize(sf, sfe->namelen);
+		sfe = M_DIROPS(mp)->sf_nextentry(sf, sfe);
 	}
 	if (i < 0 && (__psint_t)sfe - (__psint_t)sf != 
 					be64_to_cpu(dip->di_size)) {
@@ -3487,12 +3487,12 @@ process_sf_dir_v2(
 		error++;
 	}
 	if (offset + (sf->count + 2) * sizeof(xfs_dir2_leaf_entry_t) +
-	    sizeof(xfs_dir2_block_tail_t) > mp->m_dirblksize) {
+	    sizeof(xfs_dir2_block_tail_t) > mp->m_dir_geo->blksize) {
 		if (!sflag)
 			dbprintf(_("dir %llu offsets too high\n"), id->ino);
 		error++;
 	}
-	lino = xfs_dir2_sf_get_parent_ino(sf);
+	lino = M_DIROPS(mp)->sf_get_parent_ino(sf);
 	if (lino > XFS_DIR2_MAX_SHORT_INUM)
 		i8++;
 	cid = find_inode(lino, 1);
@@ -4222,7 +4222,7 @@ scanfunc_ino(
 			set_cur(&typtab[TYP_INODE],
 				XFS_AGB_TO_DADDR(mp, seqno,
 						 XFS_AGINO_TO_AGBNO(mp, agino)),
-				(int)XFS_FSB_TO_BB(mp, XFS_IALLOC_BLOCKS(mp)),
+				(int)XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
 				DB_RING_IGN, NULL);
 			if (iocur_top->data == NULL) {
 				if (!sflag)

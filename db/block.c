@@ -185,7 +185,7 @@ dblock_f(
 		dbprintf(_("no type for file data\n"));
 		return 0;
 	}
-	nex = nb = type == TYP_DIR2 ? mp->m_dirblkfsbs : 1;
+	nex = nb = type == TYP_DIR2 ? mp->m_dir_geo->fsbcount : 1;
 	bmp = malloc(nb * sizeof(*bmp));
 	bmap(bno, nb, XFS_DATA_FORK, &nex, bmp);
 	if (nex == 0) {

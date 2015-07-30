@@ -444,9 +444,9 @@ calc_mkfs(xfs_mount_t *mp)
 		first_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp, fino_bno, 0);
 	}
 
-	ASSERT(XFS_IALLOC_BLOCKS(mp) > 0);
+	ASSERT(mp->m_ialloc_blks > 0);
 
-	if (XFS_IALLOC_BLOCKS(mp) > 1)
+	if (mp->m_ialloc_blks > 1)
 		last_prealloc_ino = first_prealloc_ino + XFS_INODES_PER_CHUNK;
 	else
 		last_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp, fino_bno + 1, 0);
@@ -621,7 +621,7 @@ main(int argc, char **argv)
 	chunks_pblock = mp->m_sb.sb_inopblock / XFS_INODES_PER_CHUNK;
 	max_symlink_blocks = libxfs_symlink_blocks(mp, MAXPATHLEN);
 	inodes_per_cluster = MAX(mp->m_sb.sb_inopblock,
-			XFS_INODE_CLUSTER_SIZE(mp) >> mp->m_sb.sb_inodelog);
+			mp->m_inode_cluster_size >> mp->m_sb.sb_inodelog);
 
 	/*
 	 * Automatic striding for high agcount filesystems.

@@ -47,6 +47,9 @@
 #include <xfs/xfs_inum.h>
 #include <xfs/xfs_sb.h>
 #include <xfs/xfs_ag.h>
+#include <xfs/xfs_da_format.h>
+#include <xfs/xfs_da_btree.h>
+#include <xfs/xfs_dir2.h>
 #include <xfs/xfs_bmap_btree.h>
 #include <xfs/xfs_alloc_btree.h>
 #include <xfs/xfs_ialloc_btree.h>
@@ -199,8 +202,6 @@ typedef struct xfs_mount {
 	uint			m_flags;	/* global mount flags */
 	uint			m_qflags;	/* quota status flags */
 	uint			m_attroffset;	/* inode attribute offset */
-	uint			m_dir_node_ents; /* #entries in a dir danode */
-	uint			m_attr_node_ents; /* #entries in attr danode */
 	int			m_ialloc_inos;	/* inodes in inode allocation */
 	int			m_ialloc_blks;	/* blocks in inode allocation */
 	int			m_litino;	/* size of inode union area */
@@ -210,14 +211,13 @@ typedef struct xfs_mount {
 	int			m_dalign;	/* stripe unit */
 	int			m_swidth;	/* stripe width */
 	int			m_sinoalign;	/* stripe unit inode alignmnt */
-	int			m_attr_magicpct;/* 37% of the blocksize */
-	int			m_dir_magicpct;	/* 37% of the dir blocksize */
 	const struct xfs_nameops *m_dirnameops;	/* vector of dir name ops */
-	int			m_dirblksize;	/* directory block sz--bytes */
-	int			m_dirblkfsbs;	/* directory block sz--fsbs */
-	xfs_dablk_t		m_dirdatablk;	/* blockno of dir data v2 */
-	xfs_dablk_t		m_dirleafblk;	/* blockno of dir non-data v2 */
-	xfs_dablk_t		m_dirfreeblk;	/* blockno of dirfreeindex v2 */
+
+	struct xfs_da_geometry	*m_dir_geo;	/* directory block geometry */
+	struct xfs_da_geometry	*m_attr_geo;	/* attribute block geometry */
+	const struct xfs_dir_ops *m_dir_inode_ops; /* vector of dir inode ops */
+	const struct xfs_dir_ops *m_nondir_inode_ops; /* !dir inode ops */
+#define M_DIROPS(mp)	((mp)->m_dir_inode_ops)
 
 	/*
 	 * anonymous struct to allow xfs_dquot_buf.c to compile.
@@ -273,13 +273,6 @@ extern xfs_mount_t	*libxfs_mount (xfs_mount_t *, xfs_sb_t *,
 				dev_t, dev_t, dev_t, int);
 extern void	libxfs_umount (xfs_mount_t *);
 extern void	libxfs_rtmount_destroy (xfs_mount_t *);
-
-/*
- * xfs/xfs_da_format.h needs struct xfs_mount to be defined
- */
-#include <xfs/xfs_da_format.h>
-#include <xfs/xfs_da_btree.h>
-#include <xfs/xfs_dir2.h>
 
 /*
  * Simple I/O interface
@@ -608,6 +601,7 @@ typedef struct xfs_inode {
 	unsigned int		i_delayed_blks;	/* count of delay alloc blks */
 	xfs_icdinode_t		i_d;		/* most of ondisk inode */
 	xfs_fsize_t		i_size;		/* in-memory size */
+	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
 } xfs_inode_t;
 
 #define LIBXFS_ATTR_ROOT	0x0002	/* use attrs in root namespace */
@@ -743,7 +737,7 @@ int	libxfs_bunmapi(struct xfs_trans *tp, struct xfs_inode *ip,
 		xfs_extnum_t nexts, xfs_fsblock_t *firstblock,
 		struct xfs_bmap_free *flist, int *done);
 void	libxfs_bmap_cancel(struct xfs_bmap_free *flist);
-int	libxfs_bmap_last_offset(struct xfs_trans *tp, struct xfs_inode *ip,
+int	libxfs_bmap_last_offset(struct xfs_inode *ip,
 		xfs_fileoff_t *unused, int whichfork);
 
 /* xfs_dir2.h */
@@ -761,22 +755,27 @@ int	libxfs_dir_replace(struct xfs_trans *tp, struct xfs_inode *dp,
 				xfs_fsblock_t *first,
 				struct xfs_bmap_free *flist, xfs_extlen_t tot);
 
-int	libxfs_dir2_isblock(struct xfs_trans *tp, struct xfs_inode *dp, int *r);
-int	libxfs_dir2_isleaf(struct xfs_trans *tp, struct xfs_inode *dp, int *r);
+int	libxfs_dir2_isblock(struct xfs_da_args *args, int *r);
+int	libxfs_dir2_isleaf(struct xfs_da_args *args, int *r);
 int	libxfs_dir2_shrink_inode(struct xfs_da_args *args, xfs_dir2_db_t db,
 				struct xfs_buf *bp);
-void	libxfs_dir2_data_freescan(struct xfs_mount *mp,
+
+void	libxfs_dir2_data_freescan(struct xfs_da_geometry *geo,
+		const struct xfs_dir_ops *ops,
 		struct xfs_dir2_data_hdr *hdr, int *loghead);
-void	libxfs_dir2_data_log_entry(struct xfs_trans *tp, struct xfs_buf *bp,
-		struct xfs_dir2_data_entry *dep);
-void	libxfs_dir2_data_log_header(struct xfs_trans *tp,
+void	libxfs_dir2_data_log_entry(struct xfs_da_args *args,
+		struct xfs_buf *bp, struct xfs_dir2_data_entry *dep);
+void	libxfs_dir2_data_log_header(struct xfs_da_args *args,
 		struct xfs_buf *bp);
-void	libxfs_dir2_data_make_free(struct xfs_trans *tp, struct xfs_buf *bp,
+void	libxfs_dir2_data_log_unused(struct xfs_da_args *args,
+		struct xfs_buf *bp, struct xfs_dir2_data_unused *dup);
+void	libxfs_dir2_data_make_free(struct xfs_da_args *args,
+		struct xfs_buf *bp, xfs_dir2_data_aoff_t offset,
+		xfs_dir2_data_aoff_t len, int *needlogp, int *needscanp);
+void	libxfs_dir2_data_use_free(struct xfs_da_args *args,
+		struct xfs_buf *bp, struct xfs_dir2_data_unused *dup,
 		xfs_dir2_data_aoff_t offset, xfs_dir2_data_aoff_t len,
 		int *needlogp, int *needscanp);
-void	libxfs_dir2_data_use_free(struct xfs_trans *tp, struct xfs_buf *bp,
-		struct xfs_dir2_data_unused *dup, xfs_dir2_data_aoff_t offset,
-		xfs_dir2_data_aoff_t len, int *needlogp, int *needscanp);
 
 /* xfs_da_btree.h */
 uint	libxfs_da_hashname(const __uint8_t *name_string, int name_length);
@@ -794,10 +793,9 @@ void	libxfs_dinode_calc_crc(struct xfs_mount *, struct xfs_dinode *);
 /* xfs_inode_fork.h */
 void	libxfs_idata_realloc(struct xfs_inode *, int, int);
 
-/* xfs_shared.h */
+/* xfs_symlink_remote.h */
 int	libxfs_symlink_blocks(struct xfs_mount *mp, int pathlen);
-bool	libxfs_symlink_hdr_ok(struct xfs_mount *mp, xfs_ino_t ino,
-			      uint32_t offset, uint32_t size,
+bool	libxfs_symlink_hdr_ok(xfs_ino_t ino, uint32_t offset, uint32_t size,
 			      struct xfs_buf *bp);
 
 /* xfs_bit.h */
@@ -819,7 +817,19 @@ int libxfs_attr_remove(struct xfs_inode *, const unsigned char *, int);
 xfs_bmbt_rec_host_t *xfs_bmap_search_extents(xfs_inode_t *, xfs_fileoff_t,
 				int, int *, xfs_extnum_t *, xfs_bmbt_irec_t *,
 				xfs_bmbt_irec_t *);
-void libxfs_bmbt_disk_get_all(xfs_bmbt_rec_t *r, xfs_bmbt_irec_t *s);
+void libxfs_bmbt_get_all(struct xfs_bmbt_rec_host *r, struct xfs_bmbt_irec *s);
+
+static inline void
+libxfs_bmbt_disk_get_all(
+	struct xfs_bmbt_rec	*rp,
+	struct xfs_bmbt_irec	*irec)
+{
+	struct xfs_bmbt_rec_host hrec;
+
+	hrec.l0 = be64_to_cpu(rp->l0);
+	hrec.l1 = be64_to_cpu(rp->l1);
+	libxfs_bmbt_get_all(&hrec, irec);
+}
 
 void libxfs_dinode_from_disk(struct xfs_icdinode *,
 			     struct xfs_dinode *);
