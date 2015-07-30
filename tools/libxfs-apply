@@ -28,6 +28,24 @@ fail()
 	exit
 }
 
+# filterdiff 0.3.4 is the first version that handles git diff metadata (almost)
+# correctly. It just doesn't work properly in prior versions, so those versions
+# can't be used to extract the commit message prior to the diff. Hence just
+# abort and tell the user to upgrade if an old version is detected. We need to
+# check against x.y.z version numbers here.
+_version=`filterdiff --version | cut -d " " -f 5`
+_major=`echo $_version | cut -d "." -f 1`
+_minor=`echo $_version | cut -d "." -f 2`
+_patch=`echo $_version | cut -d "." -f 3`
+if [ $_major -eq 0 ]; then
+	if [ $_minor -lt 3 ]; then
+		fail "filterdiff $_version found. 0.3.4 or greater is required."
+	fi
+	if [ $_minor -eq 3 -a $_patch -le 3 ]; then
+		fail "filterdiff $_version found. 0.3.4 or greater is required."
+	fi
+fi
+
 # We should see repository contents we recognise, both at the source and
 # destination. Kernel repositorys will have fs/xfs/libxfs, and xfsprogs
 # repositories will have libxcmd.
@@ -123,6 +141,7 @@ filter_kernel_patch()
 
 	# Create the new patch
 	filterdiff \
+		--verbose \
 		-I $_libxfs_files \
 		--strip=1 \
 		--addoldprefix=a/fs/xfs/ \
@@ -148,6 +167,7 @@ filter_xfsprogs_patch()
 
 	# Create the new patch
 	filterdiff \
+		--verbose \
 		-I $_libxfs_files \
 		--strip=3 \
 		--addoldprefix=a/ \
