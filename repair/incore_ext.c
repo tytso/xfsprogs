@@ -552,7 +552,7 @@ avlops_t avl_extent_tree_ops = {
  * startblocks can be 64-bit values.
  */
 static rt_extent_tree_node_t *
-mk_rt_extent_tree_nodes(xfs_drtbno_t new_startblock,
+mk_rt_extent_tree_nodes(xfs_rtblock_t new_startblock,
 	xfs_extlen_t new_blockcount, extent_state_t new_state)
 {
 	rt_extent_tree_node_t *new;
@@ -620,10 +620,10 @@ free_rt_dup_extent_tree(xfs_mount_t *mp)
  * add a duplicate real-time extent
  */
 void
-add_rt_dup_extent(xfs_drtbno_t startblock, xfs_extlen_t blockcount)
+add_rt_dup_extent(xfs_rtblock_t startblock, xfs_extlen_t blockcount)
 {
 	rt_extent_tree_node_t *first, *last, *ext, *next_ext;
-	xfs_drtbno_t new_startblock;
+	xfs_rtblock_t new_startblock;
 	xfs_extlen_t new_blockcount;
 
 	pthread_mutex_lock(&rt_ext_tree_lock);
@@ -708,7 +708,7 @@ add_rt_dup_extent(xfs_drtbno_t startblock, xfs_extlen_t blockcount)
  */
 /* ARGSUSED */
 int
-search_rt_dup_extent(xfs_mount_t *mp, xfs_drtbno_t bno)
+search_rt_dup_extent(xfs_mount_t *mp, xfs_rtblock_t bno)
 {
 	int ret;
 

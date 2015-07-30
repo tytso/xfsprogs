@@ -22,8 +22,7 @@ HFILES = xfs.h \
 	xfs_dir2_priv.h \
 
 # headers installed in QA targets
-QAHFILES = xfs_ag.h \
-	xfs_alloc.h \
+QAHFILES = xfs_alloc.h \
 	xfs_alloc_btree.h \
 	xfs_attr_leaf.h \
 	xfs_attr_sf.h \
@@ -35,14 +34,12 @@ QAHFILES = xfs_ag.h \
 	xfs_cksum.h \
 	xfs_da_btree.h \
 	xfs_da_format.h \
-	xfs_dinode.h \
 	xfs_dir2.h \
 	xfs_format.h \
 	xfs_ialloc.h \
 	xfs_ialloc_btree.h \
 	xfs_inode_buf.h \
 	xfs_inode_fork.h \
-	xfs_inum.h \
 	xfs_log_format.h \
 	xfs_quota_defs.h \
 	xfs_sb.h \

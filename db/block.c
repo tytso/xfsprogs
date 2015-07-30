@@ -71,13 +71,13 @@ ablock_f(
 	char		**argv)
 {
 	bmap_ext_t	bm;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		haveattr;
 	int		nex;
 	char		*p;
 
-	bno = (xfs_dfiloff_t)strtoull(argv[1], &p, 0);
+	bno = (xfs_fileoff_t)strtoull(argv[1], &p, 0);
 	if (*p != '\0') {
 		dbprintf(_("bad block number %s\n"), argv[1]);
 		return 0;
@@ -165,14 +165,14 @@ dblock_f(
 {
 	bbmap_t		bbmap;
 	bmap_ext_t	*bmp;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		nb;
 	int		nex;
 	char		*p;
 	typnm_t		type;
 
-	bno = (xfs_dfiloff_t)strtoull(argv[1], &p, 0);
+	bno = (xfs_fileoff_t)strtoull(argv[1], &p, 0);
 	if (*p != '\0') {
 		dbprintf(_("bad block number %s\n"), argv[1]);
 		return 0;
@@ -222,7 +222,7 @@ fsblock_f(
 {
 	xfs_agblock_t	agbno;
 	xfs_agnumber_t	agno;
-	xfs_dfsbno_t	d;
+	xfs_fsblock_t	d;
 	char		*p;
 
 	if (argc == 1) {

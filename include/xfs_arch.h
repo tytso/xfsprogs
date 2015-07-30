@@ -18,22 +18,6 @@
 #ifndef __XFS_ARCH_H__
 #define __XFS_ARCH_H__
 
-#ifndef XFS_BIG_INUMS
-# error XFS_BIG_INUMS must be defined true or false
-#endif
-
-#ifdef __KERNEL__
-
-#include <asm/byteorder.h>
-
-#ifdef __BIG_ENDIAN
-#define	XFS_NATIVE_HOST	1
-#else
-#undef XFS_NATIVE_HOST
-#endif
-
-#else /* __KERNEL__ */
-
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define	XFS_NATIVE_HOST	1
 #else
@@ -86,8 +70,6 @@ static inline void be64_add_cpu(__be64 *a, __s64 b)
 {
 	*a = cpu_to_be64(be64_to_cpu(*a) + b);
 }
-
-#endif	/* __KERNEL__ */
 
 /*
  * get and set integers from potentially unaligned locations

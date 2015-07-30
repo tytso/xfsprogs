@@ -1854,10 +1854,10 @@ process_leaf_node_dir2(
 	bmap_ext_t		*bmp;
 	struct xfs_buf		*bp;
 	struct xfs_dir2_data_hdr *data;
-	xfs_dfiloff_t		dbno;
+	xfs_fileoff_t		dbno;
 	int			good;
 	int			i;
-	xfs_dfiloff_t		ndbno;
+	xfs_fileoff_t		ndbno;
 	int			nex;
 	int			t;
 	bmap_ext_t		lbmp;
@@ -1865,7 +1865,7 @@ process_leaf_node_dir2(
 
 	*repair = *dot = *dotdot = good = 0;
 	*parent = NULLFSINO;
-	ndbno = NULLDFILOFF;
+	ndbno = NULLFILEOFF;
 	while ((dbno = blkmap_next_off(blkmap, ndbno, &t)) < mp->m_dir_geo->leafblk) {
 		nex = blkmap_getn(blkmap, dbno, mp->m_dir_geo->fsbcount, &bmp, &lbmp);
 		/* Advance through map to last dfs block in this dir block */
@@ -1940,7 +1940,7 @@ process_dir2(
 {
 	int		dot;
 	int		dotdot;
-	xfs_dfiloff_t	last;
+	xfs_fileoff_t	last;
 	int		repair;
 	int		res;
 

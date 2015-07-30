@@ -614,9 +614,9 @@ static void
 rtinit(
 	xfs_mount_t	*mp)
 {
-	xfs_dfiloff_t	bno;
+	xfs_fileoff_t	bno;
 	int		committed;
-	xfs_dfiloff_t	ebno;
+	xfs_fileoff_t	ebno;
 	xfs_bmbt_irec_t	*ep;
 	int		error;
 	xfs_fsblock_t	first;

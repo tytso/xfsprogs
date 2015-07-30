@@ -158,8 +158,8 @@ void
 phase4(xfs_mount_t *mp)
 {
 	ino_tree_node_t		*irec;
-	xfs_drtbno_t		bno;
-	xfs_drtbno_t		rt_start;
+	xfs_rtblock_t		bno;
+	xfs_rtblock_t		rt_start;
 	xfs_extlen_t		rt_len;
 	xfs_agnumber_t		i;
 	xfs_agblock_t		j;
@@ -194,7 +194,7 @@ phase4(xfs_mount_t *mp)
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)  {
 		ag_end = (i < mp->m_sb.sb_agcount - 1) ? mp->m_sb.sb_agblocks :
 			mp->m_sb.sb_dblocks -
-				(xfs_drfsbno_t) mp->m_sb.sb_agblocks * i;
+				(xfs_rfsblock_t) mp->m_sb.sb_agblocks * i;
 
 		/*
 		 * set up duplicate extent list for this ag

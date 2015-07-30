@@ -120,7 +120,7 @@ mk_incore_fstree(xfs_mount_t *mp, xfs_agnumber_t agno)
 		ag_end = mp->m_sb.sb_agblocks;
 	else
 		ag_end = mp->m_sb.sb_dblocks -
-			(xfs_drfsbno_t)mp->m_sb.sb_agblocks *
+			(xfs_rfsblock_t)mp->m_sb.sb_agblocks *
                        (mp->m_sb.sb_agcount - 1);
 
 	/*
@@ -1107,7 +1107,7 @@ build_agi(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		agi->agi_length = cpu_to_be32(mp->m_sb.sb_agblocks);
 	else
 		agi->agi_length = cpu_to_be32(mp->m_sb.sb_dblocks -
-			(xfs_drfsbno_t) mp->m_sb.sb_agblocks * agno);
+			(xfs_rfsblock_t) mp->m_sb.sb_agblocks * agno);
 	agi->agi_count = cpu_to_be32(agi_stat->count);
 	agi->agi_root = cpu_to_be32(btree_curs->root);
 	agi->agi_level = cpu_to_be32(btree_curs->num_levels);
@@ -1325,7 +1325,7 @@ build_agf_agfl(xfs_mount_t	*mp,
 		agf->agf_length = cpu_to_be32(mp->m_sb.sb_agblocks);
 	else
 		agf->agf_length = cpu_to_be32(mp->m_sb.sb_dblocks -
-			(xfs_drfsbno_t) mp->m_sb.sb_agblocks * agno);
+			(xfs_rfsblock_t) mp->m_sb.sb_agblocks * agno);
 
 	agf->agf_roots[XFS_BTNUM_BNO] = cpu_to_be32(bno_bt->root);
 	agf->agf_levels[XFS_BTNUM_BNO] = cpu_to_be32(bno_bt->num_levels);

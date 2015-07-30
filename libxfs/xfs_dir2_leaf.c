@@ -367,7 +367,6 @@ xfs_dir2_block_to_leaf(
 	xfs_dir2_db_t		ldb;		/* leaf block's bno */
 	xfs_dir2_leaf_t		*leaf;		/* leaf structure */
 	xfs_dir2_leaf_tail_t	*ltp;		/* leaf's tail */
-	xfs_mount_t		*mp;		/* filesystem mount point */
 	int			needlog;	/* need to log block header */
 	int			needscan;	/* need to rescan bestfree */
 	xfs_trans_t		*tp;		/* transaction pointer */
@@ -378,7 +377,6 @@ xfs_dir2_block_to_leaf(
 	trace_xfs_dir2_block_to_leaf(args);
 
 	dp = args->dp;
-	mp = dp->i_mount;
 	tp = args->trans;
 	/*
 	 * Add the leaf block to the inode.
@@ -609,7 +607,6 @@ xfs_dir2_leaf_addname(
 	int			lfloghigh;	/* high leaf logging index */
 	int			lowstale;	/* index of prev stale leaf */
 	xfs_dir2_leaf_tail_t	*ltp;		/* leaf tail pointer */
-	xfs_mount_t		*mp;		/* filesystem mount point */
 	int			needbytes;	/* leaf block bytes needed */
 	int			needlog;	/* need to log data header */
 	int			needscan;	/* need to rescan data free */
@@ -624,7 +621,6 @@ xfs_dir2_leaf_addname(
 
 	dp = args->dp;
 	tp = args->trans;
-	mp = dp->i_mount;
 
 	error = xfs_dir3_leaf_read(tp, dp, args->geo->leafblk, -1, &lbp);
 	if (error)
@@ -1339,11 +1335,9 @@ xfs_dir2_leaf_removename(
 	xfs_dir2_leaf_t		*leaf;		/* leaf structure */
 	xfs_dir2_leaf_entry_t	*lep;		/* leaf entry */
 	xfs_dir2_leaf_tail_t	*ltp;		/* leaf tail structure */
-	xfs_mount_t		*mp;		/* filesystem mount point */
 	int			needlog;	/* need to log data header */
 	int			needscan;	/* need to rescan data frees */
 	xfs_dir2_data_off_t	oldbest;	/* old value of best free */
-	xfs_trans_t		*tp;		/* transaction pointer */
 	struct xfs_dir2_data_free *bf;		/* bestfree table */
 	struct xfs_dir2_leaf_entry *ents;
 	struct xfs_dir3_icleaf_hdr leafhdr;
@@ -1357,8 +1351,6 @@ xfs_dir2_leaf_removename(
 		return error;
 	}
 	dp = args->dp;
-	tp = args->trans;
-	mp = dp->i_mount;
 	leaf = lbp->b_addr;
 	hdr = dbp->b_addr;
 	xfs_dir3_data_check(dp, dbp);
@@ -1590,11 +1582,9 @@ xfs_dir2_leaf_trim_data(
 	int			error;		/* error return value */
 	xfs_dir2_leaf_t		*leaf;		/* leaf structure */
 	xfs_dir2_leaf_tail_t	*ltp;		/* leaf tail structure */
-	xfs_mount_t		*mp;		/* filesystem mount point */
 	xfs_trans_t		*tp;		/* transaction pointer */
 
 	dp = args->dp;
-	mp = dp->i_mount;
 	tp = args->trans;
 	/*
 	 * Read the offending data block.  We need its buffer.

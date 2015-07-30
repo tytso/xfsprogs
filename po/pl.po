@@ -9753,8 +9753,8 @@ msgstr "i-węzeł %<PRIu64>: liczba ekstentów dla odgałęzienia %s zbyt mała 
 
 #: .././repair/dinode.c:1039
 #, c-format
-msgid "bad fwd (right) sibling pointer (saw %<PRIu64> should be NULLDFSBNO)\n"
-msgstr "błędny wskaźnik fwd (prawy) (widziano %<PRIu64>, powinno być NULLDFSBNO)\n"
+msgid "bad fwd (right) sibling pointer (saw %<PRIu64> should be NULLFSBLOCK)\n"
+msgstr "błędny wskaźnik fwd (prawy) (widziano %<PRIu64>, powinno być NULLFSBLOCK)\n"
 
 #: .././repair/dinode.c:1042
 #, c-format
@@ -12217,10 +12217,10 @@ msgstr ""
 #: .././repair/scan.c:487
 #, c-format
 msgid ""
-"bad fwd (right) sibling pointer (saw %<PRIu64> should be NULLDFSBNO)\n"
+"bad fwd (right) sibling pointer (saw %<PRIu64> should be NULLFSBLOCK)\n"
 "\tin inode %<PRIu64> (%s fork) bmap btree block %<PRIu64>\n"
 msgstr ""
-"błędny wskaźnik w przód (prawy) (widziano %<PRIu64>, powinien być NULLDFSBNO)\n"
+"błędny wskaźnik w przód (prawy) (widziano %<PRIu64>, powinien być NULLFSBLOCK)\n"
 "\tw i-węźle %<PRIu64> (gałęzi %s) bloku bmap btree %<PRIu64>\n"
 
 #: .././repair/scan.c:545

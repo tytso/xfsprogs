@@ -19,9 +19,6 @@
 #ifndef __LIBXFS_H__
 #define __LIBXFS_H__
 
-#define XFS_BIG_INUMS	1
-#define XFS_BIG_BLKNOS	1
-
 #include <xfs/platform_defs.h>
 
 #include <xfs/list.h>
@@ -44,9 +41,7 @@
 #include <xfs/xfs_trans_resv.h>
 
 #include <xfs/xfs_bit.h>
-#include <xfs/xfs_inum.h>
 #include <xfs/xfs_sb.h>
-#include <xfs/xfs_ag.h>
 #include <xfs/xfs_da_format.h>
 #include <xfs/xfs_da_btree.h>
 #include <xfs/xfs_dir2.h>
@@ -54,7 +49,6 @@
 #include <xfs/xfs_alloc_btree.h>
 #include <xfs/xfs_ialloc_btree.h>
 #include <xfs/xfs_attr_sf.h>
-#include <xfs/xfs_dinode.h>
 #include <xfs/xfs_inode_fork.h>
 #include <xfs/xfs_inode_buf.h>
 #include <xfs/xfs_alloc.h>

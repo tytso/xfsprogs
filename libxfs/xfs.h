@@ -493,6 +493,7 @@ static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 		return ip->i_size;
 	return ip->i_d.di_size;
 }
+#define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
 
 /* xfs_mount.c */
 int xfs_initialize_perag_data(xfs_mount_t *, xfs_agnumber_t);

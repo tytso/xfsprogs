@@ -56,7 +56,7 @@ int	xfs_attr_shortform_bytesfit(xfs_inode_t *dp, int bytes);
 
 
 /*
- * Internal routines when attribute fork size == mp->m_sb.sb_blocksize 
+ * Internal routines when attribute fork size == XFS_LBSIZE(mp).
  */
 int	xfs_attr3_leaf_to_node(struct xfs_da_args *args);
 int	xfs_attr3_leaf_to_shortform(struct xfs_buf *bp,

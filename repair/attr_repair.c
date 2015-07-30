@@ -145,7 +145,7 @@ traverse_int_dablock(xfs_mount_t	*mp,
 	xfs_dablk_t		bno;
 	int			i;
 	xfs_da_intnode_t	*node;
-	xfs_dfsbno_t		fsbno;
+	xfs_fsblock_t		fsbno;
 	xfs_buf_t		*bp;
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
@@ -166,7 +166,7 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		 */
 		fsbno = blkmap_get(da_cursor->blkmap, bno);
 
-		if (fsbno == NULLDFSBNO)
+		if (fsbno == NULLFSBLOCK)
 			goto error_out;
 
 		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
@@ -493,7 +493,7 @@ verify_da_path(xfs_mount_t	*mp,
 {
 	xfs_da_intnode_t	*node;
 	xfs_da_intnode_t	*newnode;
-	xfs_dfsbno_t		fsbno;
+	xfs_fsblock_t		fsbno;
 	xfs_dablk_t		dabno;
 	xfs_buf_t		*bp;
 	int			bad;
@@ -545,7 +545,7 @@ verify_da_path(xfs_mount_t	*mp,
 		ASSERT(dabno != 0);
 		fsbno = blkmap_get(cursor->blkmap, dabno);
 
-		if (fsbno == NULLDFSBNO) {
+		if (fsbno == NULLFSBLOCK) {
 			do_warn(_("can't get map info for block %u "
 				  "of directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
@@ -995,7 +995,7 @@ static int
 rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		xfs_dablk_t blocknum, int valuelen, char* value)
 {
-	xfs_dfsbno_t	bno;
+	xfs_fsblock_t	bno;
 	xfs_buf_t	*bp;
 	int		clearit = 0, i = 0, length = 0, amountdone = 0;
 	int		hdrsize = 0;
@@ -1007,7 +1007,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 	/* Note that valuelen is not a multiple of blocksize */
 	while (amountdone < valuelen) {
 		bno = blkmap_get(blkmap, blocknum + i);
-		if (bno == NULLDFSBNO) {
+		if (bno == NULLFSBLOCK) {
 			do_warn(
 	_("remote block for attributes of inode %" PRIu64 " is missing\n"), ino);
 			clearit = 1;
@@ -1330,7 +1330,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 	xfs_attr_leafblock_t	*leaf;
 	xfs_buf_t		*bp;
 	xfs_ino_t		ino;
-	xfs_dfsbno_t		dev_bno;
+	xfs_fsblock_t		dev_bno;
 	xfs_dablk_t		da_bno;
 	xfs_dablk_t		prev_bno;
 	xfs_dahash_t		current_hashval = 0;
@@ -1350,7 +1350,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		 */
 		ASSERT(da_bno != 0);
 
-		if (dev_bno == NULLDFSBNO) {
+		if (dev_bno == NULLFSBLOCK) {
 			do_warn(
 	_("can't map block %u for attribute fork for inode %" PRIu64 "\n"),
 				da_bno, ino);
@@ -1519,7 +1519,7 @@ process_longform_attr(
 	int		*repair)	/* out - 1 if something was fixed */
 {
 	xfs_attr_leafblock_t	*leaf;
-	xfs_dfsbno_t	bno;
+	xfs_fsblock_t	bno;
 	xfs_buf_t	*bp;
 	xfs_dahash_t	next_hashval;
 	int		repairlinks = 0;
@@ -1529,7 +1529,7 @@ process_longform_attr(
 
 	bno = blkmap_get(blkmap, 0);
 
-	if ( bno == NULLDFSBNO ) {
+	if ( bno == NULLFSBLOCK ) {
 		if (dip->di_aformat == XFS_DINODE_FMT_EXTENTS && 
 				be16_to_cpu(dip->di_anextents) == 0)
 			return(0); /* the kernel can handle this state */

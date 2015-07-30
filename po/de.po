@@ -10069,10 +10069,10 @@ msgstr ""
 #: .././repair/scan.c:421
 #, c-format
 msgid ""
-"bad fwd (right) sibling pointer (saw %llu should be NULLDFSBNO)\n"
+"bad fwd (right) sibling pointer (saw %llu should be NULLFSBLOCK)\n"
 "\tin inode %llu (%s fork) bmap btree block %llu\n"
 msgstr ""
-"falscher fwd (rechts) Geschwisterzeiger (%llu gesehen könnte NULLDFSBNO\n"
+"falscher fwd (rechts) Geschwisterzeiger (%llu gesehen könnte NULLFSBLOCK\n"
 "\tsein) in Inode %llu (%s Unterelement) »bmap btree«-Block %llu\n"
 
 #: .././repair/scan.c:460
@@ -11740,9 +11740,9 @@ msgstr ""
 
 #: .././repair/dinode.c:1302
 #, c-format
-msgid "bad fwd (right) sibling pointer (saw %llu should be NULLDFSBNO)\n"
+msgid "bad fwd (right) sibling pointer (saw %llu should be NULLFSBLOCK)\n"
 msgstr ""
-"falscher fwd (rechts) Geschwisterzeiger (%llu gesehen könnte NULLDFSBNO\n"
+"falscher fwd (rechts) Geschwisterzeiger (%llu gesehen könnte NULLFSBLOCK\n"
 "sein)\n"
 
 #: .././repair/dinode.c:1305

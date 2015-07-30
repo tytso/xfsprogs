@@ -99,15 +99,15 @@ scan_sbtree(
  */
 int
 scan_lbtree(
-	xfs_dfsbno_t	root,
+	xfs_fsblock_t	root,
 	int		nlevels,
 	int		(*func)(struct xfs_btree_block	*block,
 				int			level,
 				int			type,
 				int			whichfork,
-				xfs_dfsbno_t		bno,
+				xfs_fsblock_t		bno,
 				xfs_ino_t		ino,
-				xfs_drfsbno_t		*tot,
+				xfs_rfsblock_t		*tot,
 				__uint64_t		*nex,
 				blkmap_t		**blkmapp,
 				bmap_cursor_t		*bm_cursor,
@@ -118,7 +118,7 @@ scan_lbtree(
 	int		type,
 	int		whichfork,
 	xfs_ino_t	ino,
-	xfs_drfsbno_t	*tot,
+	xfs_rfsblock_t	*tot,
 	__uint64_t	*nex,
 	blkmap_t	**blkmapp,
 	bmap_cursor_t	*bm_cursor,
@@ -174,9 +174,9 @@ scan_bmapbt(
 	int			level,
 	int			type,
 	int			whichfork,
-	xfs_dfsbno_t		bno,
+	xfs_fsblock_t		bno,
 	xfs_ino_t		ino,
-	xfs_drfsbno_t		*tot,
+	xfs_rfsblock_t		*tot,
 	__uint64_t		*nex,
 	blkmap_t		**blkmapp,
 	bmap_cursor_t		*bm_cursor,
@@ -190,8 +190,8 @@ scan_bmapbt(
 	xfs_bmbt_ptr_t		*pp;
 	xfs_bmbt_key_t		*pkey;
 	xfs_bmbt_rec_t		*rp;
-	xfs_dfiloff_t		first_key;
-	xfs_dfiloff_t		last_key;
+	xfs_fileoff_t		first_key;
+	xfs_fileoff_t		last_key;
 	char			*forkname = get_forkname(whichfork);
 	int			numrecs;
 	xfs_agnumber_t		agno;
@@ -252,7 +252,7 @@ _("wrong FS UUID, bmbt block %" PRIu64 "\n"),
 		 * between the sibling pointers and the child pointers
 		 * in the parent block.  blow out the inode if that happens
 		 */
-		if (bm_cursor->level[level].fsbno != NULLDFSBNO)  {
+		if (bm_cursor->level[level].fsbno != NULLFSBLOCK)  {
 			/*
 			 * this is not the first block on this level
 			 * so the cursor for this level has recorded the
@@ -283,7 +283,7 @@ _("bad back (left) sibling pointer (saw %llu parent block says %" PRIu64 ")\n"
 			 * This is the first or only block on this level.
 			 * Check that the left sibling pointer is NULL
 			 */
-			if (be64_to_cpu(block->bb_u.l.bb_leftsib) != NULLDFSBNO) {
+			if (be64_to_cpu(block->bb_u.l.bb_leftsib) != NULLFSBLOCK) {
 				do_warn(
 _("bad back (left) sibling pointer (saw %llu should be NULL (0))\n"
   "\tin inode %" PRIu64 " (%s fork) bmap btree block %" PRIu64 "\n"),
@@ -397,13 +397,13 @@ _("inode %" PRIu64 " bad # of bmap records (%u, min - %u, max - %u)\n"),
 			/*
 			 * check that key ordering is monotonically increasing.
 			 * if the last_key value in the cursor is set to
-			 * NULLDFILOFF, then we know this is the first block
+			 * NULLFILEOFF, then we know this is the first block
 			 * on the leaf level and we shouldn't check the
 			 * last_key value.
 			 */
 			if (first_key <= bm_cursor->level[level].last_key &&
 					bm_cursor->level[level].last_key !=
-					NULLDFILOFF)  {
+					NULLFILEOFF)  {
 				do_warn(
 _("out-of-order bmap key (file offset) in inode %" PRIu64 ", %s fork, fsbno %" PRIu64 "\n"),
 					ino, forkname, bno);
@@ -433,7 +433,7 @@ _("inode %" PRIu64 " bad # of bmap records (%u, min - %u, max - %u)\n"),
 	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
 	pkey = XFS_BMBT_KEY_ADDR(mp, block, 1);
 
-	last_key = NULLDFILOFF;
+	last_key = NULLFILEOFF;
 
 	for (i = 0, err = 0; i < numrecs; i++)  {
 		/*
@@ -498,10 +498,10 @@ _("bad btree key (is %llu, should be %" PRIu64 ") in inode %" PRIu64 "\n"
 	 * block's forward sibling pointer is NULL.
 	 */
 	if (check_dups == 0 &&
-			bm_cursor->level[level].right_fsbno == NULLDFSBNO &&
-			bm_cursor->level[level - 1].right_fsbno != NULLDFSBNO) {
+			bm_cursor->level[level].right_fsbno == NULLFSBLOCK &&
+			bm_cursor->level[level - 1].right_fsbno != NULLFSBLOCK) {
 		do_warn(
-_("bad fwd (right) sibling pointer (saw %" PRIu64 " should be NULLDFSBNO)\n"
+_("bad fwd (right) sibling pointer (saw %" PRIu64 " should be NULLFSBLOCK)\n"
   "\tin inode %" PRIu64 " (%s fork) bmap btree block %" PRIu64 "\n"),
 			bm_cursor->level[level - 1].right_fsbno,
 			ino, forkname, bm_cursor->level[level - 1].fsbno);

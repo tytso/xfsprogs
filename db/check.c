@@ -183,8 +183,8 @@ typedef void	(*scan_lbtree_f_t)(struct xfs_btree_block *block,
 				   dbm_t		type,
 				   xfs_fsblock_t	bno,
 				   inodata_t		*id,
-				   xfs_drfsbno_t	*totd,
-				   xfs_drfsbno_t	*toti,
+				   xfs_rfsblock_t	*totd,
+				   xfs_rfsblock_t	*toti,
 				   xfs_extnum_t		*nex,
 				   blkmap_t		**blkmapp,
 				   int			isroot,
@@ -233,23 +233,23 @@ static int		check_inomap(xfs_agnumber_t agno, xfs_agblock_t agbno,
 static void		check_linkcounts(xfs_agnumber_t agno);
 static int		check_range(xfs_agnumber_t agno, xfs_agblock_t agbno,
 				    xfs_extlen_t len);
-static void		check_rdbmap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static void		check_rdbmap(xfs_rfsblock_t bno, xfs_extlen_t len,
 				     dbm_t type);
-static int		check_rinomap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static int		check_rinomap(xfs_rfsblock_t bno, xfs_extlen_t len,
 				      xfs_ino_t c_ino);
 static void		check_rootdir(void);
-static int		check_rrange(xfs_drfsbno_t bno, xfs_extlen_t len);
+static int		check_rrange(xfs_rfsblock_t bno, xfs_extlen_t len);
 static void		check_set_dbmap(xfs_agnumber_t agno,
 					xfs_agblock_t agbno, xfs_extlen_t len,
 					dbm_t type1, dbm_t type2,
 					xfs_agnumber_t c_agno,
 					xfs_agblock_t c_agbno);
-static void		check_set_rdbmap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static void		check_set_rdbmap(xfs_rfsblock_t bno, xfs_extlen_t len,
 					 dbm_t type1, dbm_t type2);
 static void		check_summary(void);
 static void		checknot_dbmap(xfs_agnumber_t agno, xfs_agblock_t agbno,
 				       xfs_extlen_t len, int typemask);
-static void		checknot_rdbmap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static void		checknot_rdbmap(xfs_rfsblock_t bno, xfs_extlen_t len,
 					int typemask);
 static void		dir_hash_add(xfs_dahash_t hash,
 				     xfs_dir2_dataptr_t addr);
@@ -268,11 +268,11 @@ static xfs_ino_t	process_block_dir_v2(blkmap_t *blkmap, int *dot,
 					     int *dotdot, inodata_t *id);
 static void		process_bmbt_reclist(xfs_bmbt_rec_t *rp, int numrecs,
 					     dbm_t type, inodata_t *id,
-					     xfs_drfsbno_t *tot,
+					     xfs_rfsblock_t *tot,
 					     blkmap_t **blkmapp);
 static void		process_btinode(inodata_t *id, xfs_dinode_t *dip,
-					dbm_t type, xfs_drfsbno_t *totd,
-					xfs_drfsbno_t *toti, xfs_extnum_t *nex,
+					dbm_t type, xfs_rfsblock_t *totd,
+					xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					blkmap_t **blkmapp, int whichfork);
 static xfs_ino_t	process_data_dir_v2(int *dot, int *dotdot,
 					    inodata_t *id, int v,
@@ -287,14 +287,14 @@ static int		process_dir_v2(xfs_dinode_t *dip, blkmap_t *blkmap,
 				       int *dot, int *dotdot, inodata_t *id,
 				       xfs_ino_t *parent);
 static void		process_exinode(inodata_t *id, xfs_dinode_t *dip,
-					dbm_t type, xfs_drfsbno_t *totd,
-					xfs_drfsbno_t *toti, xfs_extnum_t *nex,
+					dbm_t type, xfs_rfsblock_t *totd,
+					xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					blkmap_t **blkmapp, int whichfork);
 static void		process_inode(xfs_agf_t *agf, xfs_agino_t agino,
 				      xfs_dinode_t *dip, int isfree);
 static void		process_lclinode(inodata_t *id, xfs_dinode_t *dip,
-					 dbm_t type, xfs_drfsbno_t *totd,
-					 xfs_drfsbno_t *toti, xfs_extnum_t *nex,
+					 dbm_t type, xfs_rfsblock_t *totd,
+					 xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					 blkmap_t **blkmapp, int whichfork);
 static xfs_ino_t	process_leaf_node_dir_v2(blkmap_t *blkmap, int *dot,
 						 int *dotdot, inodata_t *id,
@@ -323,8 +323,8 @@ static void		scan_ag(xfs_agnumber_t agno);
 static void		scan_freelist(xfs_agf_t *agf);
 static void		scan_lbtree(xfs_fsblock_t root, int nlevels,
 				    scan_lbtree_f_t func, dbm_t type,
-				    inodata_t *id, xfs_drfsbno_t *totd,
-				    xfs_drfsbno_t *toti, xfs_extnum_t *nex,
+				    inodata_t *id, xfs_rfsblock_t *totd,
+				    xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 				    blkmap_t **blkmapp, int isroot,
 				    typnm_t btype);
 static void		scan_sbtree(xfs_agf_t *agf, xfs_agblock_t root,
@@ -332,8 +332,8 @@ static void		scan_sbtree(xfs_agf_t *agf, xfs_agblock_t root,
 				    scan_sbtree_f_t func, typnm_t btype);
 static void		scanfunc_bmap(struct xfs_btree_block *block,
 				      int level, dbm_t type, xfs_fsblock_t bno,
-				      inodata_t *id, xfs_drfsbno_t *totd,
-				      xfs_drfsbno_t *toti, xfs_extnum_t *nex,
+				      inodata_t *id, xfs_rfsblock_t *totd,
+				      xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 				      blkmap_t **blkmapp, int isroot,
 				      typnm_t btype);
 static void		scanfunc_bno(struct xfs_btree_block *block, int level,
@@ -350,9 +350,9 @@ static void		set_dbmap(xfs_agnumber_t agno, xfs_agblock_t agbno,
 				  xfs_agnumber_t c_agno, xfs_agblock_t c_agbno);
 static void		set_inomap(xfs_agnumber_t agno, xfs_agblock_t agbno,
 				   xfs_extlen_t len, inodata_t *id);
-static void		set_rdbmap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static void		set_rdbmap(xfs_rfsblock_t bno, xfs_extlen_t len,
 				   dbm_t type);
-static void		set_rinomap(xfs_drfsbno_t bno, xfs_extlen_t len,
+static void		set_rinomap(xfs_rfsblock_t bno, xfs_extlen_t len,
 				    inodata_t *id);
 static void		setlink_inode(inodata_t *id, nlink_t nlink, int isdir,
 				       int security);
@@ -997,8 +997,8 @@ blocktrash_f(
 {
 	xfs_agblock_t	agbno;
 	xfs_agnumber_t	agno;
-	xfs_drfsbno_t	bi;
-	xfs_drfsbno_t	blocks;
+	xfs_rfsblock_t	bi;
+	xfs_rfsblock_t	blocks;
 	int		c;
 	int		count;
 	int		done;
@@ -1011,7 +1011,7 @@ blocktrash_f(
 	int		mode;
 	struct timeval	now;
 	char		*p;
-	xfs_drfsbno_t	randb;
+	xfs_rfsblock_t	randb;
 	uint		seed;
 	int		sopt;
 	int		tmask;
@@ -1135,7 +1135,7 @@ blocktrash_f(
 		dbprintf(_("blocktrash: seed %u\n"), seed);
 	srandom(seed);
 	for (i = 0; i < count; i++) {
-		randb = (xfs_drfsbno_t)((((__int64_t)random() << 32) |
+		randb = (xfs_rfsblock_t)((((__int64_t)random() << 32) |
 					 random()) % blocks);
 		for (bi = 0, agno = 0, done = 0;
 		     !done && agno < mp->m_sb.sb_agcount;
@@ -1210,7 +1210,7 @@ blockuse_f(
 		p = &dbmap[agno][agbno];
 		i = inomap[agno][agbno];
 		dbprintf(_("block %llu (%u/%u) type %s"),
-			(xfs_dfsbno_t)XFS_AGB_TO_FSB(mp, agno, agbno),
+			(xfs_fsblock_t)XFS_AGB_TO_FSB(mp, agno, agbno),
 			agno, agbno, typename[(dbm_t)*p]);
 		if (i) {
 			dbprintf(_(" inode %lld"), i->ino);
@@ -1407,7 +1407,7 @@ check_range(
 
 static void
 check_rdbmap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	dbm_t		type)
 {
@@ -1428,7 +1428,7 @@ check_rdbmap(
 
 static int
 check_rinomap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	xfs_ino_t	c_ino)
 {
@@ -1477,7 +1477,7 @@ check_rootdir(void)
 
 static int
 check_rrange(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len)
 {
 	xfs_extlen_t	i;
@@ -1525,7 +1525,7 @@ check_set_dbmap(
 
 static void
 check_set_rdbmap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	dbm_t		type1,
 	dbm_t		type2)
@@ -1549,7 +1549,7 @@ check_set_rdbmap(
 static void
 check_summary(void)
 {
-	xfs_drfsbno_t	bno;
+	xfs_rfsblock_t	bno;
 	xfs_suminfo_t	*csp;
 	xfs_suminfo_t	*fsp;
 	int		log;
@@ -1596,7 +1596,7 @@ checknot_dbmap(
 
 static void
 checknot_rdbmap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	int		typemask)
 {
@@ -2021,21 +2021,21 @@ process_bmbt_reclist(
 	int			numrecs,
 	dbm_t			type,
 	inodata_t		*id,
-	xfs_drfsbno_t		*tot,
+	xfs_rfsblock_t		*tot,
 	blkmap_t		**blkmapp)
 {
 	xfs_agblock_t		agbno;
 	xfs_agnumber_t		agno;
 	xfs_fsblock_t		b;
-	xfs_dfilblks_t		c;
-	xfs_dfilblks_t		cp;
+	xfs_filblks_t		c;
+	xfs_filblks_t		cp;
 	int			f;
 	int			i;
 	xfs_agblock_t		iagbno;
 	xfs_agnumber_t		iagno;
-	xfs_dfiloff_t		o;
-	xfs_dfiloff_t		op;
-	xfs_dfsbno_t		s;
+	xfs_fileoff_t		o;
+	xfs_fileoff_t		op;
+	xfs_fsblock_t		s;
 	int			v;
 
 	cp = op = 0;
@@ -2090,7 +2090,7 @@ process_bmbt_reclist(
 				if (CHECK_BLIST(b))
 					dbprintf(_("inode %lld block %lld at "
 						 "offset %lld\n"),
-						id->ino, (xfs_dfsbno_t)b, o);
+						id->ino, (xfs_fsblock_t)b, o);
 			}
 		} else {
 			agno = XFS_FSB_TO_AGNO(mp, (xfs_fsblock_t)s);
@@ -2104,7 +2104,7 @@ process_bmbt_reclist(
 				if (CHECK_BLIST(b))
 					dbprintf(_("inode %lld block %lld at "
 						 "offset %lld\n"),
-						id->ino, (xfs_dfsbno_t)b, o);
+						id->ino, (xfs_fsblock_t)b, o);
 			}
 		}
 		*tot += c;
@@ -2116,8 +2116,8 @@ process_btinode(
 	inodata_t		*id,
 	xfs_dinode_t		*dip,
 	dbm_t			type,
-	xfs_drfsbno_t		*totd,
-	xfs_drfsbno_t		*toti,
+	xfs_rfsblock_t		*totd,
+	xfs_rfsblock_t		*toti,
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork)
@@ -2540,8 +2540,8 @@ process_exinode(
 	inodata_t		*id,
 	xfs_dinode_t		*dip,
 	dbm_t			type,
-	xfs_drfsbno_t		*totd,
-	xfs_drfsbno_t		*toti,
+	xfs_rfsblock_t		*totd,
+	xfs_rfsblock_t		*toti,
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork)
@@ -2576,13 +2576,13 @@ process_inode(
 	xfs_extnum_t		nextents = 0;
 	int			nlink;
 	int			security;
-	xfs_drfsbno_t		totblocks;
-	xfs_drfsbno_t		totdblocks = 0;
-	xfs_drfsbno_t		totiblocks = 0;
+	xfs_rfsblock_t		totblocks;
+	xfs_rfsblock_t		totdblocks = 0;
+	xfs_rfsblock_t		totiblocks = 0;
 	dbm_t			type;
 	xfs_extnum_t		anextents = 0;
-	xfs_drfsbno_t		atotdblocks = 0;
-	xfs_drfsbno_t		atotiblocks = 0;
+	xfs_rfsblock_t		atotdblocks = 0;
+	xfs_rfsblock_t		atotiblocks = 0;
 	xfs_qcnt_t		bc = 0;
 	xfs_qcnt_t		ic = 0;
 	xfs_qcnt_t		rc = 0;
@@ -2870,8 +2870,8 @@ process_lclinode(
 	inodata_t		*id,
 	xfs_dinode_t		*dip,
 	dbm_t			type,
-	xfs_drfsbno_t		*totd,
-	xfs_drfsbno_t		*toti,
+	xfs_rfsblock_t		*totd,
+	xfs_rfsblock_t		*toti,
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork)
@@ -2943,7 +2943,7 @@ process_leaf_node_dir_v2(
 		if (v)
 			dbprintf(_("dir inode %lld block %u=%llu\n"), id->ino,
 				(__uint32_t)dbno,
-				(xfs_dfsbno_t)bmp->startblock);
+				(xfs_fsblock_t)bmp->startblock);
 		push_cur();
 		if (nex > 1)
 			make_bbmap(&bbmap, nex, bmp);
@@ -3230,8 +3230,8 @@ process_quota(
 			if (scicb)
 				dbprintf(_("can't read block %lld for %s quota "
 					 "inode (fsblock %lld)\n"),
-					(xfs_dfiloff_t)qbno, s,
-					(xfs_dfsbno_t)bno);
+					(xfs_fileoff_t)qbno, s,
+					(xfs_fsblock_t)bno);
 			error++;
 			pop_cur();
 			continue;
@@ -3240,7 +3240,7 @@ process_quota(
 			if (verbose || id->ilist || cb)
 				dbprintf(_("%s dqblk %lld entry %d id %u bc "
 					 "%lld ic %lld rc %lld\n"),
-					s, (xfs_dfiloff_t)qbno, i, dqid,
+					s, (xfs_fileoff_t)qbno, i, dqid,
 					be64_to_cpu(dqb->dd_diskdq.d_bcount),
 					be64_to_cpu(dqb->dd_diskdq.d_icount),
 					be64_to_cpu(dqb->dd_diskdq.d_rtbcount));
@@ -3249,7 +3249,7 @@ process_quota(
 					dbprintf(_("bad magic number %#x for %s "
 						 "dqblk %lld entry %d id %u\n"),
 						be16_to_cpu(dqb->dd_diskdq.d_magic), s,
-						(xfs_dfiloff_t)qbno, i, dqid);
+						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
 				continue;
 			}
@@ -3259,7 +3259,7 @@ process_quota(
 						 "%s dqblk %lld entry %d id "
 						 "%u\n"),
 						dqb->dd_diskdq.d_version, s,
-						(xfs_dfiloff_t)qbno, i, dqid);
+						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
 				continue;
 			}
@@ -3268,7 +3268,7 @@ process_quota(
 					dbprintf(_("bad flags %#x for %s dqblk "
 						 "%lld entry %d id %u\n"),
 						dqb->dd_diskdq.d_flags, s,
-						(xfs_dfiloff_t)qbno, i, dqid);
+						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
 				continue;
 			}
@@ -3277,7 +3277,7 @@ process_quota(
 					dbprintf(_("bad id %u for %s dqblk %lld "
 						 "entry %d id %u\n"),
 						be32_to_cpu(dqb->dd_diskdq.d_id), s,
-						(xfs_dfiloff_t)qbno, i, dqid);
+						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
 				continue;
 			}
@@ -3301,12 +3301,12 @@ process_rtbitmap(
 	int		bitsperblock;
 	xfs_fileoff_t	bmbno;
 	xfs_fsblock_t	bno;
-	xfs_drtbno_t	extno;
+	xfs_rtblock_t	extno;
 	int		len;
 	int		log;
 	int		offs;
 	int		prevbit;
-	xfs_drfsbno_t	rtbno;
+	xfs_rfsblock_t	rtbno;
 	int		start_bmbno;
 	int		start_bit;
 	int		t;
@@ -3322,7 +3322,7 @@ process_rtbitmap(
 			if (!sflag)
 				dbprintf(_("block %lld for rtbitmap inode is "
 					 "missing\n"),
-					(xfs_dfiloff_t)bmbno);
+					(xfs_fileoff_t)bmbno);
 			error++;
 			continue;
 		}
@@ -3333,7 +3333,7 @@ process_rtbitmap(
 			if (!sflag)
 				dbprintf(_("can't read block %lld for rtbitmap "
 					 "inode\n"),
-					(xfs_dfiloff_t)bmbno);
+					(xfs_fileoff_t)bmbno);
 			error++;
 			pop_cur();
 			continue;
@@ -3389,7 +3389,7 @@ process_rtsummary(
 			if (!sflag)
 				dbprintf(_("block %lld for rtsummary inode is "
 					 "missing\n"),
-					(xfs_dfiloff_t)sumbno);
+					(xfs_fileoff_t)sumbno);
 			error++;
 			continue;
 		}
@@ -3400,7 +3400,7 @@ process_rtsummary(
 			if (!sflag)
 				dbprintf(_("can't read block %lld for rtsummary "
 					 "inode\n"),
-					(xfs_dfiloff_t)sumbno);
+					(xfs_fileoff_t)sumbno);
 			error++;
 			pop_cur();
 			continue;
@@ -3885,8 +3885,8 @@ scan_lbtree(
 	scan_lbtree_f_t	func,
 	dbm_t		type,
 	inodata_t	*id,
-	xfs_drfsbno_t	*totd,
-	xfs_drfsbno_t	*toti,
+	xfs_rfsblock_t	*totd,
+	xfs_rfsblock_t	*toti,
 	xfs_extnum_t	*nex,
 	blkmap_t	**blkmapp,
 	int		isroot,
@@ -3941,8 +3941,8 @@ scanfunc_bmap(
 	dbm_t			type,
 	xfs_fsblock_t		bno,
 	inodata_t		*id,
-	xfs_drfsbno_t		*totd,
-	xfs_drfsbno_t		*toti,
+	xfs_rfsblock_t		*totd,
+	xfs_rfsblock_t		*toti,
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			isroot,
@@ -3981,7 +3981,7 @@ scanfunc_bmap(
 					 "in inode %lld bmap block %lld\n"),
 					be16_to_cpu(block->bb_numrecs), mp->m_bmap_dmnr[0],
 					mp->m_bmap_dmxr[0], id->ino,
-					(xfs_dfsbno_t)bno);
+					(xfs_fsblock_t)bno);
 			error++;
 			return;
 		}
@@ -3997,7 +3997,7 @@ scanfunc_bmap(
 			dbprintf(_("bad btree nrecs (%u, min=%u, max=%u) in "
 				 "inode %lld bmap block %lld\n"),
 				be16_to_cpu(block->bb_numrecs), mp->m_bmap_dmnr[1],
-				mp->m_bmap_dmxr[1], id->ino, (xfs_dfsbno_t)bno);
+				mp->m_bmap_dmxr[1], id->ino, (xfs_fsblock_t)bno);
 		error++;
 		return;
 	}
@@ -4306,7 +4306,7 @@ set_inomap(
 
 static void
 set_rdbmap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	dbm_t		type)
 {
@@ -4315,7 +4315,7 @@ set_rdbmap(
 
 static void
 set_rinomap(
-	xfs_drfsbno_t	bno,
+	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len,
 	inodata_t	*id)
 {

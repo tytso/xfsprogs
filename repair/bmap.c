@@ -106,10 +106,10 @@ blkmap_free(
 /*
  * Get one entry from a block map.
  */
-xfs_dfsbno_t
+xfs_fsblock_t
 blkmap_get(
 	blkmap_t	*blkmap,
-	xfs_dfiloff_t	o)
+	xfs_fileoff_t	o)
 {
 	bmap_ext_t	*ext = blkmap->exts;
 	int		i;
@@ -118,7 +118,7 @@ blkmap_get(
 		if (o >= ext->startoff && o < ext->startoff + ext->blockcount)
 			return ext->startblock + (o - ext->startoff);
 	}
-	return NULLDFSBNO;
+	return NULLFSBLOCK;
 }
 
 /*
@@ -127,8 +127,8 @@ blkmap_get(
 int
 blkmap_getn(
 	blkmap_t	*blkmap,
-	xfs_dfiloff_t	o,
-	xfs_dfilblks_t	nb,
+	xfs_fileoff_t	o,
+	xfs_filblks_t	nb,
 	bmap_ext_t	**bmpp,
 	bmap_ext_t	*bmpp_single)
 {
@@ -188,20 +188,20 @@ single_ext:
 	bmpp_single->blockcount = nb;
 	bmpp_single->startoff = 0;	/* not even used by caller! */
 	*bmpp = bmpp_single;
-	return (bmpp_single->startblock != NULLDFSBNO) ? 1 : 0;
+	return (bmpp_single->startblock != NULLFSBLOCK) ? 1 : 0;
 }
 
 /*
  * Return the last offset in a block map.
  */
-xfs_dfiloff_t
+xfs_fileoff_t
 blkmap_last_off(
 	blkmap_t	*blkmap)
 {
 	bmap_ext_t	*ext;
 
 	if (!blkmap->nexts)
-		return NULLDFILOFF;
+		return NULLFILEOFF;
 	ext = blkmap->exts + blkmap->nexts - 1;
 	return ext->startoff + ext->blockcount;
 }
@@ -219,34 +219,34 @@ blkmap_last_off(
  *
  * If the blockmap contains no extents, or no more logical offsets are mapped,
  * or the extent index exceeds the number of extents in the map,
- * return NULLDFILOFF.
+ * return NULLFILEOFF.
  *
  * If offset o is beyond extent index t, the first offset in the next extent
  * after extent t will be returned.
  *
  * Intended to be called starting with offset 0, index 0, and iterated.
  */
-xfs_dfiloff_t
+xfs_fileoff_t
 blkmap_next_off(
 	blkmap_t	*blkmap,
-	xfs_dfiloff_t	o,
+	xfs_fileoff_t	o,
 	int		*t)
 {
 	bmap_ext_t	*ext;
 
 	if (!blkmap->nexts)
-		return NULLDFILOFF;
-	if (o == NULLDFILOFF) {
+		return NULLFILEOFF;
+	if (o == NULLFILEOFF) {
 		*t = 0;
 		return blkmap->exts[0].startoff;
 	}
 	if (*t >= blkmap->nexts)
-		return NULLDFILOFF;
+		return NULLFILEOFF;
 	ext = blkmap->exts + *t;
 	if (o < ext->startoff + ext->blockcount - 1)
 		return o + 1;
 	if (*t == blkmap->nexts - 1)
-		return NULLDFILOFF;
+		return NULLFILEOFF;
 	(*t)++;
 	return ext[1].startoff;
 }
@@ -311,9 +311,9 @@ blkmap_grow(
 int
 blkmap_set_ext(
 	blkmap_t	**blkmapp,
-	xfs_dfiloff_t	o,
-	xfs_dfsbno_t	b,
-	xfs_dfilblks_t	c)
+	xfs_fileoff_t	o,
+	xfs_fsblock_t	b,
+	xfs_filblks_t	c)
 {
 	blkmap_t	*blkmap = *blkmapp;
 	xfs_extnum_t	i;

@@ -151,7 +151,7 @@ print_iocur(
 	dbprintf("%s\n", tag);
 	dbprintf(_("\tbyte offset %lld, length %d\n"), ioc->off, ioc->len);
 	dbprintf(_("\tbuffer block %lld (fsbno %lld), %d bb%s\n"), ioc->bb,
-		(xfs_dfsbno_t)XFS_DADDR_TO_FSB(mp, ioc->bb), ioc->blen,
+		(xfs_fsblock_t)XFS_DADDR_TO_FSB(mp, ioc->bb), ioc->blen,
 		ioc->blen == 1 ? "" : "s");
 	if (ioc->bbmap) {
 		dbprintf(_("\tblock map"));
@@ -189,7 +189,7 @@ print_ring(void)
 			 ioc->typ == NULL ? "none" : ioc->typ->name,
 			 ioc->bb,
 			 ioc->blen,
-			 (xfs_dfsbno_t)XFS_DADDR_TO_FSB(mp, ioc->bb),
+			 (xfs_fsblock_t)XFS_DADDR_TO_FSB(mp, ioc->bb),
 			 ioc->ino
 			);
 

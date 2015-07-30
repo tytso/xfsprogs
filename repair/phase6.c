@@ -485,7 +485,7 @@ mk_rbmino(xfs_mount_t *mp)
 	int		committed;
 	int		error;
 	xfs_bmap_free_t	flist;
-	xfs_dfiloff_t	bno;
+	xfs_fileoff_t	bno;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	int		vers;
 	int		times;
@@ -596,7 +596,7 @@ fill_rbmino(xfs_mount_t *mp)
 	xfs_fsblock_t	first;
 	int		nmap;
 	int		error;
-	xfs_dfiloff_t	bno;
+	xfs_fileoff_t	bno;
 	xfs_bmbt_irec_t	map;
 	struct xfs_trans_res tres = {0};
 
@@ -666,8 +666,8 @@ fill_rsumino(xfs_mount_t *mp)
 	xfs_fsblock_t	first;
 	int		nmap;
 	int		error;
-	xfs_dfiloff_t	bno;
-	xfs_dfiloff_t	end_bno;
+	xfs_fileoff_t	bno;
+	xfs_fileoff_t	end_bno;
 	xfs_bmbt_irec_t	map;
 	struct xfs_trans_res tres = {0};
 
@@ -741,7 +741,7 @@ mk_rsumino(xfs_mount_t *mp)
 	int		error;
 	int		nsumblocks;
 	xfs_bmap_free_t	flist;
-	xfs_dfiloff_t	bno;
+	xfs_fileoff_t	bno;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	int		vers;
 	int		times;

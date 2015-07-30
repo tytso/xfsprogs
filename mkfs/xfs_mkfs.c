@@ -195,7 +195,7 @@ char	*mopts[] = {
 /*
  * Use this macro before we have superblock and mount structure
  */
-#define	DTOBT(d)	((xfs_drfsbno_t)((d) >> (blocklog - BBSHIFT)))
+#define	DTOBT(d)	((xfs_rfsblock_t)((d) >> (blocklog - BBSHIFT)))
 
 /*
  * Use this for block reservations needed for mkfs's conditions
@@ -559,7 +559,7 @@ static void
 fixup_log_stripe_unit(
 	int		lsflag,
 	int		sunit,
-	xfs_drfsbno_t	*logblocks,
+	xfs_rfsblock_t	*logblocks,
 	int		blocklog)
 {
 	__uint64_t	tmp_logblocks;
@@ -589,14 +589,14 @@ fixup_log_stripe_unit(
 	}
 }
 
-static xfs_dfsbno_t
+static xfs_fsblock_t
 fixup_internal_log_stripe(
 	xfs_mount_t	*mp,
 	int		lsflag,
-	xfs_dfsbno_t	logstart,
+	xfs_fsblock_t	logstart,
 	__uint64_t	agsize,
 	int		sunit,
-	xfs_drfsbno_t	*logblocks,
+	xfs_rfsblock_t	*logblocks,
 	int		blocklog,
 	int		*lalign)
 {
@@ -922,7 +922,7 @@ main(
 	int			c;
 	int			daflag;
 	int			dasize;
-	xfs_drfsbno_t		dblocks;
+	xfs_rfsblock_t		dblocks;
 	char			*dfile;
 	int			dirblocklog;
 	int			dirblocksize;
@@ -950,11 +950,11 @@ main(
 	int			ldflag;
 	int			liflag;
 	xfs_agnumber_t		logagno;
-	xfs_drfsbno_t		logblocks;
+	xfs_rfsblock_t		logblocks;
 	char			*logfile;
 	int			loginternal;
 	char			*logsize;
-	xfs_dfsbno_t		logstart;
+	xfs_fsblock_t		logstart;
 	int			logversion;
 	int			lvflag;
 	int			lsflag;
@@ -984,9 +984,9 @@ main(
 	char			*protofile;
 	char			*protostring;
 	int			qflag;
-	xfs_drfsbno_t		rtblocks;
+	xfs_rfsblock_t		rtblocks;
 	xfs_extlen_t		rtextblocks;
-	xfs_drtbno_t		rtextents;
+	xfs_rtblock_t		rtextents;
 	char			*rtextsize;
 	char			*rtfile;
 	char			*rtsize;
@@ -1939,7 +1939,7 @@ _("warning: finobt not supported without CRC support, disabled.\n"));
 				(long long)dbytes, XFS_MIN_BLOCKSIZE);
 			usage();
 		}
-		dblocks = (xfs_drfsbno_t)(dbytes >> blocklog);
+		dblocks = (xfs_rfsblock_t)(dbytes >> blocklog);
 		if (dbytes % blocksize)
 			fprintf(stderr, _("warning: "
 	"data length %lld not a multiple of %d, truncated to %lld\n"),
@@ -1976,7 +1976,7 @@ _("warning: finobt not supported without CRC support, disabled.\n"));
 				(long long)logbytes, XFS_MIN_BLOCKSIZE);
 			usage();
 		}
-		logblocks = (xfs_drfsbno_t)(logbytes >> blocklog);
+		logblocks = (xfs_rfsblock_t)(logbytes >> blocklog);
 		if (logbytes % blocksize)
 			fprintf(stderr,
 	_("warning: log length %lld not a multiple of %d, truncated to %lld\n"),
@@ -1998,7 +1998,7 @@ _("warning: finobt not supported without CRC support, disabled.\n"));
 				(long long)rtbytes, XFS_MIN_BLOCKSIZE);
 			usage();
 		}
-		rtblocks = (xfs_drfsbno_t)(rtbytes >> blocklog);
+		rtblocks = (xfs_rfsblock_t)(rtbytes >> blocklog);
 		if (rtbytes % blocksize)
 			fprintf(stderr,
 	_("warning: rt length %lld not a multiple of %d, truncated to %lld\n"),
@@ -2353,7 +2353,7 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 				if ( dblocks % agsize != 0 &&
 				    (dblocks % agsize <
 				    XFS_AG_MIN_BLOCKS(blocklog))) {
-					dblocks = (xfs_drfsbno_t)((agcount - 1) * agsize);
+					dblocks = (xfs_rfsblock_t)((agcount - 1) * agsize);
 					agcount--;
 					ASSERT(agcount != 0);
 				}
@@ -2379,7 +2379,7 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 	if ( dblocks % agsize != 0 &&
 	     (dblocks % agsize < XFS_AG_MIN_BLOCKS(blocklog))) {
 		ASSERT(!daflag);
-		dblocks = (xfs_drfsbno_t)((agcount - 1) * agsize);
+		dblocks = (xfs_rfsblock_t)((agcount - 1) * agsize);
 		agcount--;
 		ASSERT(agcount != 0);
 	}
@@ -2752,7 +2752,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		agf = XFS_BUF_TO_AGF(buf);
 		memset(agf, 0, sectorsize);
 		if (agno == agcount - 1)
-			agsize = dblocks - (xfs_drfsbno_t)(agno * agsize);
+			agsize = dblocks - (xfs_rfsblock_t)(agno * agsize);
 		agf->agf_magicnum = cpu_to_be32(XFS_AGF_MAGIC);
 		agf->agf_versionnum = cpu_to_be32(XFS_AGF_VERSION);
 		agf->agf_seqno = cpu_to_be32(agno);

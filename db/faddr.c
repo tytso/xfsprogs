@@ -80,7 +80,7 @@ fa_attrblock(
 {
 	bmap_ext_t	bm;
 	__uint32_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fsblock_t	dfsbno;
 	int		nex;
 
 	bno = (__uint32_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
@@ -107,13 +107,13 @@ fa_cfileoffa(
 	typnm_t		next)
 {
 	bmap_ext_t	bm;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		nex;
 
-	bno = (xfs_dfiloff_t)getbitval(obj, bit, BMBT_STARTOFF_BITLEN,
+	bno = (xfs_fileoff_t)getbitval(obj, bit, BMBT_STARTOFF_BITLEN,
 		BVUNSIGNED);
-	if (bno == NULLDFILOFF) {
+	if (bno == NULLFILEOFF) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -137,14 +137,14 @@ fa_cfileoffd(
 {
 	bbmap_t		bbmap;
 	bmap_ext_t	*bmp;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		nb;
 	int		nex;
 
-	bno = (xfs_dfiloff_t)getbitval(obj, bit, BMBT_STARTOFF_BITLEN,
+	bno = (xfs_fileoff_t)getbitval(obj, bit, BMBT_STARTOFF_BITLEN,
 		BVUNSIGNED);
-	if (bno == NULLDFILOFF) {
+	if (bno == NULLFILEOFF) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -171,12 +171,12 @@ fa_cfsblock(
 	int		bit,
 	typnm_t		next)
 {
-	xfs_dfsbno_t	bno;
+	xfs_fsblock_t	bno;
 	int		nb;
 
-	bno = (xfs_dfsbno_t)getbitval(obj, bit, BMBT_STARTBLOCK_BITLEN,
+	bno = (xfs_fsblock_t)getbitval(obj, bit, BMBT_STARTBLOCK_BITLEN,
 		BVUNSIGNED);
-	if (bno == NULLDFSBNO) {
+	if (bno == NULLFSBLOCK) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -193,12 +193,12 @@ fa_dfiloffa(
 	typnm_t		next)
 {
 	bmap_ext_t	bm;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		nex;
 
-	bno = (xfs_dfiloff_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
-	if (bno == NULLDFILOFF) {
+	bno = (xfs_fileoff_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
+	if (bno == NULLFILEOFF) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -222,13 +222,13 @@ fa_dfiloffd(
 {
 	bbmap_t		bbmap;
 	bmap_ext_t	*bmp;
-	xfs_dfiloff_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fileoff_t	bno;
+	xfs_fsblock_t	dfsbno;
 	int		nb;
 	int		nex;
 
-	bno = (xfs_dfiloff_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
-	if (bno == NULLDFILOFF) {
+	bno = (xfs_fileoff_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
+	if (bno == NULLFILEOFF) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -255,10 +255,10 @@ fa_dfsbno(
 	int		bit,
 	typnm_t		next)
 {
-	xfs_dfsbno_t	bno;
+	xfs_fsblock_t	bno;
 
-	bno = (xfs_dfsbno_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
-	if (bno == NULLDFSBNO) {
+	bno = (xfs_fsblock_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
+	if (bno == NULLFSBLOCK) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -277,7 +277,7 @@ fa_dirblock(
 	bbmap_t		bbmap;
 	bmap_ext_t	*bmp;
 	__uint32_t	bno;
-	xfs_dfsbno_t	dfsbno;
+	xfs_fsblock_t	dfsbno;
 	int		nex;
 
 	bno = (__uint32_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
@@ -309,10 +309,10 @@ fa_drfsbno(
 	int		bit,
 	typnm_t		next)
 {
-	xfs_drfsbno_t	bno;
+	xfs_rfsblock_t	bno;
 
-	bno = (xfs_drfsbno_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
-	if (bno == NULLDRFSBNO) {
+	bno = (xfs_rfsblock_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
+	if (bno == NULLRFSBLOCK) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}
@@ -328,10 +328,10 @@ fa_drtbno(
 	int	bit,
 	typnm_t	next)
 {
-	xfs_drtbno_t	bno;
+	xfs_rtblock_t	bno;
 
-	bno = (xfs_drtbno_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
-	if (bno == NULLDRTBNO) {
+	bno = (xfs_rtblock_t)getbitval(obj, bit, bitsz(bno), BVUNSIGNED);
+	if (bno == NULLRTBLOCK) {
 		dbprintf(_("null block number, cannot set new addr\n"));
 		return;
 	}

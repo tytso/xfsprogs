@@ -28,14 +28,14 @@ verify_agbno(xfs_mount_t	*mp,
 
 int
 verify_dfsbno(xfs_mount_t	*mp,
-		xfs_dfsbno_t	fsbno);
+		xfs_fsblock_t	fsbno);
 
 void
 convert_extent(
 	xfs_bmbt_rec_t		*rp,
-	xfs_dfiloff_t		*op,	/* starting offset (blockno in file) */
-	xfs_dfsbno_t		*sp,	/* starting block (fs blockno) */
-	xfs_dfilblks_t		*cp,	/* blockcount */
+	xfs_fileoff_t		*op,	/* starting offset (blockno in file) */
+	xfs_fsblock_t		*sp,	/* starting block (fs blockno) */
+	xfs_filblks_t		*cp,	/* blockcount */
 	int			*fp);	/* extent flag */
 
 int
@@ -44,7 +44,7 @@ process_bmbt_reclist(xfs_mount_t	*mp,
 		int			*numrecs,
 		int			type,
 		xfs_ino_t		ino,
-		xfs_drfsbno_t		*tot,
+		xfs_rfsblock_t		*tot,
 		struct blkmap		**blkmapp,
 		__uint64_t		*first_key,
 		__uint64_t		*last_key,
@@ -57,7 +57,7 @@ scan_bmbt_reclist(
 	int			*numrecs,
 	int			type,
 	xfs_ino_t		ino,
-	xfs_drfsbno_t		*tot,
+	xfs_rfsblock_t		*tot,
 	int			whichfork);
 
 void

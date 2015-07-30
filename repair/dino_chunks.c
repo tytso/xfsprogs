@@ -121,7 +121,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 
 	if (agno == mp->m_sb.sb_agcount - 1)
 		max_agbno = mp->m_sb.sb_dblocks -
-			(xfs_drfsbno_t) mp->m_sb.sb_agblocks * agno;
+			(xfs_rfsblock_t) mp->m_sb.sb_agblocks * agno;
 	else
 		max_agbno = mp->m_sb.sb_agblocks;
 

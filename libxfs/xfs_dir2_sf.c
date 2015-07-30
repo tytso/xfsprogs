@@ -34,10 +34,9 @@ static void xfs_dir2_sf_check(xfs_da_args_t *args);
 #else
 #define	xfs_dir2_sf_check(args)
 #endif /* DEBUG */
-#if XFS_BIG_INUMS
+
 static void xfs_dir2_sf_toino4(xfs_da_args_t *args);
 static void xfs_dir2_sf_toino8(xfs_da_args_t *args);
-#endif /* XFS_BIG_INUMS */
 
 /*
  * Given a block directory (dp/block), calculate its size as a shortform (sf)
@@ -100,10 +99,10 @@ xfs_dir2_block_sfsize(
 		isdotdot =
 			dep->namelen == 2 &&
 			dep->name[0] == '.' && dep->name[1] == '.';
-#if XFS_BIG_INUMS
+
 		if (!isdot)
 			i8count += be64_to_cpu(dep->inumber) > XFS_DIR2_MAX_SHORT_INUM;
-#endif
+
 		/* take into account the file type field */
 		if (!isdot && !isdotdot) {
 			count++;
@@ -301,7 +300,7 @@ xfs_dir2_sf_addname(
 	 */
 	incr_isize = dp->d_ops->sf_entsize(sfp, args->namelen);
 	objchange = 0;
-#if XFS_BIG_INUMS
+
 	/*
 	 * Do we have to change to 8 byte inodes?
 	 */
@@ -315,7 +314,7 @@ xfs_dir2_sf_addname(
 			 (uint)sizeof(xfs_dir2_ino4_t));
 		objchange = 1;
 	}
-#endif
+
 	new_isize = (int)dp->i_d.di_size + incr_isize;
 	/*
 	 * Won't fit as shortform any more (due to size),
@@ -353,10 +352,8 @@ xfs_dir2_sf_addname(
 	 */
 	else {
 		ASSERT(pick == 2);
-#if XFS_BIG_INUMS
 		if (objchange)
 			xfs_dir2_sf_toino8(args);
-#endif
 		xfs_dir2_sf_addname_hard(args, objchange, new_isize);
 	}
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
@@ -408,10 +405,8 @@ xfs_dir2_sf_addname_easy(
 	 * Update the header and inode.
 	 */
 	sfp->count++;
-#if XFS_BIG_INUMS
 	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM)
 		sfp->i8count++;
-#endif
 	dp->i_d.di_size = new_isize;
 	xfs_dir2_sf_check(args);
 }
@@ -443,13 +438,11 @@ xfs_dir2_sf_addname_hard(
 	xfs_dir2_sf_hdr_t	*oldsfp;	/* original shortform dir */
 	xfs_dir2_sf_entry_t	*sfep;		/* entry in new dir */
 	xfs_dir2_sf_hdr_t	*sfp;		/* new shortform dir */
-	struct xfs_mount	*mp;
 
 	/*
 	 * Copy the old directory to the stack buffer.
 	 */
 	dp = args->dp;
-	mp = dp->i_mount;
 
 	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
 	old_isize = (int)dp->i_d.di_size;
@@ -499,10 +492,8 @@ xfs_dir2_sf_addname_hard(
 	dp->d_ops->sf_put_ino(sfp, sfep, args->inumber);
 	dp->d_ops->sf_put_ftype(sfep, args->filetype);
 	sfp->count++;
-#if XFS_BIG_INUMS
 	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM && !objchange)
 		sfp->i8count++;
-#endif
 	/*
 	 * If there's more left to copy, do that.
 	 */
@@ -532,7 +523,6 @@ xfs_dir2_sf_addname_pick(
 	xfs_inode_t		*dp;		/* incore directory inode */
 	int			holefit;	/* found hole it will fit in */
 	int			i;		/* entry number */
-	xfs_mount_t		*mp;		/* filesystem mount point */
 	xfs_dir2_data_aoff_t	offset;		/* data block offset */
 	xfs_dir2_sf_entry_t	*sfep;		/* shortform entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
@@ -540,7 +530,6 @@ xfs_dir2_sf_addname_pick(
 	int			used;		/* data bytes used */
 
 	dp = args->dp;
-	mp = dp->i_mount;
 
 	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
 	size = dp->d_ops->data_entsize(args->namelen);
@@ -576,13 +565,8 @@ xfs_dir2_sf_addname_pick(
 	/*
 	 * If changing the inode number size, do it the hard way.
 	 */
-#if XFS_BIG_INUMS
-	if (objchange) {
+	if (objchange)
 		return 2;
-	}
-#else
-	ASSERT(objchange == 0);
-#endif
 	/*
 	 * If it won't fit at the end then do it the hard way (use the hole).
 	 */
@@ -611,10 +595,8 @@ xfs_dir2_sf_check(
 	int			offset;		/* data offset */
 	xfs_dir2_sf_entry_t	*sfep;		/* shortform dir entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
-	struct xfs_mount	*mp;
 
 	dp = args->dp;
-	mp = dp->i_mount;
 
 	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
 	offset = dp->d_ops->data_first_offset;
@@ -633,7 +615,6 @@ xfs_dir2_sf_check(
 		ASSERT(dp->d_ops->sf_get_ftype(sfep) < XFS_DIR3_FT_MAX);
 	}
 	ASSERT(i8count == sfp->i8count);
-	ASSERT(XFS_BIG_INUMS || i8count == 0);
 	ASSERT((char *)sfep - (char *)sfp == dp->i_d.di_size);
 	ASSERT(offset +
 	       (sfp->count + 2) * (uint)sizeof(xfs_dir2_leaf_entry_t) +
@@ -853,7 +834,6 @@ xfs_dir2_sf_removename(
 	 */
 	xfs_idata_realloc(dp, newsize - oldsize, XFS_DATA_FORK);
 	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
-#if XFS_BIG_INUMS
 	/*
 	 * Are we changing inode number size?
 	 */
@@ -863,7 +843,6 @@ xfs_dir2_sf_removename(
 		else
 			sfp->i8count--;
 	}
-#endif
 	xfs_dir2_sf_check(args);
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
 	return 0;
@@ -878,12 +857,8 @@ xfs_dir2_sf_replace(
 {
 	xfs_inode_t		*dp;		/* incore directory inode */
 	int			i;		/* entry index */
-#if XFS_BIG_INUMS || defined(DEBUG)
 	xfs_ino_t		ino=0;		/* entry old inode number */
-#endif
-#if XFS_BIG_INUMS
 	int			i8elevated;	/* sf_toino8 set i8count=1 */
-#endif
 	xfs_dir2_sf_entry_t	*sfep;		/* shortform directory entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
 
@@ -903,7 +878,7 @@ xfs_dir2_sf_replace(
 	ASSERT(dp->i_df.if_u1.if_data != NULL);
 	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
 	ASSERT(dp->i_d.di_size >= xfs_dir2_sf_hdr_size(sfp->i8count));
-#if XFS_BIG_INUMS
+
 	/*
 	 * New inode number is large, and need to convert to 8-byte inodes.
 	 */
@@ -934,17 +909,15 @@ xfs_dir2_sf_replace(
 		sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
 	} else
 		i8elevated = 0;
-#endif
+
 	ASSERT(args->namelen != 1 || args->name[0] != '.');
 	/*
 	 * Replace ..'s entry.
 	 */
 	if (args->namelen == 2 &&
 	    args->name[0] == '.' && args->name[1] == '.') {
-#if XFS_BIG_INUMS || defined(DEBUG)
 		ino = dp->d_ops->sf_get_parent_ino(sfp);
 		ASSERT(args->inumber != ino);
-#endif
 		dp->d_ops->sf_put_parent_ino(sfp, args->inumber);
 	}
 	/*
@@ -955,10 +928,8 @@ xfs_dir2_sf_replace(
 		     i++, sfep = dp->d_ops->sf_nextentry(sfp, sfep)) {
 			if (xfs_da_compname(args, sfep->name, sfep->namelen) ==
 								XFS_CMP_EXACT) {
-#if XFS_BIG_INUMS || defined(DEBUG)
 				ino = dp->d_ops->sf_get_ino(sfp, sfep);
 				ASSERT(args->inumber != ino);
-#endif
 				dp->d_ops->sf_put_ino(sfp, sfep, args->inumber);
 				dp->d_ops->sf_put_ftype(sfep, args->filetype);
 				break;
@@ -969,14 +940,11 @@ xfs_dir2_sf_replace(
 		 */
 		if (i == sfp->count) {
 			ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
-#if XFS_BIG_INUMS
 			if (i8elevated)
 				xfs_dir2_sf_toino4(args);
-#endif
 			return -ENOENT;
 		}
 	}
-#if XFS_BIG_INUMS
 	/*
 	 * See if the old number was large, the new number is small.
 	 */
@@ -1003,13 +971,11 @@ xfs_dir2_sf_replace(
 		if (!i8elevated)
 			sfp->i8count++;
 	}
-#endif
 	xfs_dir2_sf_check(args);
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_DDATA);
 	return 0;
 }
 
-#if XFS_BIG_INUMS
 /*
  * Convert from 8-byte inode numbers to 4-byte inode numbers.
  * The last 8-byte inode number is gone, but the count is still 1.
@@ -1027,12 +993,10 @@ xfs_dir2_sf_toino4(
 	int			oldsize;	/* old inode size */
 	xfs_dir2_sf_entry_t	*sfep;		/* new sf entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* new sf directory */
-	struct xfs_mount	*mp;
 
 	trace_xfs_dir2_sf_toino4(args);
 
 	dp = args->dp;
-	mp = dp->i_mount;
 
 	/*
 	 * Copy the old directory to the buffer.
@@ -1105,12 +1069,10 @@ xfs_dir2_sf_toino8(
 	int			oldsize;	/* old inode size */
 	xfs_dir2_sf_entry_t	*sfep;		/* new sf entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* new sf directory */
-	struct xfs_mount	*mp;
 
 	trace_xfs_dir2_sf_toino8(args);
 
 	dp = args->dp;
-	mp = dp->i_mount;
 
 	/*
 	 * Copy the old directory to the buffer.
@@ -1164,4 +1126,3 @@ xfs_dir2_sf_toino8(
 	dp->i_d.di_size = newsize;
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
 }
-#endif	/* XFS_BIG_INUMS */

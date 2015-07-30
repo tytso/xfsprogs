@@ -165,8 +165,8 @@ pf_read_bmbt_reclist(
 {
 	int			i;
 	xfs_bmbt_irec_t		irec;
-	xfs_dfilblks_t		cp = 0;		/* prev count */
-	xfs_dfiloff_t		op = 0;		/* prev offset */
+	xfs_filblks_t		cp = 0;		/* prev count */
+	xfs_fileoff_t		op = 0;		/* prev offset */
 #define MAP_ARRAY_SZ 4
 	struct xfs_buf_map	map_array[MAP_ARRAY_SZ];
 	struct xfs_buf_map	*map = map_array;
@@ -257,7 +257,7 @@ out_free:
 
 static int
 pf_scan_lbtree(
-	xfs_dfsbno_t		dbno,
+	xfs_fsblock_t		dbno,
 	int			level,
 	int			isadir,
 	prefetch_args_t		*args,
@@ -293,7 +293,7 @@ pf_scanfunc_bmap(
 	xfs_bmbt_ptr_t		*pp;
 	int 			numrecs;
 	int			i;
-	xfs_dfsbno_t		dbno;
+	xfs_fsblock_t		dbno;
 
 	/*
 	 * do some validation on the block contents
@@ -340,7 +340,7 @@ pf_read_btinode(
 	int			level;
 	int			numrecs;
 	int			dsize;
-	xfs_dfsbno_t		dbno;
+	xfs_fsblock_t		dbno;
 
 	dib = (xfs_bmdr_block_t *)XFS_DFORK_DPTR(dino);
 

@@ -227,11 +227,11 @@ process_bmbt_reclist(
 	int			numrecs,
 	extmap_t		**extmapp)
 {
-	xfs_dfilblks_t		c;
+	xfs_filblks_t		c;
 	int			f;
 	int			i;
-	xfs_dfiloff_t		o;
-	xfs_dfsbno_t		s;
+	xfs_fileoff_t		o;
+	xfs_fsblock_t		s;
 
 	for (i = 0; i < numrecs; i++, rp++) {
 		convert_extent(rp, &o, &s, &c, &f);

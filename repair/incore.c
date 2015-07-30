@@ -190,7 +190,7 @@ static size_t		rt_bmap_size;
  */
 int
 get_rtbmap(
-	xfs_drtbno_t	bno)
+	xfs_rtblock_t	bno)
 {
 	return (*(rt_bmap + bno /  XR_BB_NUM) >>
 		((bno % XR_BB_NUM) * XR_BB)) & XR_BB_MASK;
@@ -198,7 +198,7 @@ get_rtbmap(
 
 void
 set_rtbmap(
-	xfs_drtbno_t	bno,
+	xfs_rtblock_t	bno,
 	int		state)
 {
 	*(rt_bmap + bno / XR_BB_NUM) =
@@ -254,7 +254,7 @@ reset_bmaps(xfs_mount_t *mp)
 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
 		if (agno == mp->m_sb.sb_agcount - 1)
 			ag_size = (xfs_extlen_t)(mp->m_sb.sb_dblocks -
-				   (xfs_drfsbno_t)mp->m_sb.sb_agblocks * agno);
+				   (xfs_rfsblock_t)mp->m_sb.sb_agblocks * agno);
 #ifdef BTREE_STATS
 		if (btree_find(ag_bmap[agno], 0, NULL)) {
 			printf("ag_bmap[%d] btree stats:\n", i);

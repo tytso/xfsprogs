@@ -30,7 +30,7 @@
 static int
 verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 {
-	xfs_drfsbno_t agblocks;
+	xfs_rfsblock_t agblocks;
 	int retval = 0;
 
 	/* check common fields */
@@ -73,7 +73,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 					cpu_to_be32(mp->m_sb.sb_agblocks);
 		} else  {
 			agblocks = mp->m_sb.sb_dblocks -
-				(xfs_drfsbno_t) mp->m_sb.sb_agblocks * i;
+				(xfs_rfsblock_t) mp->m_sb.sb_agblocks * i;
 
 			if (be32_to_cpu(agf->agf_length) != agblocks)  {
 				retval = XR_AG_AGF;
@@ -128,7 +128,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 static int
 verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 {
-	xfs_drfsbno_t agblocks;
+	xfs_rfsblock_t agblocks;
 	int retval = 0;
 
 	/* check common fields */
@@ -171,7 +171,7 @@ verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 					cpu_to_be32(mp->m_sb.sb_agblocks);
 		} else  {
 			agblocks = mp->m_sb.sb_dblocks -
-				(xfs_drfsbno_t) mp->m_sb.sb_agblocks * agno;
+				(xfs_rfsblock_t) mp->m_sb.sb_agblocks * agno;
 
 			if (be32_to_cpu(agi->agi_length) != agblocks)  {
 				retval = XR_AG_AGI;
