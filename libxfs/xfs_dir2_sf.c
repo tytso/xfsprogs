@@ -290,7 +290,7 @@ xfs_dir2_sf_addname(
 	 */
 	if (dp->i_d.di_size < offsetof(xfs_dir2_sf_hdr_t, parent)) {
 		ASSERT(XFS_FORCED_SHUTDOWN(dp->i_mount));
-		return XFS_ERROR(EIO);
+		return EIO;
 	}
 	ASSERT(dp->i_df.if_bytes == dp->i_d.di_size);
 	ASSERT(dp->i_df.if_u1.if_data != NULL);
@@ -328,7 +328,7 @@ xfs_dir2_sf_addname(
 		 * Just checking or no space reservation, it doesn't fit.
 		 */
 		if ((args->op_flags & XFS_DA_OP_JUSTCHECK) || args->total == 0)
-			return XFS_ERROR(ENOSPC);
+			return ENOSPC;
 		/*
 		 * Convert to block form then add the name.
 		 */
@@ -721,7 +721,7 @@ xfs_dir2_sf_lookup(
 	 */
 	if (dp->i_d.di_size < offsetof(xfs_dir2_sf_hdr_t, parent)) {
 		ASSERT(XFS_FORCED_SHUTDOWN(dp->i_mount));
-		return XFS_ERROR(EIO);
+		return EIO;
 	}
 	ASSERT(dp->i_df.if_bytes == dp->i_d.di_size);
 	ASSERT(dp->i_df.if_u1.if_data != NULL);
@@ -734,7 +734,7 @@ xfs_dir2_sf_lookup(
 		args->inumber = dp->i_ino;
 		args->cmpresult = XFS_CMP_EXACT;
 		args->filetype = XFS_DIR3_FT_DIR;
-		return XFS_ERROR(EEXIST);
+		return EEXIST;
 	}
 	/*
 	 * Special case for ..
@@ -744,7 +744,7 @@ xfs_dir2_sf_lookup(
 		args->inumber = dp->d_ops->sf_get_parent_ino(sfp);
 		args->cmpresult = XFS_CMP_EXACT;
 		args->filetype = XFS_DIR3_FT_DIR;
-		return XFS_ERROR(EEXIST);
+		return EEXIST;
 	}
 	/*
 	 * Loop over all the entries trying to match ours.
@@ -764,7 +764,7 @@ xfs_dir2_sf_lookup(
 			args->inumber = dp->d_ops->sf_get_ino(sfp, sfep);
 			args->filetype = dp->d_ops->sf_get_ftype(sfep);
 			if (cmp == XFS_CMP_EXACT)
-				return XFS_ERROR(EEXIST);
+				return EEXIST;
 			ci_sfep = sfep;
 		}
 	}
@@ -774,10 +774,10 @@ xfs_dir2_sf_lookup(
 	 * If a case-insensitive match was not found, return ENOENT.
 	 */
 	if (!ci_sfep)
-		return XFS_ERROR(ENOENT);
+		return ENOENT;
 	/* otherwise process the CI match as required by the caller */
 	error = xfs_dir_cilookup_result(args, ci_sfep->name, ci_sfep->namelen);
-	return XFS_ERROR(error);
+	return error;
 }
 
 /*
@@ -807,7 +807,7 @@ xfs_dir2_sf_removename(
 	 */
 	if (oldsize < offsetof(xfs_dir2_sf_hdr_t, parent)) {
 		ASSERT(XFS_FORCED_SHUTDOWN(dp->i_mount));
-		return XFS_ERROR(EIO);
+		return EIO;
 	}
 	ASSERT(dp->i_df.if_bytes == oldsize);
 	ASSERT(dp->i_df.if_u1.if_data != NULL);
@@ -830,7 +830,7 @@ xfs_dir2_sf_removename(
 	 * Didn't find it.
 	 */
 	if (i == sfp->count)
-		return XFS_ERROR(ENOENT);
+		return ENOENT;
 	/*
 	 * Calculate sizes.
 	 */
@@ -897,7 +897,7 @@ xfs_dir2_sf_replace(
 	 */
 	if (dp->i_d.di_size < offsetof(xfs_dir2_sf_hdr_t, parent)) {
 		ASSERT(XFS_FORCED_SHUTDOWN(dp->i_mount));
-		return XFS_ERROR(EIO);
+		return EIO;
 	}
 	ASSERT(dp->i_df.if_bytes == dp->i_d.di_size);
 	ASSERT(dp->i_df.if_u1.if_data != NULL);
@@ -973,7 +973,7 @@ xfs_dir2_sf_replace(
 			if (i8elevated)
 				xfs_dir2_sf_toino4(args);
 #endif
-			return XFS_ERROR(ENOENT);
+			return ENOENT;
 		}
 	}
 #if XFS_BIG_INUMS

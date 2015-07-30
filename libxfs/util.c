@@ -476,12 +476,12 @@ libxfs_mod_incore_sb(
 		lcounter = (long long)mp->m_sb.sb_fdblocks;
 		lcounter += delta;
 		if (lcounter < 0)
-			return XFS_ERROR(ENOSPC);
+			return ENOSPC;
 		mp->m_sb.sb_fdblocks = lcounter;
 		return 0;
 	default:
 		ASSERT(0);
-		return XFS_ERROR(EINVAL);
+		return EINVAL;
 	}
 }
 
@@ -649,7 +649,7 @@ libxfs_inode_alloc(
 	}
 	if (!ialloc_context && !ip) {
 		*ipp = NULL;
-		return XFS_ERROR(ENOSPC);
+		return ENOSPC;
 	}
 
 	if (ialloc_context) {

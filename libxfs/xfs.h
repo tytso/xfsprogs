@@ -235,7 +235,6 @@ typedef struct xfs_bmalloca {
 } while (0)
 
 #define XFS_QM_DQATTACH(mp,ip,flags)	0
-#define XFS_ERROR(e)			(e)
 #define XFS_ERRLEVEL_LOW		1
 #define XFS_FORCED_SHUTDOWN(mp)		0
 #define XFS_ILOCK_EXCL			0

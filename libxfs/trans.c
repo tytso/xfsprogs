@@ -560,8 +560,7 @@ libxfs_trans_read_buf_map(
 	if (tp == NULL) {
 		bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
 		if (!bp) {
-			return (flags & XBF_TRYLOCK) ?
-				EAGAIN : XFS_ERROR(ENOMEM);
+			return (flags & XBF_TRYLOCK) ?  EAGAIN : ENOMEM;
 		}
 		if (bp->b_error)
 			goto out_relse;
@@ -579,8 +578,7 @@ libxfs_trans_read_buf_map(
 
 	bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
 	if (!bp) {
-		return (flags & XBF_TRYLOCK) ?
-			EAGAIN : XFS_ERROR(ENOMEM);
+		return (flags & XBF_TRYLOCK) ?  EAGAIN : ENOMEM;
 	}
 	if (bp->b_error)
 		goto out_relse;
