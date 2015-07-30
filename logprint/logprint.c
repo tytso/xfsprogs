@@ -242,7 +242,6 @@ main(int argc, char **argv)
 	ASSERT(x.logBBsize <= INT_MAX);
 
 	log.l_dev = mount.m_logdev_targp;
-	log.l_logsize     = BBTOB(x.logBBsize);
 	log.l_logBBstart  = x.logBBstart;
 	log.l_logBBsize   = x.logBBsize;
 	log.l_sectBBsize  = BTOBB(x.lbsize);
