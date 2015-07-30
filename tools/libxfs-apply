@@ -17,7 +17,7 @@ usage()
 
 cleanup()
 {
-	rm -f $PATCH $LIBXFS_FILES $NEWPATCH
+	rm -f $PATCH 
 }
 
 fail()
@@ -55,7 +55,7 @@ done
 
 if [ -n "$PATCH" ]; then
 	if [ -n "$REPO" -o -n "$COMMIT_ID" ]; then
-		usage "Need to specify either patch or source epo/commit"
+		usage "Need to specify either patch or source repo/commit"
 	fi
 elif [ -z "$REPO" -o -z "$COMMIT_ID" ]; then
 	usage "Need to specify both source repo and commit id"
@@ -63,81 +63,170 @@ fi
 
 check_repo Destination
 
-LIBXFS_FILES=`mktemp`
-NEWPATCH=`mktemp`
-
-# switch to source repo and pull the commit into the patch file
-if [ -n "$COMMIT_ID" ]; then
-	pushd $REPO > /dev/null
-	check_repo Source
-	PATCH=`mktemp`
-	git show $2 > $PATCH || usage "Bad source commit ID!"
-	popd > /dev/null
-fi
-
 # Are we using guilt? This works even if no patch is applied.
 guilt top &> /dev/null
 if [ $? -eq 0 ]; then
 	GUILT=1
 fi
 
-# Filter the patch into the right format & files for the other tree
+#this is pulled from the guilt code to handle commit ids sanely.
+# usage: munge_hash_range <hash range>
+#
+# this means:
+#	<hash>			- one commit
+#	<hash>..		- hash until head (excludes hash, includes head)
+#	..<hash>		- until hash (includes hash)
+#	<hash1>..<hash2>	- from hash to hash (inclusive)
+#
+# The output of this function is suitable to be passed to "git rev-list"
+munge_hash_range()
+{
+	case "$1" in
+		*..*..*|*\ *)
+			# double .. or space is illegal
+			return 1;;
+		..*)
+			# e.g., "..v0.10"
+			echo ${1#..};;
+		*..)
+			# e.g., "v0.19.."
+			echo ${1%..}..HEAD;;
+		*..*)
+			# e.g., "v0.19-rc1..v0.19"
+			echo ${1%%..*}..${1#*..};;
+		?*)
+			# e.g., "v0.19"
+			echo $1^..$1;;
+		*)  # empty
+			return 1;;
+	esac
+	return 0
+}
 
-if   [ -d "fs/xfs/libxfs" ]; then	# We are applying a progs patch to the kernel tree
-	lsdiff $PATCH | grep -q "a/libxfs/"
+# Filter the patch into the right format & files for the other tree
+filter_kernel_patch()
+{
+	local _patch=$1
+	local _libxfs_files=""
+
+	lsdiff $_patch | grep -q "a/libxfs/"
 	if [ $? -ne 0 ]; then
 		fail "Doesn't look like an xfsprogs patch with libxfs changes"
 	fi
 
 	# The files we will try to apply to
-	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $LIBXFS_FILES
+	_libxfs_files=`mktemp`
+	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $_libxfs_files
 
 	# Create the new patch
 	filterdiff \
-		-I $LIBXFS_FILES \
+		-I $_libxfs_files \
 		--strip=1 \
 		--addoldprefix=a/fs/xfs/ \
 		--addnewprefix=b/fs/xfs/ \
-		$PATCH > $NEWPATCH 
+		$_patch
 
-elif [ -d "libxfs" -a -d "libxlog" ]; then	# We are applying a kernel patch to the xfsprogs tree
-	lsdiff $PATCH | grep -q "a/fs/xfs/libxfs/"
+	rm -f $_libxfs_files
+}
+
+filter_xfsprogs_patch()
+{
+	local _patch=$1
+	local _libxfs_files=""
+
+	lsdiff $_patch | grep -q "a/fs/xfs/libxfs/"
 	if [ $? -ne 0 ]; then
 		fail "Doesn't look like a kernel patch with libxfs changes"
 	fi
 
 	# The files we will try to apply to
-	ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $LIBXFS_FILES
+	_libxfs_files=`mktemp`
+	ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
 
 	# Create the new patch
 	filterdiff \
-		-I $LIBXFS_FILES \
+		-I $_libxfs_files \
 		--strip=3 \
 		--addoldprefix=a/ \
 		--addnewprefix=b/ \
-		$PATCH > $NEWPATCH 
-fi
+		$_patch
 
-echo "Filtered patch for $REPO contains:"
-lsdiff $NEWPATCH
+	rm -f $_libxfs_files
+}
 
+apply_patch()
+{
+	local _patch=$1
+	local _new_patch=`mktemp`
 
-# Ok, now apply with guilt or patch; either may fail and require a force
-# and/or a manual reject fixup
-if [ $GUILT -eq 1 ]; then
-	echo "$REPO looks like a guilt directory."
-	PATCHES=`guilt applied | wc -l`
-	if [ $PATCHES -gt 0 ]; then
-		echo -n "Top patch is: "
-		guilt top
+	if [ -d "fs/xfs/libxfs" ]; then
+		filter_kernel_patch $_patch > $_new_patch
+	elif [ -d "libxfs" -a -d "libxlog" ]; then
+		filter_xfsprogs_patch $_patch > $_new_patch
 	fi
-	read -r -p "Create new Guilt patch? (Enter patch name or return to skip) " response
-	[ -z "$response" ] && guilt refresh; guilt import -P $response $NEWPATCH; guilt push
-else
-	echo "Applying with patch utility:"
-	patch -p1 < $NEWPATCH
+
+	echo "Filtered patch for $REPO contains:"
+	lsdiff $_new_patch
+
+	# Ok, now apply with guilt or patch; either may fail and require a force
+	# and/or a manual reject fixup
+	if [ $GUILT -eq 1 ]; then
+		echo "$REPO looks like a guilt directory."
+		PATCHES=`guilt applied | wc -l`
+		if [ $PATCHES -gt 0 ]; then
+			echo -n "Top patch is: "
+			guilt top
+		fi
+		read -r -p "Create new Guilt patch? (Enter patch name or return to skip) " response
+		if [ -n "$response" ]; then
+			guilt refresh;
+			guilt import -P $response $_new_patch
+			guilt push
+		fi
+	else
+		echo "Applying with patch utility:"
+		patch -p1 < $_new_patch
+	fi
+
+	rm -f $_new_patch
+	echo "Patch was applied in $REPO; check for rejects, guilt push -f, etc"
+}
+
+# single patch is easy.
+if [ -z "$COMMIT_ID" ]; then
+	apply_patch $PATCH
+	cleanup
+	exit 0
 fi
 
-echo "Patch was applied in $REPO; check for rejects, guilt push -f, etc"
+# switch to source repo and get individual commit IDs
+#
+# git rev-list gives us a list in reverse chronological order, so we need to
+# reverse that to give us the order we require.
+pushd $REPO > /dev/null
+check_repo Source
+hashr=`munge_hash_range $COMMIT_ID`
+echo "Commits to apply:"
+commit_list=`git rev-list $hashr | tac`
+
+# echo the list of commits for confirmation
+git log --oneline $hashr |tac
+read -r -p "Proceed [y|N]? " response
+if [ -z "$response" -o "$response" != "y" ]; then
+	fail "Aborted!"
+fi
+popd > /dev/null
+
+PATCH=`mktemp`
+for commit in $commit_list; do
+
+	# switch to source repo and pull commit into a patch file
+	pushd $REPO > /dev/null
+	git show $commit > $PATCH || usage "Bad source commit ID!"
+	popd > /dev/null
+
+	apply_patch $PATCH
+done
+
 
 cleanup
