@@ -128,7 +128,7 @@ libxfs_trans_roll(
 	 * is in progress. The caller takes the responsibility to cancel
 	 * the duplicate transaction that gets returned.
 	 */
-	error = xfs_trans_commit(trans, 0);
+	error = xfs_trans_commit(trans);
 	if (error)
 		return error;
 
@@ -806,8 +806,7 @@ xfs_trans_free_items(
  */
 int
 libxfs_trans_commit(
-	xfs_trans_t	*tp,
-	uint		flags)
+	xfs_trans_t	*tp)
 {
 	xfs_sb_t	*sbp;
 

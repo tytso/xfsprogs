@@ -3029,7 +3029,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 
 		libxfs_alloc_fix_freelist(&args, 0);
 		xfs_perag_put(args.pag);
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 	}
 
 	/*

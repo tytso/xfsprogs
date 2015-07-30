@@ -1471,7 +1471,7 @@ build_agf_agfl(xfs_mount_t	*mp,
 			do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 					agno, error);
 		}
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 	}
 
 #ifdef XR_BLD_FREE_TRACE

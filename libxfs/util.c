@@ -590,7 +590,7 @@ libxfs_alloc_file_space(
 		if (error)
 			goto error0;
 
-		error = xfs_trans_commit(tp, 0);
+		error = xfs_trans_commit(tp);
 		if (error)
 			break;
 
