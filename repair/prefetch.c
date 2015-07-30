@@ -679,6 +679,7 @@ pf_queuing_worker(
 	xfs_agblock_t		bno;
 	int			i;
 	int			err;
+	uint64_t		sparse;
 
 	blks_per_cluster = mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog;
 	if (blks_per_cluster == 0)
@@ -736,17 +737,27 @@ pf_queuing_worker(
 
 		num_inos = 0;
 		bno = XFS_AGINO_TO_AGBNO(mp, cur_irec->ino_startnum);
+		sparse = cur_irec->ir_sparse;
 
 		do {
 			struct xfs_buf_map	map;
 
 			map.bm_bn = XFS_AGB_TO_DADDR(mp, args->agno, bno);
 			map.bm_len = XFS_FSB_TO_BB(mp, blks_per_cluster);
-			pf_queue_io(args, &map, 1,
-				    (cur_irec->ino_isa_dir != 0) ?  B_DIR_INODE
-								 : B_INODE);
+
+			/*
+			 * Queue I/O for each non-sparse cluster. We can check
+			 * sparse state in cluster sized chunks as cluster size
+			 * is the min. granularity of sparse irec regions.
+			 */
+			if ((sparse & ((1 << inodes_per_cluster) - 1)) == 0)
+				pf_queue_io(args, &map, 1,
+					    (cur_irec->ino_isa_dir != 0) ?
+					     B_DIR_INODE : B_INODE);
+
 			bno += blks_per_cluster;
 			num_inos += inodes_per_cluster;
+			sparse >>= inodes_per_cluster;
 		} while (num_inos < mp->m_ialloc_inos);
 	}
 
