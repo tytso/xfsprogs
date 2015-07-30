@@ -768,11 +768,16 @@ scan_single_ino_chunk(
 	int			off;
 	int			state;
 	ino_tree_node_t		*ino_rec, *first_rec, *last_rec;
+	int			freecount;
 
 	ino = be32_to_cpu(rp->ir_startino);
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, ino);
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		freecount = rp->ir_u.sp.ir_freecount;
+	else
+		freecount = be32_to_cpu(rp->ir_u.f.ir_freecount);
 
 	/*
 	 * on multi-block block chunks, all chunks start
@@ -907,10 +912,10 @@ _("inode rec for ino %" PRIu64 " (%d/%d) overlaps existing rec (start %d/%d)\n")
 		}
 	}
 
-	if (nfree != be32_to_cpu(rp->ir_u.f.ir_freecount)) {
-		do_warn(_("ir_freecount/free mismatch, inode "
-			"chunk %d/%u, freecount %d nfree %d\n"),
-			agno, ino, be32_to_cpu(rp->ir_u.f.ir_freecount), nfree);
+	if (nfree != freecount) {
+		do_warn(
+_("ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n"),
+			agno, ino, freecount, nfree);
 	}
 
 	return suspect;
@@ -930,11 +935,16 @@ scan_single_finobt_chunk(
 	int			off;
 	int			state;
 	ino_tree_node_t		*first_rec, *last_rec, *ino_rec;
+	int			freecount;
 
 	ino = be32_to_cpu(rp->ir_startino);
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, ino);
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		freecount = rp->ir_u.sp.ir_freecount;
+	else
+		freecount = be32_to_cpu(rp->ir_u.f.ir_freecount);
 
 	/*
 	 * on multi-block block chunks, all chunks start at the beginning of the
@@ -1106,10 +1116,10 @@ check_freecount:
 	 * corruption). Issue a warning and continue the scan. The final btree
 	 * reconstruction will correct this naturally.
 	 */
-	if (nfree != be32_to_cpu(rp->ir_u.f.ir_freecount)) {
+	if (nfree != freecount) {
 		do_warn(
 _("finobt ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n"),
-			agno, ino, be32_to_cpu(rp->ir_u.f.ir_freecount), nfree);
+			agno, ino, freecount, nfree);
 	}
 
 	if (!nfree) {
@@ -1154,6 +1164,7 @@ scan_inobt(
 	xfs_inobt_ptr_t		*pp;
 	xfs_inobt_rec_t		*rp;
 	int			hdr_errors;
+	int			freecount;
 
 	hdr_errors = 0;
 
@@ -1227,14 +1238,17 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		 * the block.  skip processing of bogus records.
 		 */
 		for (i = 0; i < numrecs; i++) {
+			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+				freecount = rp[i].ir_u.sp.ir_freecount;
+			else
+				freecount = be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+
 			if (magic == XFS_IBT_MAGIC ||
 			    magic == XFS_IBT_CRC_MAGIC) {
 				agcnts->agicount += XFS_INODES_PER_CHUNK;
 				agcnts->icount += XFS_INODES_PER_CHUNK;
-				agcnts->agifreecount +=
-					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
-				agcnts->ifreecount +=
-					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+				agcnts->agifreecount += freecount;
+				agcnts->ifreecount += freecount;
 
 				suspect = scan_single_ino_chunk(agno, &rp[i],
 						suspect);
@@ -1244,8 +1258,7 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				 * so only the free inode count is expected to be
 				 * consistent with the agi
 				 */
-				agcnts->fibtfreecount +=
-					be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+				agcnts->fibtfreecount += freecount;
 
 				suspect = scan_single_finobt_chunk(agno, &rp[i],
 						suspect);

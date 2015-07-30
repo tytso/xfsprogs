@@ -1240,7 +1240,11 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 				inocnt += is_inode_free(ino_rec, k);
 			}
 
-			bt_rec[j].ir_u.f.ir_freecount = cpu_to_be32(inocnt);
+			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+				bt_rec[j].ir_u.sp.ir_freecount = inocnt;
+			else
+				bt_rec[j].ir_u.f.ir_freecount =
+							cpu_to_be32(inocnt);
 			freecount += inocnt;
 			count += XFS_INODES_PER_CHUNK;
 
