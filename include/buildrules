@@ -100,7 +100,7 @@ $(_FORCE):
 # rebuild on every make invocation isn't a problem we need to care about. Just
 # do it silently so it doesn't make the build unnecessarily noisy.
 
-.PHONY : depend ltdepend install-qa
+.PHONY : depend ltdepend
 
 MAKEDEP := $(MAKEDEPEND) $(CFLAGS)
 

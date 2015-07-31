@@ -108,8 +108,6 @@ install: $(addsuffix -install,$(SUBDIRS))
 
 install-dev: $(addsuffix -install-dev,$(SUBDIRS))
 
-install-qa: install $(addsuffix -install-qa,$(SUBDIRS))
-
 %-install:
 	@echo "Installing $@"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* install
@@ -117,10 +115,6 @@ install-qa: install $(addsuffix -install-qa,$(SUBDIRS))
 %-install-dev:
 	@echo "Installing $@"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* install-dev
-
-%-install-qa:
-	@echo "Installing $@"
-	$(Q)$(MAKE) $(MAKEOPTS) -C $* install-qa
 
 distclean: clean
 	$(Q)rm -f $(LDIRT)

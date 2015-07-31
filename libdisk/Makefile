@@ -32,6 +32,4 @@ install: default
 
 install-dev: default
 
-install-qa: install-dev
-
 -include .ltdep

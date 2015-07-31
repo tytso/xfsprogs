@@ -34,6 +34,6 @@ default: ltdepend $(LTLIBRARY)
 
 include $(BUILDRULES)
 
-install install-dev install-qa: default
+install install-dev: default
 
 -include .ltdep

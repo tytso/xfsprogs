@@ -12,10 +12,7 @@ LT_AGE = 0
 
 # headers to install in include/xfs
 PKGHFILES = xfs_fs.h \
-	xfs_types.h
-
-# headers installed in QA targets
-QAHFILES = \
+	xfs_types.h \
 	xfs_da_format.h \
 	xfs_format.h \
 	xfs_log_format.h
@@ -138,16 +135,13 @@ include $(BUILDRULES)
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
 
-install-headers: $(addsuffix -hdrs, $(PKGHFILES) $(LIBHFILES) $(QAHFILES))
+install-headers: $(addsuffix -hdrs, $(PKGHFILES) $(LIBHFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
 
 install-dev: install
 	$(INSTALL) -m 644 $(PKGHFILES) $(PKG_INC_DIR)
-
-install-qa: install-dev
-	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
 
 # We need to install the headers before building the dependencies.  If we
 # include the .ltdep file, the makefile decides that it needs to build the

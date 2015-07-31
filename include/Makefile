@@ -18,8 +18,6 @@
 TOPDIR = ..
 include $(TOPDIR)/include/builddefs
 
-QAHFILES = xfs_arch.h
-
 LIBHFILES = libxfs.h \
 	libxlog.h \
 	atomic.h \
@@ -47,7 +45,8 @@ HFILES = handle.h \
 	$(PKG_PLATFORM).h \
 	platform_defs.h \
 	xfs.h \
-	xqm.h
+	xqm.h \
+	xfs_arch.h
 
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
 DKHFILES = volume.h fstyp.h dvh.h
@@ -66,7 +65,7 @@ disk:
 include $(BUILDRULES)
 
 # set up include/xfs header directory
-install-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(HFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
@@ -76,7 +75,3 @@ install: default
 
 install-dev: install
 	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
-
-install-qa: install-dev
-	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
-
