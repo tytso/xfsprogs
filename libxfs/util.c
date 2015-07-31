@@ -425,7 +425,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	mp = ip->i_mount;
 
 	/* set *dip = inode's place in the buffer */
-	dip = (xfs_dinode_t *)xfs_buf_offset(bp, ip->i_imap.im_boffset);
+	dip = xfs_buf_offset(bp, ip->i_imap.im_boffset);
 
 	ASSERT(ip->i_d.di_magic == XFS_DINODE_MAGIC);
 	if ((ip->i_d.di_mode & S_IFMT) == S_IFREG) {
