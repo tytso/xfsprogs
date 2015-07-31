@@ -3216,12 +3216,24 @@ xfs_bmap_extsize_align(
 		align_alen += temp;
 		align_off -= temp;
 	}
-	/*
-	 * Same adjustment for the end of the requested area.
-	 */
-	if ((temp = (align_alen % extsz))) {
+
+	/* Same adjustment for the end of the requested area. */
+	temp = (align_alen % extsz);
+	if (temp)
 		align_alen += extsz - temp;
-	}
+
+	/*
+	 * For large extent hint sizes, the aligned extent might be larger than
+	 * MAXEXTLEN. In that case, reduce the size by an extsz so that it pulls
+	 * the length back under MAXEXTLEN. The outer allocation loops handle
+	 * short allocation just fine, so it is safe to do this. We only want to
+	 * do it when we are forced to, though, because it means more allocation
+	 * operations are required.
+	 */
+	while (align_alen > MAXEXTLEN)
+		align_alen -= extsz;
+	ASSERT(align_alen <= MAXEXTLEN);
+
 	/*
 	 * If the previous block overlaps with this proposed allocation
 	 * then move the start forward without adjusting the length.
@@ -3310,7 +3322,9 @@ xfs_bmap_extsize_align(
 			return -EINVAL;
 	} else {
 		ASSERT(orig_off >= align_off);
-		ASSERT(orig_end <= align_off + align_alen);
+		/* see MAXEXTLEN handling above */
+		ASSERT(orig_end <= align_off + align_alen ||
+		       align_alen + extsz > MAXEXTLEN);
 	}
 
 #ifdef DEBUG
@@ -3499,7 +3513,8 @@ xfs_bmap_longest_free_extent(
 		}
 	}
 
-	longest = xfs_alloc_longest_free_extent(mp, pag);
+	longest = xfs_alloc_longest_free_extent(mp, pag,
+					xfs_alloc_min_freelist(mp, pag));
 	if (*blen < longest)
 		*blen = longest;
 
@@ -4091,13 +4106,6 @@ xfs_bmapi_reserve_delalloc(
 	/* Figure out the extent size, adjust alen */
 	extsz = xfs_get_extsz_hint(ip);
 	if (extsz) {
-		/*
-		 * Make sure we don't exceed a single extent length when we
-		 * align the extent by reducing length we are going to
-		 * allocate by the maximum amount extent size aligment may
-		 * require.
-		 */
-		alen = XFS_FILBLKS_MIN(len, MAXEXTLEN - (2 * extsz - 1));
 		error = xfs_bmap_extsize_align(mp, got, prev, extsz, rt, eof,
 					       1, 0, &aoff, &alen);
 		ASSERT(!error);
@@ -4409,7 +4417,15 @@ xfs_bmapi_convert_unwritten(
 	error = xfs_bmap_add_extent_unwritten_real(bma->tp, bma->ip, &bma->idx,
 			&bma->cur, mval, bma->firstblock, bma->flist,
 			&tmp_logflags);
-	bma->logflags |= tmp_logflags;
+	/*
+	 * Log the inode core unconditionally in the unwritten extent conversion
+	 * path because the conversion might not have done so (e.g., if the
+	 * extent count hasn't changed). We need to make sure the inode is dirty
+	 * in the transaction for the sake of fsync(), even if nothing has
+	 * changed, because fsync() will not force the log for this transaction
+	 * unless it sees the inode pinned.
+	 */
+	bma->logflags |= tmp_logflags | XFS_ILOG_CORE;
 	if (error)
 		return error;
 

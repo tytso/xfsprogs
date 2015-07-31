@@ -2786,6 +2786,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	for (agno = 0; agno < agcount; agno++) {
 		struct xfs_agfl	*agfl;
 		int		bucket;
+		struct xfs_perag *pag = xfs_perag_get(mp, agno);
 
 		/*
 		 * Superblock.
@@ -2817,6 +2818,8 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		agf->agf_roots[XFS_BTNUM_CNTi] = cpu_to_be32(XFS_CNT_BLOCK(mp));
 		agf->agf_levels[XFS_BTNUM_BNOi] = cpu_to_be32(1);
 		agf->agf_levels[XFS_BTNUM_CNTi] = cpu_to_be32(1);
+		pag->pagf_levels[XFS_BTNUM_BNOi] = 1;
+		pag->pagf_levels[XFS_BTNUM_CNTi] = 1;
 		agf->agf_flfirst = 0;
 		agf->agf_fllast = cpu_to_be32(XFS_AGFL_SIZE(mp) - 1);
 		agf->agf_flcount = 0;
@@ -2831,8 +2834,8 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			agf->agf_longest = cpu_to_be32(agsize -
 				XFS_FSB_TO_AGBNO(mp, logstart) - logblocks);
 		}
-		if (XFS_MIN_FREELIST(agf, mp) > worst_freelist)
-			worst_freelist = XFS_MIN_FREELIST(agf, mp);
+		if (xfs_alloc_min_freelist(mp, pag) > worst_freelist)
+			worst_freelist = xfs_alloc_min_freelist(mp, pag);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
 		/*
@@ -3004,8 +3007,10 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		/*
 		 * Free INO btree root block
 		 */
-		if (!finobt)
+		if (!finobt) {
+			xfs_perag_put(pag);
 			continue;
+		}
 
 		buf = libxfs_getbuf(mp->m_ddev_targp,
 				XFS_AGB_TO_DADDR(mp, agno, XFS_FIBT_BLOCK(mp)),
@@ -3020,6 +3025,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			xfs_btree_init_block(mp, buf, XFS_FIBT_MAGIC, 0, 0,
 						agno, 0);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+		xfs_perag_put(pag);
 	}
 
 	/*

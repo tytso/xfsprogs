@@ -601,19 +601,19 @@ xfs_ialloc_ag_alloc(
 	uint16_t	allocmask = (uint16_t) -1; /* init. to full chunk */
 	struct xfs_inobt_rec_incore rec;
 	struct xfs_perag *pag;
-
 	int		do_sparse = 0;
-
-#ifdef DEBUG
-	/* randomly do sparse inode allocations */
-	if (xfs_sb_version_hassparseinodes(&tp->t_mountp->m_sb))
-		do_sparse = prandom_u32() & 1;
-#endif
 
 	memset(&args, 0, sizeof(args));
 	args.tp = tp;
 	args.mp = tp->t_mountp;
 	args.fsbno = NULLFSBLOCK;
+
+#ifdef DEBUG
+	/* randomly do sparse inode allocations */
+	if (xfs_sb_version_hassparseinodes(&tp->t_mountp->m_sb) &&
+	    args.mp->m_ialloc_min_blks < args.mp->m_ialloc_blks)
+		do_sparse = prandom_u32() & 1;
+#endif
 
 	/*
 	 * Locking will ensure that we don't have two callers in here
@@ -621,7 +621,7 @@ xfs_ialloc_ag_alloc(
 	 */
 	newlen = args.mp->m_ialloc_inos;
 	if (args.mp->m_maxicount &&
-	    percpu_counter_read(&args.mp->m_icount) + newlen >
+	    percpu_counter_read_positive(&args.mp->m_icount) + newlen >
 							args.mp->m_maxicount)
 		return -ENOSPC;
 	args.minlen = args.maxlen = args.mp->m_ialloc_blks;
@@ -763,6 +763,7 @@ sparse_alloc:
 			return error;
 
 		newlen = args.len << args.mp->m_sb.sb_inopblog;
+		ASSERT(newlen <= XFS_INODES_PER_CHUNK);
 		allocmask = (1 << (newlen / XFS_INODES_PER_HOLEMASK_BIT)) - 1;
 	}
 
@@ -1699,10 +1700,13 @@ xfs_dialloc(
 	 * If we have already hit the ceiling of inode blocks then clear
 	 * okalloc so we scan all available agi structures for a free
 	 * inode.
+	 *
+	 * Read rough value of mp->m_icount by percpu_counter_read_positive,
+	 * which will sacrifice the preciseness but improve the performance.
 	 */
 	if (mp->m_maxicount &&
-	    percpu_counter_read(&mp->m_icount) + mp->m_ialloc_inos >
-							mp->m_maxicount) {
+	    percpu_counter_read_positive(&mp->m_icount) + mp->m_ialloc_inos
+							> mp->m_maxicount) {
 		noroom = 1;
 		okalloc = 0;
 	}
