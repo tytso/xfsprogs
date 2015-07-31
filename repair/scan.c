@@ -764,6 +764,97 @@ ino_issparse(
 	return xfs_inobt_is_sparse_disk(rp, offset);
 }
 
+/*
+ * The following helpers are to help process and validate individual on-disk
+ * inode btree records. We have two possible inode btrees with slightly
+ * different semantics. Many of the validations and actions are equivalent, such
+ * as record alignment constraints, etc. Other validations differ, such as the
+ * fact that the inode chunk block allocation state is set by the content of the
+ * core inobt and verified by the content of the finobt.
+ *
+ * The following structures are used to facilitate common validation routines
+ * where the only difference between validation of the inobt or finobt might be
+ * the error messages that results in the event of failure.
+ */
+
+enum inobt_type {
+	INOBT,
+	FINOBT
+};
+const char *inobt_names[] =	{
+	"inobt",
+	"finobt"
+};
+
+static int
+verify_single_ino_chunk_align(
+	xfs_agnumber_t		agno,
+	enum inobt_type		type,
+	struct xfs_inobt_rec	*rp,
+	int			suspect,
+	bool			*skip)
+{
+	const char		*inobt_name = inobt_names[type];
+	xfs_ino_t		lino;
+	xfs_agino_t		ino;
+	xfs_agblock_t		agbno;
+	int			off;
+
+	*skip = false;
+	ino = be32_to_cpu(rp->ir_startino);
+	off = XFS_AGINO_TO_OFFSET(mp, ino);
+	agbno = XFS_AGINO_TO_AGBNO(mp, ino);
+	lino = XFS_AGINO_TO_INO(mp, agno, ino);
+
+	/*
+	 * on multi-block block chunks, all chunks start at the beginning of the
+	 * block. with multi-chunk blocks, all chunks must start on 64-inode
+	 * boundaries since each block can hold N complete chunks. if fs has
+	 * aligned inodes, all chunks must start at a fs_ino_alignment*N'th
+	 * agbno. skip recs with badly aligned starting inodes.
+	 */
+	if (ino == 0 ||
+	    (inodes_per_block <= XFS_INODES_PER_CHUNK && off !=  0) ||
+	    (inodes_per_block > XFS_INODES_PER_CHUNK &&
+	     off % XFS_INODES_PER_CHUNK != 0) ||
+	    (fs_aligned_inodes && fs_ino_alignment &&
+	     agbno % fs_ino_alignment != 0)) {
+		do_warn(
+	_("badly aligned %s rec (starting inode = %" PRIu64 ")\n"),
+			inobt_name, lino);
+		suspect++;
+	}
+
+	/*
+	 * verify numeric validity of inode chunk first before inserting into a
+	 * tree. don't have to worry about the overflow case because the
+	 * starting ino number of a chunk can only get within 255 inodes of max
+	 * (NULLAGINO). if it gets closer, the agino number will be illegal as
+	 * the agbno will be too large.
+	 */
+	if (verify_aginum(mp, agno, ino)) {
+		do_warn(
+_("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in %s rec, skipping rec\n"),
+			lino, agno, ino, inobt_name);
+		*skip = true;
+		return ++suspect;
+	}
+
+	if (verify_aginum(mp, agno,
+			ino + XFS_INODES_PER_CHUNK - 1)) {
+		do_warn(
+_("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in %s rec, skipping rec\n"),
+			lino + XFS_INODES_PER_CHUNK - 1,
+			agno,
+			ino + XFS_INODES_PER_CHUNK - 1,
+			inobt_name);
+		*skip = true;
+		return ++suspect;
+	}
+
+	return suspect;
+}
+
 static int
 scan_single_ino_chunk(
 	xfs_agnumber_t		agno,
@@ -781,6 +872,7 @@ scan_single_ino_chunk(
 	ino_tree_node_t		*ino_rec = NULL;
 	ino_tree_node_t		*first_rec, *last_rec;
 	int			freecount;
+	bool			skip = false;
 
 	ino = be32_to_cpu(rp->ir_startino);
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
@@ -789,51 +881,12 @@ scan_single_ino_chunk(
 	freecount = inorec_get_freecount(mp, rp);
 
 	/*
-	 * on multi-block block chunks, all chunks start
-	 * at the beginning of the block.  with multi-chunk
-	 * blocks, all chunks must start on 64-inode boundaries
-	 * since each block can hold N complete chunks. if
-	 * fs has aligned inodes, all chunks must start
-	 * at a fs_ino_alignment*N'th agbno.  skip recs
-	 * with badly aligned starting inodes.
+	 * Verify record alignment, start/end inode numbers, etc.
 	 */
-	if (ino == 0 ||
-	    (inodes_per_block <= XFS_INODES_PER_CHUNK && off !=  0) ||
-	    (inodes_per_block > XFS_INODES_PER_CHUNK &&
-	     off % XFS_INODES_PER_CHUNK != 0) ||
-	    (fs_aligned_inodes && fs_ino_alignment &&
-	     agbno % fs_ino_alignment != 0))  {
-		do_warn(
-	_("badly aligned inode rec (starting inode = %" PRIu64 ")\n"),
-			lino);
-		suspect++;
-	}
-
-	/*
-	 * verify numeric validity of inode chunk first
-	 * before inserting into a tree.  don't have to
-	 * worry about the overflow case because the
-	 * starting ino number of a chunk can only get
-	 * within 255 inodes of max (NULLAGINO).  if it
-	 * gets closer, the agino number will be illegal
-	 * as the agbno will be too large.
-	 */
-	if (verify_aginum(mp, agno, ino))  {
-		do_warn(
-_("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in ino rec, skipping rec\n"),
-			lino, agno, ino);
-		return ++suspect;
-	}
-
-	if (verify_aginum(mp, agno,
-			ino + XFS_INODES_PER_CHUNK - 1))  {
-		do_warn(
-_("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in ino rec, skipping rec\n"),
-			lino + XFS_INODES_PER_CHUNK - 1,
-			agno,
-			ino + XFS_INODES_PER_CHUNK - 1);
-		return ++suspect;
-	}
+	suspect = verify_single_ino_chunk_align(agno, INOBT, rp, suspect,
+						&skip);
+	if (skip)
+		return suspect;
 
 	/*
 	 * set state of each block containing inodes
@@ -979,6 +1032,7 @@ scan_single_finobt_chunk(
 	ino_tree_node_t		*ino_rec = NULL;
 	ino_tree_node_t		*first_rec, *last_rec;
 	int			freecount;
+	bool			skip = false;
 
 	ino = be32_to_cpu(rp->ir_startino);
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
@@ -987,47 +1041,12 @@ scan_single_finobt_chunk(
 	freecount = inorec_get_freecount(mp, rp);
 
 	/*
-	 * on multi-block block chunks, all chunks start at the beginning of the
-	 * block. with multi-chunk blocks, all chunks must start on 64-inode
-	 * boundaries since each block can hold N complete chunks. if fs has
-	 * aligned inodes, all chunks must start at a fs_ino_alignment*N'th
-	 * agbno. skip recs with badly aligned starting inodes.
+	 * Verify record alignment, start/end inode numbers, etc.
 	 */
-	if (ino == 0 ||
-	    (inodes_per_block <= XFS_INODES_PER_CHUNK && off !=  0) ||
-	    (inodes_per_block > XFS_INODES_PER_CHUNK &&
-	     off % XFS_INODES_PER_CHUNK != 0) ||
-	    (fs_aligned_inodes && fs_ino_alignment &&
-	     agbno % fs_ino_alignment != 0)) {
-		do_warn(
-	_("badly aligned finobt inode rec (starting inode = %" PRIu64 ")\n"),
-			lino);
-		suspect++;
-	}
-
-	/*
-	 * verify numeric validity of inode chunk first before inserting into a
-	 * tree. don't have to worry about the overflow case because the
-	 * starting ino number of a chunk can only get within 255 inodes of max
-	 * (NULLAGINO). if it gets closer, the agino number will be illegal as
-	 * the agbno will be too large.
-	 */
-	if (verify_aginum(mp, agno, ino)) {
-		do_warn(
-_("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in finobt rec, skipping rec\n"),
-			lino, agno, ino);
-		return ++suspect;
-	}
-
-	if (verify_aginum(mp, agno,
-			ino + XFS_INODES_PER_CHUNK - 1)) {
-		do_warn(
-_("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in finobt rec, skipping rec\n"),
-			lino + XFS_INODES_PER_CHUNK - 1,
-			agno,
-			ino + XFS_INODES_PER_CHUNK - 1);
-		return ++suspect;
-	}
+	suspect = verify_single_ino_chunk_align(agno, FINOBT, rp, suspect,
+						&skip);
+	if (skip)
+		return suspect;
 
 	/*
 	 * cross check state of each block containing inodes referenced by the
