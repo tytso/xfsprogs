@@ -1510,7 +1510,8 @@ build_agf_agfl(xfs_mount_t	*mp,
 		args.agno = agno;
 		args.alignment = 1;
 		args.pag = xfs_perag_get(mp,agno);
-		libxfs_trans_reserve(tp, &tres, XFS_MIN_FREELIST(agf, mp), 0);
+		libxfs_trans_reserve(tp, &tres,
+				     xfs_alloc_min_freelist(mp, args.pag), 0);
 		error = libxfs_alloc_fix_freelist(&args, 0);
 		xfs_perag_put(args.pag);
 		if (error) {

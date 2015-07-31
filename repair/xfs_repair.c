@@ -404,11 +404,16 @@ calc_mkfs(xfs_mount_t *mp)
 	 * and by size), the inode allocation btree root, the free inode
 	 * allocation btree root (if enabled) and some number of blocks to
 	 * prefill the agfl.
+	 *
+	 * Because the current shape of the btrees may differ from the current
+	 * shape, we open code the mkfs freelist block count here. mkfs creates
+	 * single level trees, so the calculation is pertty straight forward for
+	 * the two trees that use the AGFL.
 	 */
 	bnobt_root = howmany(4 * mp->m_sb.sb_sectsize, mp->m_sb.sb_blocksize);
 	bcntbt_root = bnobt_root + 1;
 	inobt_root = bnobt_root + 2;
-	fino_bno = inobt_root + XFS_MIN_FREELIST_RAW(1, 1, mp) + 1;
+	fino_bno = inobt_root + (2 * min(2, mp->m_ag_maxlevels)) + 1;
 	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		fino_bno++;
 
