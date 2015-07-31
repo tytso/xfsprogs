@@ -18,7 +18,7 @@
 #ifndef __XQM_H__
 #define __XQM_H__
 
-#include "xfs/xfs.h"
+#include <xfs/xfs.h>
 
 /*
  * Disk quota - quotactl(2) commands for the XFS Quota Manager (XQM).
