@@ -65,11 +65,8 @@ include $(BUILDRULES)
 # set up include/xfs header directory
 install-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
 
-%-hdrs: xfs
+%-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
-
-xfs:
-	@mkdir -p xfs
 
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
