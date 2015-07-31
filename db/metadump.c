@@ -2115,12 +2115,42 @@ copy_inode_chunk(
 	xfs_agino_t 		agino;
 	int			off;
 	xfs_agblock_t		agbno;
+	xfs_agblock_t		end_agbno;
 	int			i;
 	int			rval = 0;
+	int			blks_per_buf;
+	int			inodes_per_buf;
+	int			ioff;
 
 	agino = be32_to_cpu(rp->ir_startino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
+	end_agbno = agbno + mp->m_ialloc_blks;
 	off = XFS_INO_TO_OFFSET(mp, agino);
+
+	/*
+	 * If the fs supports sparse inode records, we must process inodes a
+	 * cluster at a time because that is the sparse allocation granularity.
+	 * Otherwise, we risk CRC corruption errors on reads of inode chunks.
+	 *
+	 * Also make sure that that we don't process more than the single record
+	 * we've been passed (large block sizes can hold multiple inode chunks).
+	 */
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		blks_per_buf = xfs_icluster_size_fsb(mp);
+	else
+		blks_per_buf = mp->m_ialloc_blks;
+	inodes_per_buf = min(blks_per_buf << mp->m_sb.sb_inopblog,
+			     XFS_INODES_PER_CHUNK);
+
+	/*
+	 * Sanity check that we only process a single buffer if ir_startino has
+	 * a buffer offset. A non-zero offset implies that the entire chunk lies
+	 * within a block.
+	 */
+	if (off && inodes_per_buf != XFS_INODES_PER_CHUNK) {
+		print_warning("bad starting inode offset %d", off);
+		return 0;
+	}
 
 	if (agino == 0 || agino == NULLAGINO || !valid_bno(agno, agbno) ||
 			!valid_bno(agno, XFS_AGINO_TO_AGBNO(mp,
@@ -2148,35 +2178,41 @@ copy_inode_chunk(
 	}
 
 	push_cur();
-	set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, agbno),
-			XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
-			DB_RING_IGN, NULL);
-	if (iocur_top->data == NULL) {
-		print_warning("cannot read inode block %u/%u", agno, agbno);
-		rval = !stop_on_read_error;
-		goto pop_out;
-	}
+	ioff = 0;
+	while (agbno < end_agbno && ioff < XFS_INODES_PER_CHUNK) {
+		if (xfs_inobt_is_sparse_disk(rp, ioff))
+			goto next_bp;
 
-	/*
-	 * scan through inodes and copy any btree extent lists, directory
-	 * contents and extended attributes.
-	 */
-	for (i = 0; i < XFS_INODES_PER_CHUNK; i++) {
-		xfs_dinode_t            *dip;
-
-		dip = (xfs_dinode_t *)((char *)iocur_top->data +
-				((off + i) << mp->m_sb.sb_inodelog));
-
-		/* process_inode handles free inodes, too */
-		if (!process_inode(agno, agino + i, dip,
-				   XFS_INOBT_IS_FREE_DISK(rp, i)))
+		set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, agbno),
+			XFS_FSB_TO_BB(mp, blks_per_buf), DB_RING_IGN, NULL);
+		if (iocur_top->data == NULL) {
+			print_warning("cannot read inode block %u/%u",
+				      agno, agbno);
+			rval = !stop_on_read_error;
 			goto pop_out;
+		}
+
+		for (i = 0; i < inodes_per_buf; i++) {
+			xfs_dinode_t	*dip;
+
+			dip = (xfs_dinode_t *)((char *)iocur_top->data +
+					((off + i) << mp->m_sb.sb_inodelog));
+
+			/* process_inode handles free inodes, too */
+			if (!process_inode(agno, agino + ioff + i, dip,
+			    XFS_INOBT_IS_FREE_DISK(rp, i)))
+				goto pop_out;
+
+			inodes_copied++;
+		}
+
+		if (write_buf(iocur_top))
+			goto pop_out;
+
+next_bp:
+		agbno += blks_per_buf;
+		ioff += inodes_per_buf;
 	}
-
-	if (write_buf(iocur_top))
-		goto pop_out;
-
-	inodes_copied += XFS_INODES_PER_CHUNK;
 
 	if (show_progress)
 		print_progress("Copied %u of %u inodes (%u of %u AGs)",
