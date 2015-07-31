@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs/libxfs.h"
+#include "libxfs.h"
 #include "avl.h"
 #include "globals.h"
 #include "incore.h"

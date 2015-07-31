@@ -1,4 +1,4 @@
-#include "xfs/libxfs.h"
+#include "libxfs.h"
 #include <pthread.h>
 #include "avl.h"
 #include "btree.h"

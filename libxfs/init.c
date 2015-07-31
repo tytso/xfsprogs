@@ -31,7 +31,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-#include "xfs/libxfs.h"		/* for now */
+#include "libxfs.h"		/* for now */
 
 char *progname = "libxfs";	/* default, changed by each tool */
 

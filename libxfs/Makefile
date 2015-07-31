@@ -17,7 +17,7 @@ PKGHFILES = xfs_fs.h \
 	xfs_format.h \
 	xfs_log_format.h
 
-LIBHFILES = \
+HFILES = \
 	xfs_alloc.h \
 	xfs_alloc_btree.h \
 	xfs_attr_leaf.h \
@@ -40,11 +40,8 @@ LIBHFILES = \
 	xfs_trans_resv.h \
 	xfs_trans_space.h \
 	libxfs_io.h \
-	libxfs_api_defs.h
-
-
-# headers with build dependencies
-HFILES = init.h \
+	libxfs_api_defs.h \
+	init.h \
 	crc32defs.h \
 	crc32table.h \
 	libxfs_priv.h \
@@ -90,7 +87,6 @@ CFILES = cache.c \
 CFILES += $(PKG_PLATFORM).c
 PCFILES = darwin.c freebsd.c irix.c linux.c
 LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
-LSRCFILES += $(LIBHFILES)
 LSRCFILES += gen_crc32table.c
 
 #
@@ -135,7 +131,7 @@ include $(BUILDRULES)
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
 
-install-headers: $(addsuffix -hdrs, $(PKGHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(PKGHFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*

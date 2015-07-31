@@ -44,7 +44,7 @@ struct xlog {
 	int		l_sectBBsize;   /* size of log sector in 512 byte chunks */
 };
 
-#include "xfs/xfs_log_recover.h"
+#include "xfs_log_recover.h"
 
 /*
  * macros mapping kernel code to user code

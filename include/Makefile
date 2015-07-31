@@ -65,7 +65,7 @@ disk:
 include $(BUILDRULES)
 
 # set up include/xfs header directory
-install-headers: $(addsuffix -hdrs, $(HFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(PHFILES) $(DKHFILES) $(HFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*

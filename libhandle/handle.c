@@ -17,9 +17,9 @@
  */
 
 #include <libgen.h>
-#include "xfs/xfs.h"
-#include "xfs/handle.h"
-#include "xfs/parent.h"
+#include "xfs.h"
+#include "handle.h"
+#include "parent.h"
 
 /* just pick a value we know is more than big enough */
 #define	MAXHANSIZ	64

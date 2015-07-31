@@ -19,26 +19,26 @@
 #ifndef __LIBXFS_H__
 #define __LIBXFS_H__
 
-#include "xfs/libxfs_api_defs.h"
-#include "xfs/platform_defs.h"
+#include "libxfs_api_defs.h"
+#include "platform_defs.h"
 
-#include "xfs/list.h"
-#include "xfs/hlist.h"
-#include "xfs/cache.h"
-#include "xfs/bitops.h"
-#include "xfs/kmem.h"
-#include "xfs/radix-tree.h"
-#include "xfs/atomic.h"
+#include "list.h"
+#include "hlist.h"
+#include "cache.h"
+#include "bitops.h"
+#include "kmem.h"
+#include "radix-tree.h"
+#include "atomic.h"
 
-#include "xfs/xfs_types.h"
-#include "xfs/xfs_fs.h"
-#include "xfs/xfs_arch.h"
+#include "xfs_types.h"
+#include "xfs_fs.h"
+#include "xfs_arch.h"
 
-#include "xfs/xfs_shared.h"
-#include "xfs/xfs_format.h"
-#include "xfs/xfs_log_format.h"
-#include "xfs/xfs_quota_defs.h"
-#include "xfs/xfs_trans_resv.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_quota_defs.h"
+#include "xfs_trans_resv.h"
 
 
 /* CRC stuff, buffer API dependent on it */
@@ -48,33 +48,33 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 #define crc32(c,p,l)	crc32_le((c),(unsigned char const *)(p),(l))
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
 
-#include "xfs/xfs_cksum.h"
+#include "xfs_cksum.h"
 
 /*
  * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
  * every files via a similar include in the kernel xfs_linux.h.
  */
-#include "xfs/libxfs_io.h"
+#include "libxfs_io.h"
 
-#include "xfs/xfs_bit.h"
-#include "xfs/xfs_sb.h"
-#include "xfs/xfs_mount.h"
-#include "xfs/xfs_da_format.h"
-#include "xfs/xfs_da_btree.h"
-#include "xfs/xfs_dir2.h"
-#include "xfs/xfs_bmap_btree.h"
-#include "xfs/xfs_alloc_btree.h"
-#include "xfs/xfs_ialloc_btree.h"
-#include "xfs/xfs_attr_sf.h"
-#include "xfs/xfs_inode_fork.h"
-#include "xfs/xfs_inode_buf.h"
-#include "xfs/xfs_inode.h"
-#include "xfs/xfs_alloc.h"
-#include "xfs/xfs_btree.h"
-#include "xfs/xfs_btree_trace.h"
-#include "xfs/xfs_bmap.h"
-#include "xfs/xfs_trace.h"
-#include "xfs/xfs_trans.h"
+#include "xfs_bit.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_da_format.h"
+#include "xfs_da_btree.h"
+#include "xfs_dir2.h"
+#include "xfs_bmap_btree.h"
+#include "xfs_alloc_btree.h"
+#include "xfs_ialloc_btree.h"
+#include "xfs_attr_sf.h"
+#include "xfs_inode_fork.h"
+#include "xfs_inode_buf.h"
+#include "xfs_inode.h"
+#include "xfs_alloc.h"
+#include "xfs_btree.h"
+#include "xfs_btree_trace.h"
+#include "xfs_bmap.h"
+#include "xfs_trace.h"
+#include "xfs_trans.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -173,11 +173,11 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 extern int		libxfs_nproc(void);
 extern unsigned long	libxfs_physmem(void);	/* in kilobytes */
 
-#include "xfs/xfs_ialloc.h"
+#include "xfs_ialloc.h"
 
-#include "xfs/xfs_attr_leaf.h"
-#include "xfs/xfs_attr_remote.h"
-#include "xfs/xfs_trans_space.h"
+#include "xfs_attr_leaf.h"
+#include "xfs_attr_remote.h"
+#include "xfs_trans_space.h"
 
 #define XFS_INOBT_IS_FREE_DISK(rp,i)		\
 			((be64_to_cpu((rp)->ir_free) & XFS_INOBT_MASK(i)) != 0)

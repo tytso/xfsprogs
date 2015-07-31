@@ -17,9 +17,9 @@
  */
 
 #include <sys/uio.h>
-#include "xfs/xfs.h"
-#include "xfs/command.h"
-#include "xfs/input.h"
+#include "xfs.h"
+#include "command.h"
+#include "input.h"
 #include "init.h"
 #include "io.h"
 

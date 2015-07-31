@@ -18,7 +18,7 @@
 #ifndef __PROJECT_H__
 #define __PROJECT_H__
 
-#include "xfs/xfs.h"
+#include "xfs.h"
 
 extern int setprojid(const char *__name, int __fd, prid_t __id);
 extern int getprojid(const char *__name, int __fd, prid_t *__id);

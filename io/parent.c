@@ -16,13 +16,13 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs/xfs.h"
-#include "xfs/command.h"
-#include "xfs/input.h"
-#include "xfs/path.h"
-#include "xfs/parent.h"
-#include "xfs/handle.h"
-#include "xfs/jdm.h"
+#include "xfs.h"
+#include "command.h"
+#include "input.h"
+#include "path.h"
+#include "parent.h"
+#include "handle.h"
+#include "jdm.h"
 #include "init.h"
 #include "io.h"
 
