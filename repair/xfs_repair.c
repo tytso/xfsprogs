@@ -573,6 +573,18 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* -f forces this, but let's be nice and autodetect it, as well. */
+	if (!isa_file) {
+		int		fd = libxfs_device_to_fd(x.ddev);
+		struct stat64	statbuf;
+
+		if (fstat64(fd, &statbuf) < 0)
+			do_warn(_("%s: couldn't stat \"%s\"\n"),
+				progname, fs_name);
+		else if (S_ISREG(statbuf.st_mode))
+			isa_file = 1;
+	}
+
 	/*
 	 * if the sector size of the filesystem we are trying to repair is
 	 * smaller than that of the underlying filesystem (i.e. we are repairing

@@ -121,8 +121,12 @@ phase1(xfs_mount_t *mp)
 			sb->sb_bad_features2 |= XFS_SB_VERSION2_LAZYSBCOUNTBIT;
 			primary_sb_modified = 1;
 			printf(_("Enabling lazy-counters\n"));
-		} else
-		if (!lazy_count && xfs_sb_version_haslazysbcount(sb)) {
+		} else if (!lazy_count && xfs_sb_version_haslazysbcount(sb)) {
+			if (XFS_SB_VERSION_NUM(sb) == XFS_SB_VERSION_5) {
+				printf(
+_("Cannot disable lazy-counters on V5 fs\n"));
+				exit(1);
+			}
 			sb->sb_features2 &= ~XFS_SB_VERSION2_LAZYSBCOUNTBIT;
 			sb->sb_bad_features2 &= ~XFS_SB_VERSION2_LAZYSBCOUNTBIT;
 			printf(_("Disabling lazy-counters\n"));

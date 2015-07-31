@@ -464,31 +464,35 @@ static void get_topology(
 	struct fs_topology	*ft,
 	int			force_overwrite)
 {
-	if (!xi->disfile) {
-		char *dfile = xi->volname ? xi->volname : xi->dname;
-		struct stat statbuf;
+	struct stat statbuf;
+	char *dfile = xi->volname ? xi->volname : xi->dname;
 
-		/*
-		 * If our target is a regular file, and xi->disfile isn't
-		 * set (i.e. no "-d file" invocation), use platform_findsizes
-		 * to try to obtain the underlying filesystem's requirements
-		 * for direct IO; we'll set our sector size to that if possible.
-		 */
-		if (!stat(dfile, &statbuf) && S_ISREG(statbuf.st_mode)) {
-			int fd;
-			long long dummy;
+	/*
+	 * If our target is a regular file, use platform_findsizes
+	 * to try to obtain the underlying filesystem's requirements
+	 * for direct IO; we'll set our sector size to that if possible.
+	 */
+	if (xi->disfile ||
+	    (!stat(dfile, &statbuf) && S_ISREG(statbuf.st_mode))) {
+		int fd;
+		int flags = O_RDONLY;
+		long long dummy;
 
-			fd = open(dfile, O_RDONLY);
-			if (fd >= 0) {
-				platform_findsizes(dfile, fd, &dummy,
-						   &ft->lsectorsize);
-				close(fd);
-			}
-		} else {
-			blkid_get_topology(dfile, &ft->dsunit, &ft->dswidth,
-					   &ft->lsectorsize, &ft->psectorsize,
-					   force_overwrite);
-		}
+		/* with xi->disfile we may not have the file yet! */
+		if (xi->disfile)
+			flags |= O_CREAT;
+
+		fd = open(dfile, flags, 0666);
+		if (fd >= 0) {
+			platform_findsizes(dfile, fd, &dummy, &ft->lsectorsize);
+			close(fd);
+			ft->psectorsize = ft->lsectorsize;
+		} else
+			ft->psectorsize = ft->lsectorsize = BBSIZE;
+	} else {
+		blkid_get_topology(dfile, &ft->dsunit, &ft->dswidth,
+				   &ft->lsectorsize, &ft->psectorsize,
+				   force_overwrite);
 	}
 
 	if (xi->rtname && !xi->risfile) {
@@ -527,11 +531,32 @@ static void get_topology(
 	struct fs_topology	*ft,
 	int			force_overwrite)
 {
-
+	struct stat statbuf;
 	char *dfile = xi->volname ? xi->volname : xi->dname;
 	int bsz = BBSIZE;
 
-	if (!xi->disfile) {
+        /*
+	 * If our target is a regular file, use platform_findsizes
+	 * to try to obtain the underlying filesystem's requirements
+	 * for direct IO; we'll set our sector size to that if possible.
+	 */
+	if (xi->disfile ||
+	    (!stat(dfile, &statbuf) && S_ISREG(statbuf.st_mode))) {
+		int fd;
+		int flags = O_RDONLY;
+		long long dummy;
+
+		/* with xi->disfile we may not have the file yet! */
+		if (xi->disfile)
+			flags |= O_CREAT;
+
+		fd = open(dfile, flags, 0666);
+		/* If this fails we just fall back to BBSIZE */
+		if (fd >= 0) {
+			platform_findsizes(dfile, fd, &dummy, &bsz);
+			close(fd);
+		}
+	} else {
 		int fd;
 		long long dummy;
 

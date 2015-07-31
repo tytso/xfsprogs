@@ -151,9 +151,9 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define XFS_TRANS_UNRESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
 #define XFS_TEST_ERROR(expr,a,b,c)	( expr )
 #define XFS_WANT_CORRUPTED_GOTO(mp, expr, l)	\
-		{ if (!(expr)) { error = EFSCORRUPTED; goto l; } }
+		{ (mp) = (mp); if (!(expr)) { error = EFSCORRUPTED; goto l; } }
 #define XFS_WANT_CORRUPTED_RETURN(mp, expr)	\
-		{ if (!(expr)) { return EFSCORRUPTED; } }
+		{ (mp) = (mp); if (!(expr)) { return EFSCORRUPTED; } }
 
 #ifdef __GNUC__
 #define __return_address	__builtin_return_address(0)
@@ -401,7 +401,11 @@ roundup_64(__uint64_t x, __uint32_t y)
 
 /* space allocation */
 #define xfs_extent_busy_reuse(mp,ag,bno,len,user)	((void) 0)
-#define xfs_extent_busy_insert(tp,ag,bno,len,flags)	((void) 0)
+/* avoid unused variable warning */
+#define xfs_extent_busy_insert(tp,ag,bno,len,flags)({ 	\
+	xfs_agnumber_t __foo = ag; 			\
+	__foo = __foo; /* no set-but-unused warning */	\
+})
 #define xfs_extent_busy_trim(args,fbno,flen,bno,len) \
 do { \
 	*(bno) = (fbno); \

@@ -138,7 +138,7 @@ include $(BUILDRULES)
 install: default
 
 install-dev: install
-	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
+	$(INSTALL) -m 644 $(PKGHFILES) $(HFILES) $(PKG_INC_DIR)
 
 install-qa: install-dev
 	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)

@@ -50,7 +50,6 @@ zero_log(xfs_mount_t *mp)
 		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
 
 	log.l_dev = mp->m_logdev_targp;
-	log.l_logsize = BBTOB(x.logBBsize);
 	log.l_logBBsize = x.logBBsize;
 	log.l_logBBstart = x.logBBstart;
 	log.l_sectBBsize  = BTOBB(x.lbsize);
