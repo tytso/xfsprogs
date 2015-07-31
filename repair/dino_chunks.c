@@ -550,7 +550,42 @@ verify_aginode_chunk_irec(xfs_mount_t	*mp,
 	return(irec);
 }
 
+/*
+ * Set the state of an inode block during inode chunk processing. The block is
+ * expected to be in the free or inode state. If free, it transitions to the
+ * inode state. Warn if the block is in neither expected state as this indicates
+ * multiply claimed blocks.
+ */
+static void
+process_inode_agbno_state(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	xfs_agblock_t		agbno)
+{
+	int state;
 
+	pthread_mutex_lock(&ag_locks[agno].lock);
+	state = get_bmap(agno, agbno);
+	switch (state) {
+	case XR_E_INO:	/* already marked */
+		break;
+	case XR_E_UNKNOWN:
+	case XR_E_FREE:
+	case XR_E_FREE1:
+		set_bmap(agno, agbno, XR_E_INO);
+		break;
+	case XR_E_BAD_STATE:
+		do_error(_("bad state in block map %d\n"), state);
+		break;
+	default:
+		set_bmap(agno, agbno, XR_E_MULT);
+		do_warn(
+	_("inode block %" PRIu64 " multiply claimed, state was %d\n"),
+			XFS_AGB_TO_FSB(mp, agno, agbno), state);
+		break;
+	}
+	pthread_mutex_unlock(&ag_locks[agno].lock);
+}
 
 /*
  * processes an inode allocation chunk/block, returns 1 on I/O errors,
@@ -558,8 +593,6 @@ verify_aginode_chunk_irec(xfs_mount_t	*mp,
  *
  * *bogus is set to 1 if the entire set of inodes is bad.
  */
-
-/* ARGSUSED */
 static int
 process_inode_chunk(
 	xfs_mount_t 		*mp,
@@ -578,7 +611,6 @@ process_inode_chunk(
 	int			icnt;
 	int			status;
 	int			is_used;
-	int			state;
 	int			ino_dirty;
 	int			irec_offset;
 	int			ibuf_offset;
@@ -757,29 +789,8 @@ next_readbuf:
 	/*
 	 * mark block as an inode block in the incore bitmap
 	 */
-	if (!is_inode_sparse(ino_rec, irec_offset)) {
-		pthread_mutex_lock(&ag_locks[agno].lock);
-		state = get_bmap(agno, agbno);
-		switch (state) {
-		case XR_E_INO:	/* already marked */
-			break;
-		case XR_E_UNKNOWN:
-		case XR_E_FREE:
-		case XR_E_FREE1:
-			set_bmap(agno, agbno, XR_E_INO);
-			break;
-		case XR_E_BAD_STATE:
-			do_error(_("bad state in block map %d\n"), state);
-			break;
-		default:
-			set_bmap(agno, agbno, XR_E_MULT);
-			do_warn(
-		_("inode block %" PRIu64 " multiply claimed, state was %d\n"),
-				XFS_AGB_TO_FSB(mp, agno, agbno), state);
-			break;
-		}
-		pthread_mutex_unlock(&ag_locks[agno].lock);
-	}
+	if (!is_inode_sparse(ino_rec, irec_offset))
+		process_inode_agbno_state(mp, agno, agbno);
 
 	for (;;) {
 		agino = irec_offset + ino_rec->ino_startnum;
@@ -956,32 +967,8 @@ process_next:
 			ibuf_offset = 0;
 			agbno++;
 
-			if (!is_inode_sparse(ino_rec, irec_offset)) {
-				pthread_mutex_lock(&ag_locks[agno].lock);
-				state = get_bmap(agno, agbno);
-				switch (state) {
-				case XR_E_INO:	/* already marked */
-					break;
-				case XR_E_UNKNOWN:
-				case XR_E_FREE:
-				case XR_E_FREE1:
-					set_bmap(agno, agbno, XR_E_INO);
-					break;
-				case XR_E_BAD_STATE:
-					do_error(
-					_("bad state in block map %d\n"),
-						state);
-					break;
-				default:
-					set_bmap(agno, agbno, XR_E_MULT);
-					do_warn(
-		_("inode block %" PRIu64 " multiply claimed, state was %d\n"),
-						XFS_AGB_TO_FSB(mp, agno, agbno),
-						state);
-					break;
-				}
-				pthread_mutex_unlock(&ag_locks[agno].lock);
-			}
+			if (!is_inode_sparse(ino_rec, irec_offset))
+				process_inode_agbno_state(mp, agno, agbno);
 		} else if (irec_offset == XFS_INODES_PER_CHUNK)  {
 			/*
 			 * get new irec (multiple chunks per block fs)
