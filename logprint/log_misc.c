@@ -15,8 +15,8 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#include <xfs/libxfs.h>
-#include <xfs/libxlog.h>
+#include "xfs/libxfs.h"
+#include "xfs/libxlog.h"
 
 #include "logprint.h"
 
@@ -119,7 +119,7 @@ print_stars(void)
 void
 xlog_print_op_header(xlog_op_header_t	*op_head,
 		     int		i,
-		     xfs_caddr_t	*ptr)
+		     char		**ptr)
 {
     xlog_op_header_t hbuf;
 
@@ -208,10 +208,10 @@ xlog_print_find_tid(xlog_tid_t tid, uint was_cont)
 }	/* xlog_print_find_tid */
 
 int
-xlog_print_trans_header(xfs_caddr_t *ptr, int len)
+xlog_print_trans_header(char **ptr, int len)
 {
     xfs_trans_header_t  *h;
-    xfs_caddr_t		cptr = *ptr;
+    char		*cptr = *ptr;
     __uint32_t          magic;
     char                *magic_c = (char *)&magic;
 
@@ -240,7 +240,7 @@ xlog_print_trans_header(xfs_caddr_t *ptr, int len)
 
 
 int
-xlog_print_trans_buffer(xfs_caddr_t *ptr, int len, int *i, int num_ops)
+xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 {
     xfs_buf_log_format_t *f;
     xfs_agi_t		 *agi;
@@ -466,7 +466,7 @@ xlog_print_trans_buffer(xfs_caddr_t *ptr, int len, int *i, int num_ops)
 
 
 int
-xlog_print_trans_efd(xfs_caddr_t *ptr, uint len)
+xlog_print_trans_efd(char **ptr, uint len)
 {
     xfs_efd_log_format_t *f;
     xfs_efd_log_format_t lbuf;
@@ -496,7 +496,7 @@ xlog_print_trans_efd(xfs_caddr_t *ptr, uint len)
 
 int
 xlog_print_trans_efi(
-	xfs_caddr_t *ptr,
+	char **ptr,
 	uint src_len,
 	int continued)
 {
@@ -560,7 +560,7 @@ error:
 
 
 int
-xlog_print_trans_qoff(xfs_caddr_t *ptr, uint len)
+xlog_print_trans_qoff(char **ptr, uint len)
 {
     xfs_qoff_logformat_t *f;
     xfs_qoff_logformat_t lbuf;
@@ -637,11 +637,11 @@ xlog_print_dir2_sf(
 int
 xlog_print_trans_inode(
 	struct xlog	*log,
-	xfs_caddr_t	*ptr,
+	char		**ptr,
 	int		len,
 	int		*i,
 	int		num_ops,
-	boolean_t	continued)
+	int		continued)
 {
     xfs_icdinode_t	   dino;
     xlog_op_header_t	   *op_head;
@@ -778,7 +778,7 @@ xlog_print_trans_inode(
 
 
 int
-xlog_print_trans_dquot(xfs_caddr_t *ptr, int len, int *i, int num_ops)
+xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
 {
     xfs_dq_logformat_t	*f;
     xfs_dq_logformat_t	lbuf = {0};
@@ -834,7 +834,7 @@ xlog_print_trans_dquot(xfs_caddr_t *ptr, int len, int *i, int num_ops)
 
 STATIC int
 xlog_print_trans_icreate(
-	xfs_caddr_t	*ptr,
+	char		**ptr,
 	int		len,
 	int		*i,
 	int		num_ops)
@@ -886,7 +886,7 @@ xlog_print_lseek(struct xlog *log, int fd, xfs_daddr_t blkno, int whence)
 
 
 void
-print_lsn(xfs_caddr_t	string,
+print_lsn(char		*string,
 	  __be64	*lsn)
 {
     printf("%s: %u,%u", string,
@@ -901,12 +901,12 @@ xlog_print_record(
 	int			num_ops,
 	int			len,
 	int			*read_type,
-	xfs_caddr_t		*partial_buf,
+	char			**partial_buf,
 	xlog_rec_header_t	*rhead,
 	xlog_rec_ext_header_t	*xhdrs,
 	int			bad_hdr_warn)
 {
-    xfs_caddr_t		buf, ptr;
+    char		*buf, *ptr;
     int			read_len, skip, lost_context = 0;
     int			ret, n, i, j, k;
 
@@ -923,13 +923,13 @@ xlog_print_record(
 
     /* read_type => don't malloc() new buffer, use old one */
     if (*read_type == FULL_READ) {
-	if ((ptr = buf = (xfs_caddr_t)malloc(read_len)) == NULL) {
+	if ((ptr = buf = malloc(read_len)) == NULL) {
 	    fprintf(stderr, _("%s: xlog_print_record: malloc failed\n"), progname);
 	    exit(1);
 	}
     } else {
 	read_len -= *read_type;
-	buf = (xfs_caddr_t)((__psint_t)(*partial_buf) + (__psint_t)(*read_type));
+	buf = (char *)((intptr_t)(*partial_buf) + (intptr_t)(*read_type));
 	ptr = *partial_buf;
     }
     if ((ret = (int) read(fd, buf, read_len)) == -1) {
@@ -1220,7 +1220,7 @@ print_xlog_bad_zeroed(xfs_daddr_t blkno)
 }	/* print_xlog_bad_zeroed */
 
 static void
-print_xlog_bad_header(xfs_daddr_t blkno, xfs_caddr_t buf)
+print_xlog_bad_header(xfs_daddr_t blkno, char *buf)
 {
 	print_stars();
 	printf(_("* ERROR: header cycle=%-11d block=%-21lld        *\n"),
@@ -1358,7 +1358,7 @@ void xfs_log_print(struct xlog  *log,
     xfs_daddr_t			block_end = 0, block_start, blkno, error;
     xfs_daddr_t			zeroed_blkno = 0, cleared_blkno = 0;
     int				read_type = FULL_READ;
-    xfs_caddr_t			partial_buf;
+    char			*partial_buf;
     int				zeroed = 0;
     int				cleared = 0;
     int				first_hdr_found = 0;

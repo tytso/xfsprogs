@@ -87,11 +87,10 @@ void	xfs_trans_init(struct xfs_mount *);
 int	xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 
 xfs_trans_t	*libxfs_trans_alloc(struct xfs_mount *, int);
-xfs_trans_t	*libxfs_trans_dup(struct xfs_trans *);
 int	libxfs_trans_reserve(struct xfs_trans *, struct xfs_trans_res *,
 				     uint, uint);
-int	libxfs_trans_commit(struct xfs_trans *, uint);
-void	libxfs_trans_cancel(struct xfs_trans *, int);
+int	libxfs_trans_commit(struct xfs_trans *);
+void	libxfs_trans_cancel(struct xfs_trans *);
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);
 
 int	libxfs_trans_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,

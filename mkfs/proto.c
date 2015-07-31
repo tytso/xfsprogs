@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs/libxfs.h>
+#include "xfs/libxfs.h"
 #include <sys/stat.h>
 #include "xfs_mkfs.h"
 
@@ -215,7 +215,7 @@ rsvfile(
 	ip->i_d.di_flags |= XFS_DIFLAG_PREALLOC;
 
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 }
 
 static int
@@ -443,7 +443,7 @@ parseproto(
 	mode |= val;
 	creds.cr_uid = (int)getnum(pp);
 	creds.cr_gid = (int)getnum(pp);
-	xname.name = (uchar_t *)name;
+	xname.name = (unsigned char *)name;
 	xname.len = name ? strlen(name) : 0;
 	xname.type = 0;
 	tp = libxfs_trans_alloc(mp, 0);
@@ -484,7 +484,7 @@ parseproto(
 		error = -libxfs_bmap_finish(&tp, &flist, &committed);
 		if (error)
 			fail(_("Pre-allocated file creation failed"), error);
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 		rsvfile(mp, ip, llen);
 		IRELE(ip);
 		return;
@@ -566,7 +566,7 @@ parseproto(
 		error = -libxfs_bmap_finish(&tp, &flist, &committed);
 		if (error)
 			fail(_("Directory creation failed"), error);
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 		/*
 		 * RT initialization.  Do this here to ensure that
 		 * the RT inodes get placed after the root inode.
@@ -594,7 +594,7 @@ parseproto(
 		fail(_("Error encountered creating file from prototype file"),
 			error);
 	}
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 	IRELE(ip);
 }
 
@@ -668,7 +668,7 @@ rtinit(
 	rsumip->i_d.di_size = mp->m_rsumsize;
 	libxfs_trans_log_inode(tp, rsumip, XFS_ILOG_CORE);
 	libxfs_log_sb(tp);
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 	mp->m_rsumip = rsumip;
 	/*
 	 * Next, give the bitmap file some zero-filled blocks.
@@ -704,7 +704,7 @@ rtinit(
 	if (error) {
 		fail(_("Completion of the realtime bitmap failed"), error);
 	}
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 
 	/*
 	 * Give the summary file some zero-filled blocks.
@@ -739,7 +739,7 @@ rtinit(
 	if (error) {
 		fail(_("Completion of the realtime summary failed"), error);
 	}
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 
 	/*
 	 * Free the whole area using transactions.
@@ -763,7 +763,7 @@ rtinit(
 		if (error) {
 			fail(_("Error completing the realtime space"), error);
 		}
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 	}
 }
 

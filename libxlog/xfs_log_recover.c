@@ -15,8 +15,8 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#include <xfs/libxfs.h>
-#include <xfs/libxlog.h>
+#include "xfs/libxfs.h"
+#include "xfs/libxlog.h"
 
 #define xfs_readonly_buftarg(buftarg)			(0)
 
@@ -93,7 +93,7 @@ xlog_put_bp(
  * Return the address of the start of the given block number's data
  * in a log buffer.  The buffer covers a log sector-aligned region.
  */
-STATIC xfs_caddr_t
+STATIC char *
 xlog_align(
 	struct xlog	*log,
 	xfs_daddr_t	blk_no,
@@ -143,7 +143,7 @@ xlog_bread(
 	xfs_daddr_t	blk_no,
 	int		nbblks,
 	struct xfs_buf	*bp,
-	xfs_caddr_t	*offset)
+	char		**offset)
 {
 	int		error;
 
@@ -165,9 +165,9 @@ xlog_bread_offset(
 	xfs_daddr_t	blk_no,		/* block to read from */
 	int		nbblks,		/* blocks to read */
 	struct xfs_buf	*bp,
-	xfs_caddr_t	offset)
+	char		*offset)
 {
-	xfs_caddr_t	orig_offset = bp->b_addr;
+	char		*orig_offset = bp->b_addr;
 	int		orig_len = bp->b_bcount;
 	int		error, error2;
 
@@ -198,7 +198,7 @@ xlog_find_cycle_start(
 	xfs_daddr_t	*last_blk,
 	uint		cycle)
 {
-	xfs_caddr_t	offset;
+	char		*offset;
 	xfs_daddr_t	mid_blk;
 	xfs_daddr_t	end_blk;
 	uint		mid_cycle;
@@ -245,7 +245,7 @@ xlog_find_verify_cycle(
 	uint		cycle;
 	xfs_buf_t	*bp;
 	xfs_daddr_t	bufblks;
-	xfs_caddr_t	buf = NULL;
+	char		*buf = NULL;
 	int		error = 0;
 
 	/*
@@ -311,7 +311,7 @@ xlog_find_verify_log_record(
 {
 	xfs_daddr_t		i;
 	xfs_buf_t		*bp;
-	xfs_caddr_t		offset = NULL;
+	char			*offset = NULL;
 	xlog_rec_header_t	*head = NULL;
 	int			error = 0;
 	int			smallmem = 0;
@@ -418,7 +418,7 @@ xlog_find_head(
 	xfs_daddr_t	*return_head_blk)
 {
 	xfs_buf_t	*bp;
-	xfs_caddr_t	offset;
+	char		*offset;
 	xfs_daddr_t	new_blk, first_blk, start_blk, last_blk, head_blk;
 	int		num_scan_bblks;
 	uint		first_half_cycle, last_half_cycle;
@@ -691,7 +691,7 @@ xlog_find_tail(
 {
 	xlog_rec_header_t	*rhead;
 	xlog_op_header_t	*op_head;
-	xfs_caddr_t		offset = NULL;
+	char			*offset = NULL;
 	xfs_buf_t		*bp;
 	int			error, i, found;
 	xfs_daddr_t		umount_data_blk;
@@ -899,7 +899,7 @@ xlog_find_zeroed(
 	xfs_daddr_t	*blk_no)
 {
 	xfs_buf_t	*bp;
-	xfs_caddr_t	offset;
+	char		*offset;
 	uint	        first_cycle, last_cycle;
 	xfs_daddr_t	new_blk, last_blk, start_blk;
 	xfs_daddr_t     num_scan_bblks;
@@ -1041,17 +1041,17 @@ STATIC int
 xlog_recover_add_to_cont_trans(
 	struct xlog		*log,
 	struct xlog_recover	*trans,
-	xfs_caddr_t		dp,
+	char			*dp,
 	int			len)
 {
 	xlog_recover_item_t	*item;
-	xfs_caddr_t		ptr, old_ptr;
+	char			*ptr, *old_ptr;
 	int			old_len;
 
 	if (list_empty(&trans->r_itemq)) {
 		/* finish copying rest of trans header */
 		xlog_recover_add_item(&trans->r_itemq);
-		ptr = (xfs_caddr_t) &trans->r_theader +
+		ptr = (char *) &trans->r_theader +
 				sizeof(xfs_trans_header_t) - len;
 		memcpy(ptr, dp, len); /* d, s, l */
 		return 0;
@@ -1087,12 +1087,12 @@ STATIC int
 xlog_recover_add_to_trans(
 	struct xlog		*log,
 	struct xlog_recover	*trans,
-	xfs_caddr_t		dp,
+	char			*dp,
 	int			len)
 {
 	xfs_inode_log_format_t	*in_f;			/* any will do */
 	xlog_recover_item_t	*item;
-	xfs_caddr_t		ptr;
+	char			*ptr;
 
 	if (!len)
 		return 0;
@@ -1219,10 +1219,10 @@ xlog_recover_process_data(
 	struct xlog		*log,
 	struct hlist_head	rhash[],
 	struct xlog_rec_header	*rhead,
-	xfs_caddr_t		dp,
+	char			*dp,
 	int			pass)
 {
-	xfs_caddr_t		lp;
+	char			*lp;
 	int			num_logops;
 	xlog_op_header_t	*ohead;
 	xlog_recover_t		*trans;
@@ -1322,7 +1322,7 @@ xlog_recover_process_data(
 STATIC int
 xlog_unpack_data_crc(
 	struct xlog_rec_header	*rhead,
-	xfs_caddr_t		dp,
+	char			*dp,
 	struct xlog		*log)
 {
 	__le32			crc;
@@ -1352,7 +1352,7 @@ xlog_unpack_data_crc(
 STATIC int
 xlog_unpack_data(
 	struct xlog_rec_header	*rhead,
-	xfs_caddr_t		dp,
+	char			*dp,
 	struct xlog		*log)
 {
 	int			i, j, k;
@@ -1434,7 +1434,7 @@ xlog_do_recovery_pass(
 {
 	xlog_rec_header_t	*rhead;
 	xfs_daddr_t		blk_no;
-	xfs_caddr_t		offset;
+	char			*offset;
 	xfs_buf_t		*hbp, *dbp;
 	int			error = 0, h_size;
 	int			bblks, split_bblks;

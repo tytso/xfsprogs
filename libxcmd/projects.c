@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xfs/project.h>
+#include "xfs/project.h"
 
 #define PROJID		"/etc/projid"
 #define PROJECT_PATHS	"/etc/projects"

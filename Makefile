@@ -40,18 +40,22 @@ LDIRDIRT = $(SRCDIR)
 LDIRT += $(SRCTAR)
 endif
 
+# header install rules to populate include/xfs correctly
+HDR_SUBDIRS = include libxfs
 
 DLIB_SUBDIRS = libxlog libxcmd libhandle libdisk
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc po debian
 
-SUBDIRS = include $(LIB_SUBDIRS) $(TOOL_SUBDIRS)
+# include is listed last so it is processed last in clean rules.
+SUBDIRS = $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
 
 default: include/builddefs include/platform_defs.h
 ifeq ($(HAVE_BUILDDEFS), no)
 	$(Q)$(MAKE) $(MAKEOPTS) -C . $@
 else
+	$(Q)$(MAKE) $(MAKEOPTS) headers
 	$(Q)$(MAKE) $(MAKEOPTS) $(SUBDIRS)
 endif
 

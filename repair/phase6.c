@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "threads.h"
 #include "prefetch.h"
 #include "avl.h"
@@ -545,7 +545,7 @@ mk_rbmino(xfs_mount_t *mp)
 	 * commit changes
 	 */
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 
 	/*
 	 * then allocate blocks for file and fill with zeroes (stolen
@@ -584,7 +584,7 @@ mk_rbmino(xfs_mount_t *mp)
 		_("allocation of the realtime bitmap failed, error = %d\n"),
 			error);
 	}
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 }
 
 static int
@@ -649,11 +649,11 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 
 		libxfs_trans_log_buf(tp, bp, 0, mp->m_sb.sb_blocksize - 1);
 
-		bmp = (xfs_rtword_t *)((__psint_t) bmp + mp->m_sb.sb_blocksize);
+		bmp = (xfs_rtword_t *)((intptr_t) bmp + mp->m_sb.sb_blocksize);
 		bno++;
 	}
 
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 	return(0);
 }
 
@@ -721,11 +721,11 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 
 		libxfs_trans_log_buf(tp, bp, 0, mp->m_sb.sb_blocksize - 1);
 
-		smp = (xfs_suminfo_t *)((__psint_t)smp + mp->m_sb.sb_blocksize);
+		smp = (xfs_suminfo_t *)((intptr_t)smp + mp->m_sb.sb_blocksize);
 		bno++;
 	}
 
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 	return(0);
 }
 
@@ -801,7 +801,7 @@ mk_rsumino(xfs_mount_t *mp)
 	 * commit changes
 	 */
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 
 	/*
 	 * then allocate blocks for file and fill with zeroes (stolen
@@ -845,7 +845,7 @@ mk_rsumino(xfs_mount_t *mp)
 	_("allocation of the realtime summary ino failed, error = %d\n"),
 			error);
 	}
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 }
 
 /*
@@ -919,7 +919,7 @@ mk_root_dir(xfs_mount_t *mp)
 	ip->d_ops = mp->m_dir_inode_ops;
 	libxfs_dir_init(tp, ip, ip);
 
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
 				XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino));
@@ -1060,7 +1060,7 @@ mk_orphanage(xfs_mount_t *mp)
 	}
 
 
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 	IRELE(ip);
 	IRELE(pip);
 	add_inode_reached(irec,ino_offset);
@@ -1168,8 +1168,7 @@ mv_orphanage(
 	_("bmap finish failed (err - %d), filesystem may be out of space\n"),
 					err);
 
-			libxfs_trans_commit(tp,
-				XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+			libxfs_trans_commit(tp);
 		} else  {
 			err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
 						   nres, 0);
@@ -1216,8 +1215,7 @@ mv_orphanage(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
 					err);
 
-			libxfs_trans_commit(tp,
-				XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+			libxfs_trans_commit(tp);
 		}
 
 	} else  {
@@ -1256,7 +1254,7 @@ mv_orphanage(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
 				err);
 
-		libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+		libxfs_trans_commit(tp);
 	}
 	IRELE(ino_p);
 	IRELE(orphanage_ip);
@@ -1354,7 +1352,7 @@ longform_dir2_rebuild(
 
 	error = -libxfs_bmap_finish(&tp, &flist, &committed);
 
-	libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+	libxfs_trans_commit(tp);
 
 	if (ino == mp->m_sb.sb_rootino)
 		need_root_dotdot = 0;
@@ -1395,15 +1393,14 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 			goto out_bmap_cancel;
 		}
 
-		libxfs_trans_commit(tp,
-				XFS_TRANS_RELEASE_LOG_RES|XFS_TRANS_SYNC);
+		libxfs_trans_commit(tp);
 	}
 
 	return;
 
 out_bmap_cancel:
 	libxfs_bmap_cancel(&flist);
-	libxfs_trans_cancel(tp, XFS_TRANS_RELEASE_LOG_RES | XFS_TRANS_ABORT);
+	libxfs_trans_cancel(tp);
 	return;
 }
 
@@ -1450,7 +1447,7 @@ dir2_kill_block(
 		do_error(_("shrink_inode failed inode %" PRIu64 " block %u\n"),
 			ip->i_ino, da_bno);
 	libxfs_bmap_finish(&tp, &flist, &committed);
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 }
 
 /*
@@ -1926,7 +1923,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
 	libxfs_bmap_finish(&tp, &flist, &committed);
-	libxfs_trans_commit(tp, 0);
+	libxfs_trans_commit(tp);
 
 	/* record the largest free space in the freetab for later checking */
 	bf = M_DIROPS(mp)->data_bestfree_p(d);
@@ -2410,14 +2407,14 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 out_fix:
 	if (!no_modify && (fixit || dotdot_update)) {
 		dir_hash_dup_names(hashtab);
-		for (i = 0; i < freetab->naents; i++)
+		for (i = 0; i < num_bps; i++)
 			if (bplist[i])
 				libxfs_putbuf(bplist[i]);
 		longform_dir2_rebuild(mp, ino, ip, irec, ino_offset, hashtab);
 		*num_illegal = 0;
 		*need_dot = 0;
 	} else {
-		for (i = 0; i < freetab->naents; i++)
+		for (i = 0; i < num_bps; i++)
 			if (bplist[i])
 				libxfs_putbuf(bplist[i]);
 	}
@@ -2464,12 +2461,12 @@ shortform_dir2_junk(
 	 * now move all the remaining entries down over the junked entry and
 	 * clear the newly unused bytes at the tail of the directory region.
 	 */
-	next_len = *max_size - ((__psint_t)next_sfep - (__psint_t)sfp);
+	next_len = *max_size - ((intptr_t)next_sfep - (intptr_t)sfp);
 	*max_size -= next_elen;
 	*bytes_deleted += next_elen;
 
 	memmove(sfep, next_sfep, next_len);
-	memset((void *)((__psint_t)sfep + next_len), 0, next_elen);
+	memset((void *)((intptr_t)sfep + next_len), 0, next_elen);
 	sfp->count -= 1;
 	*ino_dirty = 1;
 
@@ -2559,7 +2556,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 	sfep = next_sfep = xfs_dir2_sf_firstentry(sfp);
 
 	for (i = 0; i < sfp->count && max_size >
-					(__psint_t)next_sfep - (__psint_t)sfp;
+					(intptr_t)next_sfep - (intptr_t)sfp;
 			sfep = next_sfep, i++)  {
 		bad_sfnamelen = 0;
 
@@ -2582,8 +2579,8 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 
 			if (i == sfp->count - 1)  {
 				namelen = ip->i_d.di_size -
-					((__psint_t) &sfep->name[0] -
-					 (__psint_t) sfp);
+					((intptr_t) &sfep->name[0] -
+					 (intptr_t) sfp);
 			} else  {
 				/*
 				 * don't process the rest of the directory,
@@ -2591,15 +2588,15 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 				 */
 				break;
 			}
-		} else if (no_modify && (__psint_t) sfep - (__psint_t) sfp +
+		} else if (no_modify && (intptr_t) sfep - (intptr_t) sfp +
 				+ M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
 				> ip->i_d.di_size)  {
 			bad_sfnamelen = 1;
 
 			if (i == sfp->count - 1)  {
 				namelen = ip->i_d.di_size -
-					((__psint_t) &sfep->name[0] -
-					 (__psint_t) sfp);
+					((intptr_t) &sfep->name[0] -
+					 (intptr_t) sfp);
 			} else  {
 				/*
 				 * don't process the rest of the directory,
@@ -2781,7 +2778,7 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 		 * on next_sfep.
 		 */
 		ASSERT(no_modify || bad_sfnamelen == 0);
-		next_sfep = (struct xfs_dir2_sf_entry *)((__psint_t)sfep +
+		next_sfep = (struct xfs_dir2_sf_entry *)((intptr_t)sfep +
 			      (bad_sfnamelen
 				? M_DIROPS(mp)->sf_entsize(sfp, namelen)
 				: M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)));
@@ -2798,8 +2795,8 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 				tmp_sfep = next_sfep;
 				process_sf_dir2_fixi8(mp, sfp, &tmp_sfep);
 				bytes_deleted +=
-					(__psint_t)next_sfep -
-					(__psint_t)tmp_sfep;
+					(intptr_t)next_sfep -
+					(intptr_t)tmp_sfep;
 				next_sfep = tmp_sfep;
 			} else
 				sfp->i8count = i8;
@@ -2820,9 +2817,9 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 
 	if (ip->i_d.di_size != ip->i_df.if_bytes)  {
 		ASSERT(ip->i_df.if_bytes == (xfs_fsize_t)
-				((__psint_t) next_sfep - (__psint_t) sfp));
+				((intptr_t) next_sfep - (intptr_t) sfp));
 		ip->i_d.di_size = (xfs_fsize_t)
-				((__psint_t) next_sfep - (__psint_t) sfp);
+				((intptr_t) next_sfep - (intptr_t) sfp);
 		do_warn(
 	_("setting size to %" PRId64 " bytes to reflect junked entries\n"),
 			ip->i_d.di_size);
@@ -2945,12 +2942,9 @@ process_dir_inode(
 			if (dirty)  {
 				libxfs_trans_log_inode(tp, ip,
 					XFS_ILOG_CORE | XFS_ILOG_DDATA);
-				libxfs_trans_commit(tp,
-					XFS_TRANS_RELEASE_LOG_RES |
-					XFS_TRANS_SYNC);
+				libxfs_trans_commit(tp);
 			} else  {
-				libxfs_trans_cancel(tp,
-					XFS_TRANS_RELEASE_LOG_RES);
+				libxfs_trans_cancel(tp);
 			}
 			break;
 
@@ -2996,8 +2990,7 @@ process_dir_inode(
 
 		error = -libxfs_bmap_finish(&tp, &flist, &committed);
 		ASSERT(error == 0);
-		libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES |
-							XFS_TRANS_SYNC);
+		libxfs_trans_commit(tp);
 
 		need_root_dotdot = 0;
 	} else if (need_root_dotdot && ino == mp->m_sb.sb_rootino)  {
@@ -3058,8 +3051,7 @@ process_dir_inode(
 
 			error = -libxfs_bmap_finish(&tp, &flist, &committed);
 			ASSERT(error == 0);
-			libxfs_trans_commit(tp, XFS_TRANS_RELEASE_LOG_RES
-					|XFS_TRANS_SYNC);
+			libxfs_trans_commit(tp);
 		}
 	}
 	IRELE(ip);

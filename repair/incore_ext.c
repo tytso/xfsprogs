@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "avl.h"
 #include "btree.h"
 #include "globals.h"
@@ -498,17 +498,17 @@ get_bcnt_extent(xfs_agnumber_t agno, xfs_agblock_t startblock,
 	return(ext);
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_ext_start(avlnode_t *node)
 {
-	return((__psunsigned_t)
+	return((uintptr_t)
 		((extent_tree_node_t *) node)->ex_startblock);
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_ext_end(avlnode_t *node)
 {
-	return((__psunsigned_t) (
+	return((uintptr_t) (
 		((extent_tree_node_t *) node)->ex_startblock +
 		((extent_tree_node_t *) node)->ex_blockcount));
 }
@@ -517,24 +517,24 @@ avl_ext_end(avlnode_t *node)
  * convert size to an address for the AVL tree code -- the bigger the size,
  * the lower the address so the biggest extent will be first in the tree
  */
-static __psunsigned_t
+static uintptr_t
 avl_ext_bcnt_start(avlnode_t *node)
 {
 /*
-	return((__psunsigned_t) (BCNT_ADDR(((extent_tree_node_t *)
+	return((uintptr_t) (BCNT_ADDR(((extent_tree_node_t *)
 						node)->ex_blockcount)));
 */
-	return((__psunsigned_t) ((extent_tree_node_t *)node)->ex_blockcount);
+	return((uintptr_t) ((extent_tree_node_t *)node)->ex_blockcount);
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_ext_bcnt_end(avlnode_t *node)
 {
 /*
-	return((__psunsigned_t) (BCNT_ADDR(((extent_tree_node_t *)
+	return((uintptr_t) (BCNT_ADDR(((extent_tree_node_t *)
 						node)->ex_blockcount)));
 */
-	return((__psunsigned_t) ((extent_tree_node_t *)node)->ex_blockcount);
+	return((uintptr_t) ((extent_tree_node_t *)node)->ex_blockcount);
 }
 
 avlops_t avl_extent_bcnt_tree_ops = {

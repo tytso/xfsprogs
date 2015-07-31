@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 
 int rtcp(char *, char *, int);
 int xfsrtextsize(char *path);
@@ -34,7 +34,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	register int	c, i, r, errflg = 0;
+	int	c, i, r, errflg = 0;
 	struct stat64	s2;
 	int		extsize = - 1;
 

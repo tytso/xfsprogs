@@ -16,8 +16,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs/libxfs.h>
-#include <xfs/libxlog.h>
+#include "xfs/libxfs.h"
+#include "xfs/libxlog.h"
 
 int print_exit;
 int print_skip_uuid;

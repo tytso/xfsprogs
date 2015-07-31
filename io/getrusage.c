@@ -16,9 +16,9 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs/xfs.h>
-#include <xfs/command.h>
-#include <xfs/input.h>
+#include "xfs/xfs.h"
+#include "xfs/command.h"
+#include "xfs/input.h"
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "init.h"

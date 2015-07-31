@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <xfs/libxfs.h>
-#include <xfs/libxlog.h>
+#include "xfs/libxfs.h"
+#include "xfs/libxlog.h"
 
 #include "logprint.h"
 

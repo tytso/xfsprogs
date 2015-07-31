@@ -18,8 +18,16 @@
 TOPDIR = ..
 include $(TOPDIR)/include/builddefs
 
-QAHFILES = libxfs.h libxlog.h \
-	atomic.h bitops.h cache.h kmem.h list.h hlist.h parent.h radix-tree.h \
+QAHFILES = libxfs.h \
+	libxlog.h \
+	atomic.h \
+	bitops.h \
+	cache.h \
+	hlist.h \
+	kmem.h \
+	list.h \
+	parent.h \
+	radix-tree.h \
 	swab.h \
 	xfs_arch.h \
 	xfs_btree_trace.h \
@@ -30,8 +38,13 @@ QAHFILES = libxfs.h libxlog.h \
 	xfs_trace.h \
 	xfs_trans.h
 
-HFILES = handle.h jdm.h xqm.h xfs.h
-HFILES += $(PKG_PLATFORM).h
+HFILES = handle.h \
+	jdm.h \
+	$(PKG_PLATFORM).h \
+	platform_defs.h \
+	xfs.h \
+	xqm.h
+
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
 DKHFILES = volume.h fstyp.h dvh.h
 LIBHFILES = command.h input.h path.h project.h
@@ -41,14 +54,16 @@ LSRCFILES += $(DKHFILES) $(LIBHFILES)
 LDIRT = disk
 LDIRDIRT = xfs
 
-default install: .xfs disk
+default: disk
 
 disk:
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) . $@
 
+include $(BUILDRULES)
+
 # set up include/xfs header directory
-.xfs: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
 
 %-hdrs: xfs
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
@@ -56,13 +71,11 @@ disk:
 xfs:
 	@mkdir -p xfs
 
-
-include $(BUILDRULES)
-
-install-dev: default
+install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
+
+install-dev: install
 	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
-	$(INSTALL) -m 644 platform_defs.h $(PKG_INC_DIR)
 
 install-qa: install-dev
 	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)

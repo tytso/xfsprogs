@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include <libgen.h>
 #include <paths.h>
-#include <xfs/swab.h>
+#include "xfs/swab.h"
 
 #define constpp	char * const *
 
@@ -42,14 +42,6 @@ typedef off_t		xfs_off_t;
 typedef __uint64_t	xfs_ino_t;
 typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
-typedef char*		xfs_caddr_t;
-typedef off_t		loff_t;
-
-#ifndef	_UCHAR_T_DEFINED
-typedef unsigned char	uchar_t;
-#define	_UCHAR_T_DEFINED	1
-#endif
-typedef enum { B_FALSE,B_TRUE }	boolean_t;
 
 #define HAVE_FID	1
 

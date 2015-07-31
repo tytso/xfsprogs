@@ -21,7 +21,7 @@
  *
  * XXX: assumes dirv1 format.
  */
-#include <xfs/libxfs.h>
+#include "xfs/libxfs.h"
 #include <sys/stat.h>
 #include <ftw.h>
 

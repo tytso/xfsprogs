@@ -16,10 +16,10 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <xfs/xfs.h>
-#include <xfs/handle.h>
-#include <xfs/jdm.h>
-#include <xfs/parent.h>
+#include "xfs/xfs.h"
+#include "xfs/handle.h"
+#include "xfs/jdm.h"
+#include "xfs/parent.h"
 
 /* internal fshandle - typecast to a void for external use */
 #define FSHANDLE_SZ		8
@@ -111,7 +111,7 @@ jdm_delete_filehandle( jdm_filehandle_t *handlep, size_t hlen )
 intgen_t
 jdm_open( jdm_fshandle_t *fshp, xfs_bstat_t *statp, intgen_t oflags )
 {
-	register fshandle_t *fshandlep = ( fshandle_t * )fshp;
+	fshandle_t *fshandlep = ( fshandle_t * )fshp;
 	filehandle_t filehandle;
 	intgen_t fd;
 
@@ -127,7 +127,7 @@ jdm_readlink( jdm_fshandle_t *fshp,
 	      xfs_bstat_t *statp,
 	      char *bufp, size_t bufsz )
 {
-	register fshandle_t *fshandlep = ( fshandle_t * )fshp;
+	fshandle_t *fshandlep = ( fshandle_t * )fshp;
 	filehandle_t filehandle;
 	intgen_t rval;
 
@@ -144,7 +144,7 @@ jdm_attr_multi(	jdm_fshandle_t *fshp,
 		xfs_bstat_t *statp,
 		char *bufp, int rtrvcnt, int flags)
 {
-	register fshandle_t *fshandlep = ( fshandle_t * )fshp;
+	fshandle_t *fshandlep = ( fshandle_t * )fshp;
 	filehandle_t filehandle;
 	int rval;
 
@@ -162,7 +162,7 @@ jdm_attr_list(	jdm_fshandle_t *fshp,
 		char *bufp, size_t bufsz, int flags,
 		struct attrlist_cursor *cursor)
 {
-	register fshandle_t *fshandlep = ( fshandle_t * )fshp;
+	fshandle_t *fshandlep = ( fshandle_t * )fshp;
 	filehandle_t filehandle;
 	int rval;
 

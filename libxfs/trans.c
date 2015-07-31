@@ -30,6 +30,8 @@
 #include "xfs_trans.h"
 #include "xfs_sb.h"
 
+static void xfs_trans_free_items(struct xfs_trans *tp);
+
 /*
  * Simple transaction interface
  */
@@ -109,14 +111,15 @@ libxfs_trans_roll(
 	 * Ensure that the inode is always logged.
 	 */
 	trans = *tpp;
-	xfs_trans_log_inode(trans, dp, XFS_ILOG_CORE);
+	if (dp)
+		xfs_trans_log_inode(trans, dp, XFS_ILOG_CORE);
 
 	/*
 	 * Copy the critical parameters from one trans to the next.
 	 */
 	tres.tr_logres = trans->t_log_res;
 	tres.tr_logcount = trans->t_log_count;
-	*tpp = xfs_trans_dup(trans);
+	*tpp = libxfs_trans_alloc(trans->t_mountp, trans->t_type);
 
 	/*
 	 * Commit the current transaction.
@@ -125,7 +128,7 @@ libxfs_trans_roll(
 	 * is in progress. The caller takes the responsibility to cancel
 	 * the duplicate transaction that gets returned.
 	 */
-	error = xfs_trans_commit(trans, 0);
+	error = xfs_trans_commit(trans);
 	if (error)
 		return error;
 
@@ -147,7 +150,8 @@ libxfs_trans_roll(
 	if (error)
 		return error;
 
-	xfs_trans_ijoin(trans, dp, 0);
+	if (dp)
+		xfs_trans_ijoin(trans, dp, 0);
 	return 0;
 }
 
@@ -168,19 +172,6 @@ libxfs_trans_alloc(
 	INIT_LIST_HEAD(&ptr->t_items);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "allocated new transaction %p\n", ptr);
-#endif
-	return ptr;
-}
-
-xfs_trans_t *
-libxfs_trans_dup(
-	xfs_trans_t	*tp)
-{
-	xfs_trans_t	*ptr;
-
-	ptr = libxfs_trans_alloc(tp->t_mountp, tp->t_type);
-#ifdef XACT_DEBUG
-	fprintf(stderr, "duplicated transaction %p (new=%p)\n", tp, ptr);
 #endif
 	return ptr;
 }
@@ -209,14 +200,13 @@ libxfs_trans_reserve(
 
 void
 libxfs_trans_cancel(
-	xfs_trans_t	*tp,
-	int		flags)
+	xfs_trans_t	*tp)
 {
 #ifdef XACT_DEBUG
 	xfs_trans_t	*otp = tp;
 #endif
 	if (tp != NULL) {
-		xfs_trans_free_items(tp, flags);
+		xfs_trans_free_items(tp);
 		free(tp);
 		tp = NULL;
 	}
@@ -789,10 +779,9 @@ inode_item_unlock(
  * Unlock all of the items of a transaction and free all the descriptors
  * of that transaction.
  */
-void
+static void
 xfs_trans_free_items(
-	struct xfs_trans	*tp,
-	int			flags)
+	struct xfs_trans	*tp)
 {
 	struct xfs_log_item_desc *lidp, *next;
 
@@ -817,8 +806,7 @@ xfs_trans_free_items(
  */
 int
 libxfs_trans_commit(
-	xfs_trans_t	*tp,
-	uint		flags)
+	xfs_trans_t	*tp)
 {
 	xfs_sb_t	*sbp;
 
@@ -829,7 +817,7 @@ libxfs_trans_commit(
 #ifdef XACT_DEBUG
 		fprintf(stderr, "committed clean transaction %p\n", tp);
 #endif
-		xfs_trans_free_items(tp, flags);
+		xfs_trans_free_items(tp);
 		free(tp);
 		tp = NULL;
 		return 0;

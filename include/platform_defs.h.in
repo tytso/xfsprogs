@@ -69,15 +69,15 @@ typedef __u64	__bitwise	__be64;
 typedef struct filldir		filldir_t;
 
 #if defined(__linux__)
-#include <xfs/linux.h>
+#include "xfs/linux.h"
 #elif defined(__FreeBSD__)
-#include <xfs/freebsd.h>
+#include "xfs/freebsd.h"
 #elif defined(__FreeBSD_kernel__)
-#include <xfs/gnukfreebsd.h>
+#include "xfs/gnukfreebsd.h"
 #elif defined(__APPLE__)
-#include <xfs/darwin.h>
+#include "xfs/darwin.h"
 #elif defined(__sgi__) || defined(__sgi)
-#include <xfs/irix.h>
+#include "xfs/irix.h"
 #else
 # error unknown platform... have fun porting!
 #endif
@@ -86,42 +86,6 @@ typedef struct filldir		filldir_t;
 #undef SIZEOF_LONG
 #undef SIZEOF_CHAR_P
 #define BITS_PER_LONG (SIZEOF_LONG * CHAR_BIT)
-
-/* Check if __psint_t is set to something meaningful */
-#undef HAVE___PSINT_T
-#ifndef HAVE___PSINT_T
-# if (SIZEOF_CHAR_P * CHAR_BIT) == 32
-typedef int __psint_t;
-# elif (SIZEOF_CHAR_P * CHAR_BIT) == 64
-#  if BITS_PER_LONG == 64
-typedef long __psint_t;
-#  else
-/* This is a very strange architecture, which has 64 bit pointers but */
-/* not 64 bit longs.  So, just punt here and assume long long is OK.  */
-typedef long long __psint_t;
-#  endif
-# else
-#  error Unknown pointer size
-# endif
-#endif
-
-/* Check if __psunsigned_t is set to something meaningful */
-#undef HAVE___PSUNSIGNED_T
-#ifndef HAVE___PSUNSIGNED_T
-# if (SIZEOF_CHAR_P * CHAR_BIT) == 32
-typedef unsigned int __psunsigned_t;
-# elif (SIZEOF_CHAR_P * CHAR_BIT) == 64
-#  if BITS_PER_LONG == 64
-typedef long __psunsigned_t;
-#  else
-/* This is a very strange architecture, which has 64 bit pointers but */
-/* not 64 bit longs.  So, just punt here and assume long long is OK.  */
-typedef unsigned long long __psunsigned_t;
-#  endif
-# else
-#  error Unknown pointer size
-# endif
-#endif
 
 /* Check whether to define umode_t ourselves. */
 #ifndef HAVE_UMODE_T

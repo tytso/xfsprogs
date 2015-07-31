@@ -19,8 +19,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <ctype.h>
-#include <xfs/input.h>
-#include <xfs/command.h>
+#include "xfs/input.h"
+#include "xfs/command.h"
 #include "init.h"
 #include "quota.h"
 

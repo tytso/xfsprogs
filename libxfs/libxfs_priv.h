@@ -58,21 +58,21 @@
 				 (ip)->d_ops, hdr, loghead)
 
 #include "libxfs_api_defs.h"
-#include <xfs/platform_defs.h>
+#include "xfs/platform_defs.h"
 
-#include <xfs/list.h>
-#include <xfs/hlist.h>
-#include <xfs/cache.h>
-#include <xfs/bitops.h>
-#include <xfs/kmem.h>
-#include <xfs/radix-tree.h>
-#include <xfs/swab.h>
-#include <xfs/atomic.h>
+#include "xfs/list.h"
+#include "xfs/hlist.h"
+#include "xfs/cache.h"
+#include "xfs/bitops.h"
+#include "xfs/kmem.h"
+#include "xfs/radix-tree.h"
+#include "xfs/swab.h"
+#include "xfs/atomic.h"
 
-#include <xfs/xfs_types.h>
-#include <xfs/xfs_arch.h>
+#include "xfs/xfs_types.h"
+#include "xfs/xfs_arch.h"
 
-#include <xfs/xfs_fs.h>
+#include "xfs/xfs_fs.h"
 
 /* CRC stuff, buffer API dependent on it */
 extern uint32_t crc32_le(uint32_t crc, unsigned char const *p, size_t len);
@@ -81,22 +81,19 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 #define crc32(c,p,l)	crc32_le((c),(unsigned char const *)(p),(l))
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
 
-#include <xfs/xfs_cksum.h>
+#include "xfs/xfs_cksum.h"
 
 /*
  * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
  * every files via a similar include in the kernel xfs_linux.h.
  */
-#include <xfs/libxfs_io.h>
+#include "libxfs_io.h"
 
 /* for all the support code that uses progname in error messages */
 extern char    *progname;
 
 #undef ASSERT
 #define ASSERT(ex) assert(ex)
-
-typedef __uint32_t		uint_t;
-typedef __uint32_t		inst_t;		/* an instruction */
 
 #ifndef EWRONGFS
 #define EWRONGFS	EINVAL
@@ -479,7 +476,6 @@ int xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 /* xfs_trans_item.c */
 void xfs_trans_add_item(struct xfs_trans *, struct xfs_log_item *);
 void xfs_trans_del_item(struct xfs_log_item *);
-void xfs_trans_free_items(struct xfs_trans *, int);
 
 /* xfs_inode_item.c */
 void xfs_inode_item_init(struct xfs_inode *, struct xfs_mount *);

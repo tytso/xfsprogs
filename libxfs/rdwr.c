@@ -30,7 +30,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-#include <xfs/libxfs.h>		/* for LIBXFS_EXIT_ON_FAILURE */
+#include "xfs/libxfs.h"		/* for LIBXFS_EXIT_ON_FAILURE */
 
 /*
  * Important design/architecture note:
@@ -132,7 +132,7 @@ static void unmount_record(void *p)
 	memcpy((char *)p + sizeof(xlog_op_header_t), &magic, sizeof(magic));
 }
 
-static xfs_caddr_t next(xfs_caddr_t ptr, int offset, void *private)
+static char *next(char *ptr, int offset, void *private)
 {
 	xfs_buf_t	*buf = (xfs_buf_t *)private;
 
@@ -173,7 +173,7 @@ libxfs_log_clear(
 
 int
 libxfs_log_header(
-	xfs_caddr_t		caddr,
+	char			*caddr,
 	uuid_t			*fs_uuid,
 	int			version,
 	int			sunit,
@@ -182,7 +182,7 @@ libxfs_log_header(
 	void			*private)
 {
 	xlog_rec_header_t	*head = (xlog_rec_header_t *)caddr;
-	xfs_caddr_t		p = caddr;
+	char			*p = caddr;
 	__be32			cycle_lsn;
 	int			i, len;
 

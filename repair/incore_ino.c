@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "avl.h"
 #include "globals.h"
 #include "incore.h"
@@ -772,16 +772,16 @@ add_ino_ex_data(xfs_mount_t *mp)
 	full_ino_ex_data = 1;
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_ino_start(avlnode_t *node)
 {
-	return((__psunsigned_t) ((ino_tree_node_t *) node)->ino_startnum);
+	return((uintptr_t) ((ino_tree_node_t *) node)->ino_startnum);
 }
 
-static __psunsigned_t
+static uintptr_t
 avl_ino_end(avlnode_t *node)
 {
-	return((__psunsigned_t) (
+	return((uintptr_t) (
 		((ino_tree_node_t *) node)->ino_startnum +
 		XFS_INODES_PER_CHUNK));
 }

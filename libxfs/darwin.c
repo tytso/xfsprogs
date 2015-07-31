@@ -20,8 +20,8 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
-#include <xfs/libxfs.h>
 #include <sys/sysctl.h>
+#include "xfs/libxfs.h"
 
 int platform_has_uuid = 1;
 extern char *progname;

@@ -118,16 +118,13 @@ static __inline__ void platform_uuid_copy(uuid_t *dst, uuid_t *src)
 #define __uint16_t	u_int16_t
 #define __uint32_t	u_int32_t
 #define __uint64_t	u_int64_t
-#define loff_t		off_t
 #define off64_t		off_t
 
 typedef off_t		xfs_off_t;
 typedef u_int64_t	xfs_ino_t;
 typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
-typedef char*		xfs_caddr_t;
 
-typedef unsigned char	uchar_t;
 #define stat64		stat
 #define fstat64		fstat
 #define lseek64		lseek
@@ -144,9 +141,6 @@ typedef unsigned char	uchar_t;
 #ifndef O_SYNC
 #define O_SYNC          0
 #endif
-
-#define B_FALSE		0
-#define B_TRUE		1
 
 #define ENOATTR		989     /* Attribute not found */
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */

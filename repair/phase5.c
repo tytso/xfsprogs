@@ -16,7 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <libxfs.h>
+#include "xfs/libxfs.h"
 #include "avl.h"
 #include "globals.h"
 #include "agheader.h"
@@ -1518,7 +1518,7 @@ build_agf_agfl(xfs_mount_t	*mp,
 			do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 					agno, error);
 		}
-		libxfs_trans_commit(tp, 0);
+		libxfs_trans_commit(tp);
 	}
 
 #ifdef XR_BLD_FREE_TRACE
