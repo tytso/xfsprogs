@@ -786,10 +786,7 @@ scan_single_ino_chunk(
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, ino);
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		freecount = rp->ir_u.sp.ir_freecount;
-	else
-		freecount = be32_to_cpu(rp->ir_u.f.ir_freecount);
+	freecount = inorec_get_freecount(mp, rp);
 
 	/*
 	 * on multi-block block chunks, all chunks start
@@ -987,10 +984,7 @@ scan_single_finobt_chunk(
 	off = XFS_AGINO_TO_OFFSET(mp, ino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, ino);
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		freecount = rp->ir_u.sp.ir_freecount;
-	else
-		freecount = be32_to_cpu(rp->ir_u.f.ir_freecount);
+	freecount = inorec_get_freecount(mp, rp);
 
 	/*
 	 * on multi-block block chunks, all chunks start at the beginning of the
@@ -1331,10 +1325,7 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		 * the block.  skip processing of bogus records.
 		 */
 		for (i = 0; i < numrecs; i++) {
-			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-				freecount = rp[i].ir_u.sp.ir_freecount;
-			else
-				freecount = be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+			freecount = inorec_get_freecount(mp, &rp[i]);
 
 			if (magic == XFS_IBT_MAGIC ||
 			    magic == XFS_IBT_CRC_MAGIC) {

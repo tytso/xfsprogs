@@ -591,4 +591,32 @@ typedef struct bm_cursor  {
 
 void init_bm_cursor(bmap_cursor_t *cursor, int num_level);
 
+/*
+ * On-disk inobt record helpers. The sparse inode record format has a single
+ * byte freecount. The older format has a 32-bit freecount and thus byte
+ * conversion is necessary.
+ */
+
+static inline int
+inorec_get_freecount(
+	struct xfs_mount	*mp,
+	struct xfs_inobt_rec	*rp)
+{
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		return rp->ir_u.sp.ir_freecount;
+	return be32_to_cpu(rp->ir_u.f.ir_freecount);
+}
+
+static inline void
+inorec_set_freecount(
+	struct xfs_mount	*mp,
+	struct xfs_inobt_rec	*rp,
+	int			freecount)
+{
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		rp->ir_u.sp.ir_freecount = freecount;
+	else
+		rp->ir_u.f.ir_freecount = cpu_to_be32(freecount);
+}
+
 #endif /* XFS_REPAIR_INCORE_H */

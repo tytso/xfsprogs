@@ -1258,11 +1258,14 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 				inocnt++;
 			}
 
-			if (!xfs_sb_version_hassparseinodes(&mp->m_sb)) {
-				bt_rec[j].ir_u.f.ir_freecount =
-							cpu_to_be32(finocnt);
+			/*
+			 * Set the freecount and check whether we need to update
+			 * the sparse format fields. Otherwise, skip to the next
+			 * record.
+			 */
+			inorec_set_freecount(mp, &bt_rec[j], finocnt);
+			if (!xfs_sb_version_hassparseinodes(&mp->m_sb))
 				goto nextrec;
-			}
 
 			/*
 			 * Convert the 64-bit in-core sparse inode state to the
@@ -1280,7 +1283,6 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 				sparse >>= XFS_INODES_PER_HOLEMASK_BIT;
 			}
 
-			bt_rec[j].ir_u.sp.ir_freecount = finocnt;
 			bt_rec[j].ir_u.sp.ir_count = inocnt;
 			bt_rec[j].ir_u.sp.ir_holemask = cpu_to_be16(holemask);
 
