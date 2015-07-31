@@ -28,7 +28,6 @@ QAHFILES = libxfs.h \
 	list.h \
 	parent.h \
 	radix-tree.h \
-	swab.h \
 	xfs_arch.h \
 	xfs_btree_trace.h \
 	xfs_inode.h \

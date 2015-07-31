@@ -34,7 +34,6 @@
  */
 
 #include "xfs/platform_defs.h"
-#include "xfs/swab.h"
 #include "xfs/xfs_arch.h"
 #include "crc32defs.h"
 

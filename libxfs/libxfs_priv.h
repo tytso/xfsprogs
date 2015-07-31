@@ -66,7 +66,6 @@
 #include "xfs/bitops.h"
 #include "xfs/kmem.h"
 #include "xfs/radix-tree.h"
-#include "xfs/swab.h"
 #include "xfs/atomic.h"
 
 #include "xfs/xfs_types.h"
