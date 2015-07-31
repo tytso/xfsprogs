@@ -855,6 +855,81 @@ _("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in %s rec, skipping rec\n"),
 	return suspect;
 }
 
+/*
+ * Process the state of individual inodes in an on-disk inobt record and import
+ * into the appropriate in-core tree based on whether the on-disk tree is
+ * suspect. Return the total and free inode counts based on the record free and
+ * hole masks.
+ */
+static int
+import_single_ino_chunk(
+	xfs_agnumber_t		agno,
+	enum inobt_type		type,
+	struct xfs_inobt_rec	*rp,
+	int			suspect,
+	int			*p_nfree,
+	int			*p_ninodes)
+{
+	struct ino_tree_node	*ino_rec = NULL;
+	const char		*inobt_name = inobt_names[type];
+	xfs_agino_t		ino;
+	int			j;
+	int			nfree;
+	int			ninodes;
+
+	ino = be32_to_cpu(rp->ir_startino);
+
+	if (!suspect) {
+		if (XFS_INOBT_IS_FREE_DISK(rp, 0))
+			ino_rec = set_inode_free_alloc(mp, agno, ino);
+		else
+			ino_rec = set_inode_used_alloc(mp, agno, ino);
+		for (j = 1; j < XFS_INODES_PER_CHUNK; j++) {
+			if (XFS_INOBT_IS_FREE_DISK(rp, j))
+				set_inode_free(ino_rec, j);
+			else
+				set_inode_used(ino_rec, j);
+		}
+	} else {
+		for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
+			if (XFS_INOBT_IS_FREE_DISK(rp, j))
+				add_aginode_uncertain(mp, agno, ino + j, 1);
+			else
+				add_aginode_uncertain(mp, agno, ino + j, 0);
+		}
+	}
+
+	/*
+	 * Mark sparse inodes as such in the in-core tree. Verify that sparse
+	 * inodes are free and that freecount is consistent with the free mask.
+	 */
+	nfree = ninodes = 0;
+	for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
+		if (ino_issparse(rp, j)) {
+			if (!suspect && !XFS_INOBT_IS_FREE_DISK(rp, j)) {
+				do_warn(
+_("ir_holemask/ir_free mismatch, %s chunk %d/%u, holemask 0x%x free 0x%llx\n"),
+					inobt_name, agno, ino,
+					be16_to_cpu(rp->ir_u.sp.ir_holemask),
+					be64_to_cpu(rp->ir_free));
+				suspect++;
+			}
+			if (!suspect && ino_rec)
+				set_inode_sparse(ino_rec, j);
+		} else {
+			/* count fields track non-sparse inos */
+			if (XFS_INOBT_IS_FREE_DISK(rp, j))
+				nfree++;
+			ninodes++;
+		}
+	}
+
+	*p_nfree = nfree;
+	*p_ninodes = ninodes;
+
+	return suspect;
+}
+
 static int
 scan_single_ino_chunk(
 	xfs_agnumber_t		agno,
@@ -869,7 +944,6 @@ scan_single_ino_chunk(
 	int			ninodes;
 	int			off;
 	int			state;
-	ino_tree_node_t		*ino_rec = NULL;
 	ino_tree_node_t		*first_rec, *last_rec;
 	int			freecount;
 	bool			skip = false;
@@ -946,57 +1020,13 @@ _("inode rec for ino %" PRIu64 " (%d/%d) overlaps existing rec (start %d/%d)\n")
 	}
 
 	/*
-	 * now mark all the inodes as existing and free or used.
-	 * if the tree is suspect, put them into the uncertain
-	 * inode tree.
-	 */
-	if (!suspect)  {
-		if (XFS_INOBT_IS_FREE_DISK(rp, 0)) {
-			ino_rec = set_inode_free_alloc(mp, agno, ino);
-		} else  {
-			ino_rec = set_inode_used_alloc(mp, agno, ino);
-		}
-		for (j = 1; j < XFS_INODES_PER_CHUNK; j++) {
-			if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				set_inode_free(ino_rec, j);
-			} else  {
-				set_inode_used(ino_rec, j);
-			}
-		}
-	} else  {
-		for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
-			if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				add_aginode_uncertain(mp, agno, ino + j, 1);
-			} else  {
-				add_aginode_uncertain(mp, agno, ino + j, 0);
-			}
-		}
-	}
-
-	/*
-	 * Mark sparse inodes as such in the in-core tree. Verify that sparse
-	 * inodes are free and that freecount is consistent with the free mask.
+	 * Import the state of individual inodes into the appropriate in-core
+	 * trees, mark them free or used, and get the resulting total and free
+	 * inode counts.
 	 */
 	nfree = ninodes = 0;
-	for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
-		if (ino_issparse(rp, j)) {
-			if (!suspect && !XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				do_warn(
-_("ir_holemask/ir_free mismatch, inode chunk %d/%u, holemask 0x%x free 0x%llx\n"),
-					agno, ino,
-					be16_to_cpu(rp->ir_u.sp.ir_holemask),
-					be64_to_cpu(rp->ir_free));
-				suspect++;
-			}
-			if (!suspect && ino_rec)
-				set_inode_sparse(ino_rec, j);
-		} else {
-			/* count fields track non-sparse inos */
-			if (XFS_INOBT_IS_FREE_DISK(rp, j))
-				nfree++;
-			ninodes++;
-		}
-	}
+	suspect = import_single_ino_chunk(agno, INOBT, rp, suspect, &nfree,
+					 &ninodes);
 
 	if (nfree != freecount) {
 		do_warn(
@@ -1029,7 +1059,6 @@ scan_single_finobt_chunk(
 	int			ninodes;
 	int			off;
 	int			state;
-	ino_tree_node_t		*ino_rec = NULL;
 	ino_tree_node_t		*first_rec, *last_rec;
 	int			freecount;
 	bool			skip = false;
@@ -1138,68 +1167,22 @@ _("finobt rec for ino %" PRIu64 " (%d/%u) does not match existing rec (%d/%d)\n"
 	}
 
 	/*
-	 * the finobt contains a record that the previous alloc inobt scan never
-	 * found. insert the inodes into the appropriate tree.
+	 * The finobt contains a record that the previous inobt scan never
+	 * found. Warn about it and import the inodes into the appropriate
+	 * trees.
+	 *
+	 * Note that this should do the right thing if the previous inobt scan
+	 * had added these inodes to the uncertain tree. If the finobt is not
+	 * suspect, these inodes should supercede the uncertain ones. Otherwise,
+	 * the uncertain tree helpers handle the case where uncertain inodes
+	 * already exist.
 	 */
 	do_warn(_("undiscovered finobt record, ino %" PRIu64 " (%d/%u)\n"),
 		lino, agno, ino);
 
-	if (!suspect) {
-		/*
-		 * inodes previously inserted into the uncertain tree should be
-		 * superceded by these when the uncertain tree is processed
-		 */
-		if (XFS_INOBT_IS_FREE_DISK(rp, 0)) {
-			ino_rec = set_inode_free_alloc(mp, agno, ino);
-		} else  {
-			ino_rec = set_inode_used_alloc(mp, agno, ino);
-		}
-		for (j = 1; j < XFS_INODES_PER_CHUNK; j++) {
-			if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				set_inode_free(ino_rec, j);
-			} else  {
-				set_inode_used(ino_rec, j);
-			}
-		}
-	} else {
-		/*
-		 * this should handle the case where the inobt scan may have
-		 * already added uncertain inodes
-		 */
-		for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
-			if (XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				add_aginode_uncertain(mp, agno, ino + j, 1);
-			} else {
-				add_aginode_uncertain(mp, agno, ino + j, 0);
-			}
-		}
-	}
-
-	/*
-	 * Mark sparse inodes as such in the in-core tree. Verify that sparse
-	 * inodes are free and that freecount is consistent with the free mask.
-	 */
 	nfree = ninodes = 0;
-	for (j = 0; j < XFS_INODES_PER_CHUNK; j++) {
-		if (ino_issparse(rp, j)) {
-			if (!suspect && !XFS_INOBT_IS_FREE_DISK(rp, j)) {
-				do_warn(
-_("finobt ir_holemask/ir_free mismatch, inode chunk %d/%u, holemask 0x%x free 0x%llx\n"),
-					agno, ino,
-					be16_to_cpu(rp->ir_u.sp.ir_holemask),
-					be64_to_cpu(rp->ir_free));
-				suspect++;
-			}
-			if (!suspect && ino_rec)
-				set_inode_sparse(ino_rec, j);
-		} else {
-			/* count fields track non-sparse inos */
-			if (XFS_INOBT_IS_FREE_DISK(rp, j))
-				nfree++;
-			ninodes++;
-		}
-
-	}
+	suspect = import_single_ino_chunk(agno, FINOBT, rp, suspect, &nfree,
+					 &ninodes);
 
 check_freecount:
 
