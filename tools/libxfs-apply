@@ -1,0 +1,284 @@
+#!/bin/bash
+
+# 2 args:
+#	libxfs-apply <repo> <commit ID or patchfile>
+
+usage()
+{
+	echo $*
+	echo
+	echo "Usage:"
+	echo "	libxfs-apply [--verbose] --source <repodir> --commit <commit_id>"
+	echo "	libxfs-apply --patch <patchfile>"
+	echo
+	echo "libxfs-apply should be run in the destination git repository."
+	exit
+}
+
+cleanup()
+{
+	rm -f $PATCH 
+}
+
+fail()
+{
+	echo "Fail:"
+	echo $*
+	cleanup
+	exit
+}
+
+# filterdiff 0.3.4 is the first version that handles git diff metadata (almost)
+# correctly. It just doesn't work properly in prior versions, so those versions
+# can't be used to extract the commit message prior to the diff. Hence just
+# abort and tell the user to upgrade if an old version is detected. We need to
+# check against x.y.z version numbers here.
+_version=`filterdiff --version | cut -d " " -f 5`
+_major=`echo $_version | cut -d "." -f 1`
+_minor=`echo $_version | cut -d "." -f 2`
+_patch=`echo $_version | cut -d "." -f 3`
+if [ $_major -eq 0 ]; then
+	if [ $_minor -lt 3 ]; then
+		fail "filterdiff $_version found. 0.3.4 or greater is required."
+	fi
+	if [ $_minor -eq 3 -a $_patch -le 3 ]; then
+		fail "filterdiff $_version found. 0.3.4 or greater is required."
+	fi
+fi
+
+# We should see repository contents we recognise, both at the source and
+# destination. Kernel repositorys will have fs/xfs/libxfs, and xfsprogs
+# repositories will have libxcmd.
+check_repo()
+{
+	if [ ! -d "fs/xfs/libxfs" -a ! -d "libxcmd" ]; then
+		usage "$1 repository contents not recognised!"
+	fi
+}
+
+REPO=
+PATCH=
+COMMIT_ID=
+VERBOSE=
+GUILT=0
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--source)	REPO=$2 ; shift ;;
+	--patch)	PATCH=$2; shift ;;
+	--commit)	COMMIT_ID=$2 ; shift ;;
+	--verbose)	VERBOSE=true ;;
+	*)		usage ;;
+	esac
+	shift
+done
+
+if [ -n "$PATCH" ]; then
+	if [ -n "$REPO" -o -n "$COMMIT_ID" ]; then
+		usage "Need to specify either patch or source repo/commit"
+	fi
+	VERBOSE=true
+elif [ -z "$REPO" -o -z "$COMMIT_ID" ]; then
+	usage "Need to specify both source repo and commit id"
+fi
+
+check_repo Destination
+
+# Are we using guilt? This works even if no patch is applied.
+guilt top &> /dev/null
+if [ $? -eq 0 ]; then
+	GUILT=1
+fi
+
+#this is pulled from the guilt code to handle commit ids sanely.
+# usage: munge_hash_range <hash range>
+#
+# this means:
+#	<hash>			- one commit
+#	<hash>..		- hash until head (excludes hash, includes head)
+#	..<hash>		- until hash (includes hash)
+#	<hash1>..<hash2>	- from hash to hash (inclusive)
+#
+# The output of this function is suitable to be passed to "git rev-list"
+munge_hash_range()
+{
+	case "$1" in
+		*..*..*|*\ *)
+			# double .. or space is illegal
+			return 1;;
+		..*)
+			# e.g., "..v0.10"
+			echo ${1#..};;
+		*..)
+			# e.g., "v0.19.."
+			echo ${1%..}..HEAD;;
+		*..*)
+			# e.g., "v0.19-rc1..v0.19"
+			echo ${1%%..*}..${1#*..};;
+		?*)
+			# e.g., "v0.19"
+			echo $1^..$1;;
+		*)  # empty
+			return 1;;
+	esac
+	return 0
+}
+
+# Filter the patch into the right format & files for the other tree
+filter_kernel_patch()
+{
+	local _patch=$1
+	local _libxfs_files=""
+
+	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/libxfs/"
+	if [ $? -ne 0 ]; then
+		fail "Doesn't look like an xfsprogs patch with libxfs changes"
+	fi
+
+	# The files we will try to apply to
+	_libxfs_files=`mktemp`
+	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $_libxfs_files
+
+	# Create the new patch
+	filterdiff \
+		--verbose \
+		-I $_libxfs_files \
+		--strip=1 \
+		--addoldprefix=a/fs/xfs/ \
+		--addnewprefix=b/fs/xfs/ \
+		$_patch
+
+	rm -f $_libxfs_files
+}
+
+filter_xfsprogs_patch()
+{
+	local _patch=$1
+	local _libxfs_files=""
+
+	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/fs/xfs/libxfs/"
+	if [ $? -ne 0 ]; then
+		fail "Doesn't look like a kernel patch with libxfs changes"
+	fi
+
+	# The files we will try to apply to
+	_libxfs_files=`mktemp`
+	ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
+
+	# Create the new patch
+	filterdiff \
+		--verbose \
+		-I $_libxfs_files \
+		--strip=3 \
+		--addoldprefix=a/ \
+		--addnewprefix=b/ \
+		$_patch
+
+	rm -f $_libxfs_files
+}
+
+apply_patch()
+{
+	local _patch=$1
+	local _patch_name=$2
+	local _current_commit=$3
+	local _new_patch=`mktemp`
+
+	if [ -d "fs/xfs/libxfs" ]; then
+		filter_kernel_patch $_patch > $_new_patch
+	elif [ -d "libxfs" -a -d "libxlog" ]; then
+		filter_xfsprogs_patch $_patch > $_new_patch
+	fi
+
+	if [ -n "$VERBOSE" ]; then
+		echo "Filtered patch from $REPO contains:"
+		lsdiff $_new_patch
+	fi
+
+	# Ok, now apply with guilt or patch; either may fail and require a force
+	# and/or a manual reject fixup
+	if [ $GUILT -eq 1 ]; then
+		[ -n "$VERBOSE" ] || echo "$REPO looks like a guilt directory."
+		PATCHES=`guilt applied | wc -l`
+		if [ -n "$VERBOSE" -a $PATCHES -gt 0 ]; then
+			echo -n "Top patch is: "
+			guilt top
+		fi
+
+		guilt import -P $_patch_name $_new_patch
+		guilt push
+		if [ $? -ne 0 ]; then
+			echo "Guilt push failed!"
+			echo "Force push patch, fix and refresh."
+			echo "Restart from commit $_current_commit"
+			fail "Manual cleanup required!"
+		fi
+		guilt refresh
+	else
+		echo "Applying with patch utility:"
+		patch -p1 < $_new_patch
+		echo "Patch was applied in $REPO; check for rejects, etc"
+	fi
+
+	rm -f $_new_patch
+}
+
+# name a guilt patch. Code is lifted from guilt import-commit.
+name_patch()
+{
+	s=`git log --no-decorate --pretty=oneline -1 $1 | cut -c 42-`
+
+	# Try to convert the first line of the commit message to a
+	# valid patch name.
+	fname=`printf %s "$s" |  \
+			sed -e "s/&/and/g" -e "s/[ :]/_/g" -e "s,[/\\],-,g" \
+			    -e "s/['\\[{}]//g" -e 's/]//g' -e 's/\*/-/g' \
+			    -e 's/\?/-/g' -e 's/\.\.\.*/./g' -e 's/^\.//' \
+			    -e 's/\.patch$//' -e 's/\.$//' | tr A-Z a-z`
+
+	# Try harder to make it a legal commit name by
+	# removing all but a few safe characters.
+	fname=`echo $fname|tr -d -c _a-zA-Z0-9---/\\n`
+
+	echo $fname
+}
+
+# single patch is easy.
+if [ -z "$COMMIT_ID" ]; then
+	apply_patch $PATCH
+	cleanup
+	exit 0
+fi
+
+# switch to source repo and get individual commit IDs
+#
+# git rev-list gives us a list in reverse chronological order, so we need to
+# reverse that to give us the order we require.
+pushd $REPO > /dev/null
+check_repo Source
+hashr=`munge_hash_range $COMMIT_ID`
+echo "Commits to apply:"
+commit_list=`git rev-list $hashr | tac`
+
+# echo the list of commits for confirmation
+git log --oneline $hashr |tac
+read -r -p "Proceed [y|N]? " response
+if [ -z "$response" -o "$response" != "y" ]; then
+	fail "Aborted!"
+fi
+popd > /dev/null
+
+PATCH=`mktemp`
+for commit in $commit_list; do
+
+	# switch to source repo and pull commit into a patch file
+	pushd $REPO > /dev/null
+	git show $commit > $PATCH || usage "Bad source commit ID!"
+	patch_name=`name_patch $commit`
+	popd > /dev/null
+
+	apply_patch $PATCH $patch_name $commit
+done
+
+
+cleanup
