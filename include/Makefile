@@ -18,7 +18,9 @@
 TOPDIR = ..
 include $(TOPDIR)/include/builddefs
 
-QAHFILES = libxfs.h \
+QAHFILES = xfs_arch.h
+
+LIBHFILES = libxfs.h \
 	libxlog.h \
 	atomic.h \
 	bitops.h \
@@ -28,14 +30,17 @@ QAHFILES = libxfs.h \
 	list.h \
 	parent.h \
 	radix-tree.h \
-	xfs_arch.h \
 	xfs_btree_trace.h \
 	xfs_inode.h \
 	xfs_log_recover.h \
 	xfs_metadump.h \
 	xfs_mount.h \
 	xfs_trace.h \
-	xfs_trans.h
+	xfs_trans.h \
+	command.h \
+	input.h \
+	path.h \
+	project.h
 
 HFILES = handle.h \
 	jdm.h \
@@ -46,7 +51,6 @@ HFILES = handle.h \
 
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
 DKHFILES = volume.h fstyp.h dvh.h
-LIBHFILES = command.h input.h path.h project.h
 LSRCFILES = $(shell echo $(PHFILES) | sed -e "s/$(PKG_PLATFORM).h//g")
 LSRCFILES += platform_defs.h.in builddefs.in buildmacros buildrules install-sh
 LSRCFILES += $(DKHFILES) $(LIBHFILES)
