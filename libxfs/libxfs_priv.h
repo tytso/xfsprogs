@@ -173,8 +173,9 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define rcu_read_unlock()	((void) 0)
 #define WARN_ON_ONCE(expr)	((void) 0)
 
-#define percpu_counter_read(x)	(*x)
-#define percpu_counter_sum(x)	(*x)
+#define percpu_counter_read(x)		(*x)
+#define percpu_counter_read_positive(x)	((*x) > 0 ? (*x) : 0)
+#define percpu_counter_sum(x)		(*x)
 
 /*
  * prandom_u32 is used for di_gen inode allocation, it must be zero for libxfs
