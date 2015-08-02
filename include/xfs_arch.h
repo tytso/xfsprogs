@@ -24,6 +24,22 @@
 #undef XFS_NATIVE_HOST
 #endif
 
+#ifdef __CHECKER__
+#define __bitwise		__attribute__((bitwise))
+#define __force			__attribute__((force))
+#else
+#define __bitwise
+#define __force
+#endif
+
+typedef __u16	__bitwise	__le16;
+typedef __u32	__bitwise	__le32;
+typedef __u64	__bitwise	__le64;
+
+typedef __u16	__bitwise	__be16;
+typedef __u32	__bitwise	__be32;
+typedef __u64	__bitwise	__be64;
+
 /*
  * Casts are necessary for constants, because we never know how for sure
  * how U/UL/ULL map to __u16, __u32, __u64. At least not in a portable way.
@@ -261,5 +277,12 @@ static inline void put_unaligned_be64(__uint64_t val, void *p)
 	put_unaligned_be32(val >> 32, p);
 	put_unaligned_be32(val, p + 4);
 }
+
+/* ARM old ABI has some weird alignment/padding */
+#if defined(__arm__) && !defined(__ARM_EABI__)
+#define __arch_pack __attribute__((packed))
+#else
+#define __arch_pack
+#endif
 
 #endif	/* __XFS_ARCH_H__ */
