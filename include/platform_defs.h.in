@@ -38,20 +38,6 @@
 
 typedef struct filldir		filldir_t;
 
-#if defined(__linux__)
-#include <xfs/linux.h>
-#elif defined(__FreeBSD__)
-#include <xfs/freebsd.h>
-#elif defined(__FreeBSD_kernel__)
-#include <xfs/gnukfreebsd.h>
-#elif defined(__APPLE__)
-#include <xfs/darwin.h>
-#elif defined(__sgi__) || defined(__sgi)
-#include <xfs/irix.h>
-#else
-# error unknown platform... have fun porting!
-#endif
-
 /* long and pointer must be either 32 bit or 64 bit */
 #undef SIZEOF_LONG
 #undef SIZEOF_CHAR_P
@@ -75,19 +61,6 @@ typedef unsigned short umode_t;
 # define bindtextdomain(d,dir)  do { } while (0)
 #endif
 #include <locale.h>
-
-#ifdef DEBUG
-# define ASSERT(EX)	assert(EX)
-#else
-# define ASSERT(EX)	((void) 0)
-#endif
-
-/*
- * sparse kernel source annotations
- */
-#ifndef __user
-#define __user
-#endif
 
 #define IRIX_DEV_BITSMAJOR      14
 #define IRIX_DEV_BITSMINOR      18

@@ -38,12 +38,12 @@ LIBHFILES = libxfs.h \
 	command.h \
 	input.h \
 	path.h \
-	project.h
+	project.h \
+	platform_defs.h \
 
 HFILES = handle.h \
 	jdm.h \
 	$(PKG_PLATFORM).h \
-	platform_defs.h \
 	xfs.h \
 	xqm.h \
 	xfs_arch.h

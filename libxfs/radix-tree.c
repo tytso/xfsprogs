@@ -19,6 +19,7 @@
  */
 
 #include "platform_defs.h"
+#include "xfs.h"
 #include "radix-tree.h"
 
 #ifndef ARRAY_SIZE

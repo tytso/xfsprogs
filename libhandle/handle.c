@@ -17,6 +17,7 @@
  */
 
 #include <libgen.h>
+#include "platform_defs.h"
 #include "xfs.h"
 #include "handle.h"
 #include "parent.h"

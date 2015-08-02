@@ -17,7 +17,6 @@
  */
 
 #include <sys/uio.h>
-#include "xfs.h"
 #include "command.h"
 #include "input.h"
 #include <ctype.h>

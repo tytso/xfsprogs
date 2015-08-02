@@ -16,7 +16,6 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs.h"
 #include "command.h"
 #include "input.h"
 #include <sys/mman.h>

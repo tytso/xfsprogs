@@ -19,7 +19,6 @@
 #if defined(HAVE_FALLOCATE)
 #include <linux/falloc.h>
 #endif
-#include "xfs.h"
 #include "command.h"
 #include "input.h"
 #include "init.h"

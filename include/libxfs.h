@@ -21,6 +21,7 @@
 
 #include "libxfs_api_defs.h"
 #include "platform_defs.h"
+#include "xfs.h"
 
 #include "list.h"
 #include "hlist.h"
