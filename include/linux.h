@@ -28,6 +28,7 @@
 #include <getopt.h>
 #include <endian.h>
 #include <stdbool.h>
+#include <asm/types.h>
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {

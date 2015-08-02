@@ -109,6 +109,15 @@ static __inline__ void platform_uuid_copy(uuid_t *dst, uuid_t *src)
 	memcpy(dst, src, sizeof(uuid_t));
 }
 
+typedef unsigned char		__u8;
+typedef signed char		__s8;
+typedef unsigned short		__u16;
+typedef signed short		__s16;
+typedef unsigned int		__u32;
+typedef signed int		__s32;
+typedef unsigned long long int	__u64;
+typedef signed long long int	__s64;
+
 #define __int8_t	int8_t
 #define __int16_t	int16_t
 #define __int32_t	int32_t

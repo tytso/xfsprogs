@@ -36,20 +36,6 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#undef HAVE___U32
-#ifdef HAVE___U32
-#include <asm/types.h>
-#else
-typedef unsigned char		__u8;
-typedef signed char		__s8;
-typedef unsigned short		__u16;
-typedef signed short		__s16;
-typedef unsigned int		__u32;
-typedef signed int		__s32;
-typedef unsigned long long int	__u64;
-typedef signed long long int	__s64;
-#endif
-
 typedef struct filldir		filldir_t;
 
 #if defined(__linux__)
