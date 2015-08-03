@@ -78,7 +78,7 @@ char *trans_type[] = {
 typedef struct xlog_split_item {
 	struct xlog_split_item	*si_next;
 	struct xlog_split_item	*si_prev;
-	xlog_tid_t		si_tid;
+	xlog_tid_t		si_xtid;
 	int			si_skip;
 } xlog_split_item_t;
 
@@ -163,7 +163,7 @@ xlog_print_add_to_trans(xlog_tid_t	tid,
     xlog_split_item_t *item;
 
     item	  = (xlog_split_item_t *)calloc(sizeof(xlog_split_item_t), 1);
-    item->si_tid  = tid;
+    item->si_xtid  = tid;
     item->si_skip = skip;
     item->si_next = split_list;
     item->si_prev = NULL;
@@ -185,7 +185,7 @@ xlog_print_find_tid(xlog_tid_t tid, uint was_cont)
 	    return 0;
     }
     while (listp) {
-	if (listp->si_tid == tid)
+	if (listp->si_xtid == tid)
 	    break;
 	listp = listp->si_next;
     }
