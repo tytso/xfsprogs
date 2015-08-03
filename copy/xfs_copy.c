@@ -25,6 +25,7 @@
 #include "xfs_copy.h"
 
 #define	rounddown(x, y)	(((x)/(y))*(y))
+#define uuid_equal(s,d) (platform_uuid_compare((s),(d)) == 0)
 
 extern int	platform_check_ismounted(char *, char *, struct stat64 *, int);
 
@@ -466,6 +467,36 @@ write_wbuf(void)
 	sighold(SIGCHLD);
 }
 
+void
+sb_update_uuid(
+	xfs_sb_t	*sb,
+	ag_header_t	*ag_hdr,
+	thread_args	*tcarg)
+{
+	/*
+	 * If this filesystem has CRCs, the original UUID is stamped into
+	 * all metadata.  If we are changing the UUID in the copy, we need
+	 * to copy the original UUID into the meta_uuid slot and set the
+	 * set the incompat flag if that hasn't already been done.
+	 */
+	if (!uuid_equal(&tcarg->uuid, &ag_hdr->xfs_sb->sb_uuid) &&
+	    xfs_sb_version_hascrc(sb) && !xfs_sb_version_hasmetauuid(sb)) {
+		__be32 feat;
+
+		feat = be32_to_cpu(ag_hdr->xfs_sb->sb_features_incompat);
+		feat |= XFS_SB_FEAT_INCOMPAT_META_UUID;
+		ag_hdr->xfs_sb->sb_features_incompat = cpu_to_be32(feat);
+		platform_uuid_copy(&ag_hdr->xfs_sb->sb_meta_uuid,
+				   &ag_hdr->xfs_sb->sb_uuid);
+	}
+
+	platform_uuid_copy(&ag_hdr->xfs_sb->sb_uuid, &tcarg->uuid);
+
+	/* We may have changed the UUID, so update the superblock CRC */
+	if (xfs_sb_version_hascrc(sb))
+		xfs_update_cksum((char *)ag_hdr->xfs_sb, sb->sb_sectsize,
+							 XFS_SB_CRC_OFF);
+}
 
 int
 main(int argc, char **argv)
@@ -650,25 +681,21 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* prepare the mount structure */
-
 	memset(&mbuf, 0, sizeof(xfs_mount_t));
+
+	/* We don't yet know the sector size, so read maximal size */
 	libxfs_buftarg_init(&mbuf, xargs.ddev, xargs.logdev, xargs.rtdev);
 	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
-			     1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT),
-			     0, &xfs_sb_buf_ops);
+			     1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, NULL);
 	sb = &mbuf.m_sb;
 	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbp));
 
-	/*
-	 * For now, V5 superblock filesystems are not supported without -d;
-	 * we do not have the infrastructure yet to fix CRCs when a new UUID
-	 * is generated.
-	 */
-	if (xfs_sb_version_hascrc(sb) && !duplicate) {
-		do_log(_("%s: Cannot yet copy V5 fs without '-d'\n"), progname);
-		exit(1);
-	}
+	/* Do it again, now with proper length and verifier */
+	libxfs_putbuf(sbp);
+	libxfs_purgebuf(sbp);
+	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
+			     1 << (sb->sb_sectlog - BBSHIFT),
+			     0, &xfs_sb_buf_ops);
 
 	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);
 	if (mp == NULL) {
@@ -1128,8 +1155,7 @@ main(int argc, char **argv)
 			/* do each thread in turn, each has its own UUID */
 
 			for (j = 0, tcarg = targ; j < num_targets; j++)  {
-				platform_uuid_copy(&ag_hdr.xfs_sb->sb_uuid,
-							&tcarg->uuid);
+				sb_update_uuid(sb, &ag_hdr, tcarg);
 				do_write(tcarg);
 				tcarg++;
 			}

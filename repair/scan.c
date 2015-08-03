@@ -237,7 +237,7 @@ _("expected block %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
 		}
 		/* verify uuid */
 		if (platform_uuid_compare(&block->bb_u.l.bb_uuid,
-					  &mp->m_sb.sb_uuid) != 0) {
+					  &mp->m_sb.sb_meta_uuid) != 0) {
 			do_warn(
 _("wrong FS UUID, bmbt block %" PRIu64 "\n"),
 				bno);

@@ -29,6 +29,8 @@
 #include "output.h"
 #include "init.h"
 
+#define uuid_equal(s,d)		(platform_uuid_compare((s),(d)) == 0)
+
 static int	sb_f(int argc, char **argv);
 static void     sb_help(void);
 static int	uuid_f(int argc, char **argv);
@@ -122,6 +124,7 @@ const field_t	sb_flds[] = {
 	{ "spino_align", FLDT_EXTLEN, OI(OFF(spino_align)), C1, 0, TYP_NONE },
 	{ "pquotino", FLDT_INO, OI(OFF(pquotino)), C1, 0, TYP_INODE },
 	{ "lsn", FLDT_UINT64X, OI(OFF(lsn)), C1, 0, TYP_NONE },
+	{ "meta_uuid", FLDT_UUID, OI(OFF(meta_uuid)), C1, 0, TYP_NONE },
 	{ NULL }
 };
 
@@ -322,6 +325,32 @@ do_uuid(xfs_agnumber_t agno, uuid_t *uuid)
 		return &uu;
 	}
 	/* set uuid */
+	if (!xfs_sb_version_hascrc(&tsb))
+		goto write;
+	/*
+	 * If we have CRCs, and this UUID differs from that stamped in the
+	 * metadata, set the incompat flag and copy the old one to the
+	 * metadata-specific location.
+	 *
+	 * If we are setting the user-visible UUID back to match the metadata
+	 * UUID, clear the metadata-specific location and the incompat flag.
+	 */
+	if (!xfs_sb_version_hasmetauuid(&tsb) &&
+	    !uuid_equal(uuid, &mp->m_sb.sb_meta_uuid)) {
+		mp->m_sb.sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_META_UUID;
+		tsb.sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_META_UUID;
+		memcpy(&tsb.sb_meta_uuid, &tsb.sb_uuid, sizeof(uuid_t));
+	} else if (xfs_sb_version_hasmetauuid(&tsb) &&
+		   uuid_equal(uuid, &mp->m_sb.sb_meta_uuid)) {
+		memset(&tsb.sb_meta_uuid, 0, sizeof(uuid_t));
+		/* Write those zeros now; it's ignored once we clear the flag */
+		libxfs_sb_to_disk(iocur_top->data, &tsb);
+		mp->m_sb.sb_features_incompat &=
+						~XFS_SB_FEAT_INCOMPAT_META_UUID;
+		tsb.sb_features_incompat &= ~XFS_SB_FEAT_INCOMPAT_META_UUID;
+	}
+
+write:
 	memcpy(&tsb.sb_uuid, uuid, sizeof(uuid_t));
 	libxfs_sb_to_disk(iocur_top->data, &tsb);
 	write_cur();
@@ -351,18 +380,6 @@ uuid_f(
 			return 0;
 		}
 
-		/*
-		 * For now, changing the UUID of V5 superblock filesystems is
-		 * not supported; we do not have the infrastructure to fix all
-		 * other metadata when a new superblock UUID is generated.
-		 */
-		if (xfs_sb_version_hascrc(&mp->m_sb) &&
-		    strcasecmp(argv[1], "rewrite")) {
-			dbprintf(_("%s: only 'rewrite' supported on V5 fs\n"),
-				progname);
-			return 0;
-		}
-
 		if (!strcasecmp(argv[1], "generate")) {
 			platform_uuid_generate(&uu);
 		} else if (!strcasecmp(argv[1], "nil")) {
@@ -376,6 +393,17 @@ uuid_f(
 			memcpy(&uu, uup, sizeof(uuid_t));
 			platform_uuid_unparse(&uu, bp);
 			dbprintf(_("old UUID = %s\n"), bp);
+		} else if (!strcasecmp(argv[1], "restore")) {
+			xfs_sb_t	tsb;
+
+			if (!get_sb(0, &tsb))
+				return 0;
+
+			/* Not set; nothing to do.  Success! */
+			if (!xfs_sb_version_hasmetauuid(&tsb))
+				return 0;
+		
+			memcpy(&uu, mp->m_sb.sb_meta_uuid, sizeof(uuid_t));
 		} else {
 			if (platform_uuid_parse(argv[1], &uu)) {
 				dbprintf(_("invalid UUID\n"));
@@ -652,6 +680,8 @@ version_string(
 		strcat(s, ",FINOBT");
 	if (xfs_sb_version_hassparseinodes(sbp))
 		strcat(s, ",SPARSE_INODES");
+	if (xfs_sb_version_hasmetauuid(sbp))
+		strcat(s, ",META_UUID");
 	return s;
 }
 

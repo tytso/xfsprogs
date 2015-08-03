@@ -664,7 +664,7 @@ The possible data types are:
 .BR sb ", " symlink " and " text .
 See the TYPES section below for more information on these data types.
 .TP
-.BI "uuid [" uuid " | " generate " | " rewrite ]
+.BI "uuid [" uuid " | " generate " | " rewrite " | " restore ]
 Set the filesystem universally unique identifier (UUID).
 The filesystem UUID can be used by
 .BR mount (8)
@@ -675,7 +675,12 @@ can be set directly to the desired UUID, or it can
 be automatically generated using the
 .B generate
 option. These options will both write the UUID into every copy of the
-superblock in the filesystem.
+superblock in the filesystem.  On a CRC-enabled filesystem, this will
+set an incompatible superblock flag, and the filesystem will not be
+mountable with older kernels.  This can be reverted with the
+.B restore
+option, which will copy the original UUID back into place and clear
+the incompatible flag as needed.
 .B rewrite
 copies the current UUID from the primary superblock
 to all secondary copies of the superblock.

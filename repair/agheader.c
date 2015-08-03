@@ -112,7 +112,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 	if (!xfs_sb_version_hascrc(&mp->m_sb))
 		return retval;
 
-	if (platform_uuid_compare(&agf->agf_uuid, &mp->m_sb.sb_uuid)) {
+	if (platform_uuid_compare(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid)) {
 		char uu[64];
 
 		retval = XR_AG_AGF;
@@ -120,7 +120,8 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 		do_warn(_("bad uuid %s for agf %d\n"), uu, i);
 
 		if (!no_modify)
-			platform_uuid_copy(&agf->agf_uuid, &mp->m_sb.sb_uuid);
+			platform_uuid_copy(&agf->agf_uuid,
+					   &mp->m_sb.sb_meta_uuid);
 	}
 	return retval;
 }
@@ -190,7 +191,7 @@ verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 	if (!xfs_sb_version_hascrc(&mp->m_sb))
 		return retval;
 
-	if (platform_uuid_compare(&agi->agi_uuid, &mp->m_sb.sb_uuid)) {
+	if (platform_uuid_compare(&agi->agi_uuid, &mp->m_sb.sb_meta_uuid)) {
 		char uu[64];
 
 		retval = XR_AG_AGI;
@@ -198,7 +199,8 @@ verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 		do_warn(_("bad uuid %s for agi %d\n"), uu, agno);
 
 		if (!no_modify)
-			platform_uuid_copy(&agi->agi_uuid, &mp->m_sb.sb_uuid);
+			platform_uuid_copy(&agi->agi_uuid,
+					   &mp->m_sb.sb_meta_uuid);
 	}
 
 	return retval;
@@ -245,7 +247,7 @@ compare_sb(xfs_mount_t *mp, xfs_sb_t *sb)
  * superblocks, not just the secondary superblocks.
  */
 static int
-secondary_sb_wack(
+secondary_sb_whack(
 	struct xfs_mount *mp,
 	struct xfs_buf	*sbuf,
 	struct xfs_sb	*sb,
@@ -267,7 +269,10 @@ secondary_sb_wack(
 	 *
 	 * size is the size of data which is valid for this sb.
 	 */
-	if (xfs_sb_version_hascrc(sb))
+	if (xfs_sb_version_hasmetauuid(sb))
+		size = offsetof(xfs_sb_t, sb_meta_uuid)
+			+ sizeof(sb->sb_meta_uuid);
+	else if (xfs_sb_version_hascrc(sb))
 		size = offsetof(xfs_sb_t, sb_lsn)
 			+ sizeof(sb->sb_lsn);
 	else if (xfs_sb_version_hasmorebits(sb))
@@ -511,7 +516,7 @@ verify_set_agheader(xfs_mount_t *mp, xfs_buf_t *sbuf, xfs_sb_t *sb,
 		rval |= XR_AG_SB;
 	}
 
-	rval |= secondary_sb_wack(mp, sbuf, sb, i);
+	rval |= secondary_sb_whack(mp, sbuf, sb, i);
 
 	rval |= verify_set_agf(mp, agf, i);
 	rval |= verify_set_agi(mp, agi, i);
