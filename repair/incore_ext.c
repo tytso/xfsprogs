@@ -783,7 +783,7 @@ incore_ext_init(xfs_mount_t *mp)
 		avl_init_tree(extent_bcnt_ptrs[i], &avl_extent_bcnt_tree_ops);
 	}
 
-	if ((rt_ext_tree_ptr = malloc(sizeof(avltree_desc_t))) == NULL)
+	if ((rt_ext_tree_ptr = malloc(sizeof(avl64tree_desc_t))) == NULL)
 		do_error(_("couldn't malloc dup rt extent tree descriptor\n"));
 
 	avl64_init_tree(rt_ext_tree_ptr, &avl64_extent_tree_ops);
