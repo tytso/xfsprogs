@@ -1960,7 +1960,7 @@ _("expected block %" PRIu64 ", got %llu, directory inode %" PRIu64 "\n"),
 		return 1;
 	}
 	/* verify uuid */
-	if (platform_uuid_compare(uuid, &mp->m_sb.sb_uuid) != 0) {
+	if (platform_uuid_compare(uuid, &mp->m_sb.sb_meta_uuid) != 0) {
 		do_warn(
 _("wrong FS UUID, directory inode %" PRIu64 " block %" PRIu64 "\n"),
 			ino, bp->b_bn);
