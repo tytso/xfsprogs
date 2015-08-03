@@ -681,14 +681,21 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* prepare the mount structure */
-
 	memset(&mbuf, 0, sizeof(xfs_mount_t));
+
+	/* We don't yet know the sector size, so read maximal size */
 	libxfs_buftarg_init(&mbuf, xargs.ddev, xargs.logdev, xargs.rtdev);
-	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR, 1, 0,
-							&xfs_sb_buf_ops);
+	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
+			     1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, NULL);
 	sb = &mbuf.m_sb;
 	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbp));
+
+	/* Do it again, now with proper length and verifier */
+	libxfs_putbuf(sbp);
+	libxfs_purgebuf(sbp);
+	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
+			     1 << (sb->sb_sectlog - BBSHIFT),
+			     0, &xfs_sb_buf_ops);
 
 	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);
 	if (mp == NULL) {
