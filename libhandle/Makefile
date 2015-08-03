@@ -25,6 +25,4 @@ install: default
 install-dev: default
 	$(INSTALL_LTLIB_DEV)
 
-install-qa: install-dev
-
 -include .ltdep

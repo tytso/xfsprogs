@@ -18,7 +18,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "xfs/platform_defs.h"
+#include "platform_defs.h"
+#include "xfs.h"
 #include "radix-tree.h"
 
 #ifndef ARRAY_SIZE

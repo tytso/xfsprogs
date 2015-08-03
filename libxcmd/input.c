@@ -16,8 +16,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs/xfs.h"
-#include "xfs/input.h"
+#include "platform_defs.h"
+#include "input.h"
 #include <ctype.h>
 #include <stdbool.h>
 

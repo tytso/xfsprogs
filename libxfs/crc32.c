@@ -33,9 +33,9 @@
  * match the hardware acceleration available on Intel CPUs.
  */
 
-#include "xfs/platform_defs.h"
-#include "xfs/swab.h"
-#include "xfs/xfs_arch.h"
+#include "platform_defs.h"
+#include "xfs.h"
+#include "xfs_arch.h"
 #include "crc32defs.h"
 
 /* types specifc to this file */

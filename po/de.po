@@ -5706,57 +5706,6 @@ msgstr "[-cpv]"
 msgid "print or check parent inodes"
 msgstr "Eltern-Inodes ausgeben oder prüfen"
 
-#: .././libdisk/lvm.c:60
-#, c-format
-msgid "Warning - LVM device, but no lvdisplay(8) found\n"
-msgstr "Warnung: LVM-Gerät, aber es wurde kein lvdisplay(8) gefunden\n"
-
-#: .././libdisk/lvm.c:70 .././libdisk/dm.c:73
-#, c-format
-msgid "Could not open pipe\n"
-msgstr "Weiterleitung kann nicht geöffnet werden\n"
-
-#: .././libdisk/lvm.c:85 .././libdisk/dm.c:88
-#, c-format
-msgid "Failed to execute %s\n"
-msgstr "Ausführen von %s fehlgeschlagen\n"
-
-#: .././libdisk/lvm.c:89
-#, c-format
-msgid "Failed forking lvdisplay process\n"
-msgstr "Erstellen des »lvdisplay«-Unterprozesses fehlgeschlagen\n"
-
-#: .././libdisk/drivers.c:35
-#, c-format
-msgid "Cannot stat %s: %s\n"
-msgstr "Kann Status für »%s« nicht abfragen:%s\n"
-
-#: .././libdisk/md.c:61
-#, c-format
-msgid "Error getting MD array device from %s\n"
-msgstr "Fehler beim Ermitteln des MD-Array-Geräts von %s\n"
-
-#: .././libdisk/md.c:68
-#, c-format
-msgid "Couldn't malloc device string\n"
-msgstr "malloc von Gerätzeichenkette konnte nicht durchgeführt werden\n"
-
-#: .././libdisk/md.c:84
-#, c-format
-msgid "Error getting MD array info from %s\n"
-msgstr "Fehler beim Ermitteln der MD-Array-Informationen von %s\n"
-
-#: .././libdisk/dm.c:57
-#, c-format
-msgid "Warning - device mapper device, but no dmsetup(8) found\n"
-msgstr ""
-"Warnung: »device mapper«-Gerät, aber es wurde kein dmsetup(8) gefunden\n"
-
-#: .././libdisk/dm.c:92
-#, c-format
-msgid "Failed forking dmsetup process\n"
-msgstr "Erstellen des »dmsetup«-Unterprozesses fehlgeschlagen\n"
-
 #: .././libxcmd/command.c:85
 #, c-format
 msgid "bad argument count %d to %s, expected at least %d arguments\n"

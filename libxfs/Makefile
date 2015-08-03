@@ -12,17 +12,13 @@ LT_AGE = 0
 
 # headers to install in include/xfs
 PKGHFILES = xfs_fs.h \
-	xfs_types.h
+	xfs_types.h \
+	xfs_da_format.h \
+	xfs_format.h \
+	xfs_log_format.h
 
-# headers with build dependencies
-HFILES = init.h \
-	crc32defs.h \
-	crc32table.h \
-	libxfs_priv.h \
-	xfs_dir2_priv.h \
-
-# headers installed in QA targets
-QAHFILES = xfs_alloc.h \
+HFILES = \
+	xfs_alloc.h \
 	xfs_alloc_btree.h \
 	xfs_attr_leaf.h \
 	xfs_attr_sf.h \
@@ -33,21 +29,23 @@ QAHFILES = xfs_alloc.h \
 	xfs_attr_remote.h \
 	xfs_cksum.h \
 	xfs_da_btree.h \
-	xfs_da_format.h \
 	xfs_dir2.h \
-	xfs_format.h \
 	xfs_ialloc.h \
 	xfs_ialloc_btree.h \
 	xfs_inode_buf.h \
 	xfs_inode_fork.h \
-	xfs_log_format.h \
 	xfs_quota_defs.h \
 	xfs_sb.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \
 	xfs_trans_space.h \
 	libxfs_io.h \
-	libxfs_api_defs.h
+	libxfs_api_defs.h \
+	init.h \
+	crc32defs.h \
+	crc32table.h \
+	libxfs_priv.h \
+	xfs_dir2_priv.h
 
 CFILES = cache.c \
 	crc32.c \
@@ -113,7 +111,7 @@ default: crc32selftest ltdepend $(LTLIBRARY)
 
 crc32table.h: gen_crc32table.c
 	@echo "    [CC]     gen_crc32table"
-	$(Q) $(CC) $(CFLAGS) -o gen_crc32table $<
+	$(Q) $(BUILD_CC) $(CFLAGS) -o gen_crc32table $<
 	@echo "    [GENERATE] $@"
 	$(Q) ./gen_crc32table > crc32table.h
 
@@ -124,7 +122,7 @@ crc32table.h: gen_crc32table.c
 # disk.
 crc32selftest: gen_crc32table.c crc32table.h crc32.c
 	@echo "    [TEST]    CRC32"
-	$(Q) $(CC) $(CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
+	$(Q) $(BUILD_CC) $(CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
 	$(Q) ./$@
 
 # set up include/xfs header directory
@@ -133,16 +131,13 @@ include $(BUILDRULES)
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
 
-install-headers: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
+install-headers: $(addsuffix -hdrs, $(PKGHFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
 
 install-dev: install
-	$(INSTALL) -m 644 $(PKGHFILES) $(HFILES) $(PKG_INC_DIR)
-
-install-qa: install-dev
-	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
+	$(INSTALL) -m 644 $(PKGHFILES) $(PKG_INC_DIR)
 
 # We need to install the headers before building the dependencies.  If we
 # include the .ltdep file, the makefile decides that it needs to build the

@@ -31,7 +31,6 @@
 #include <ctype.h>
 #include <libgen.h>
 #include <paths.h>
-#include "xfs/swab.h"
 
 #define constpp	char * const *
 
@@ -42,6 +41,15 @@ typedef off_t		xfs_off_t;
 typedef __uint64_t	xfs_ino_t;
 typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
+
+typedef unsigned char		__u8;
+typedef signed char		__s8;
+typedef unsigned short		__u16;
+typedef signed short		__s16;
+typedef unsigned int		__u32;
+typedef signed int		__s32;
+typedef unsigned long long int	__u64;
+typedef signed long long int	__s64;
 
 #define HAVE_FID	1
 

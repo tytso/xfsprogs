@@ -20,8 +20,8 @@
 #define __XFS_INODE_H__
 
 /* These match kernel side includes */
-#include "xfs/xfs_inode_buf.h"
-#include "xfs/xfs_inode_fork.h"
+#include "xfs_inode_buf.h"
+#include "xfs_inode_fork.h"
 
 struct xfs_trans;
 struct xfs_mount;

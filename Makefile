@@ -43,10 +43,22 @@ endif
 # header install rules to populate include/xfs correctly
 HDR_SUBDIRS = include libxfs
 
-DLIB_SUBDIRS = libxlog libxcmd libhandle libdisk
+DLIB_SUBDIRS = libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
-		mdrestore repair rtcp m4 man doc po debian
+		mdrestore repair rtcp m4 man doc debian
+
+ifneq ("$(XGETTEXT)","")
+TOOL_SUBDIRS += po
+endif
+
+# If we are on OS X, use glibtoolize from MacPorts, as OS X doesn't have
+# libtoolize binary itself.
+LIBTOOLIZE_TEST=$(shell libtoolize --version >/dev/null 2>&1 && echo found)
+LIBTOOLIZE_BIN=libtoolize
+ifneq ("$(LIBTOOLIZE_TEST)","found")
+LIBTOOLIZE_BIN=glibtoolize
+endif
 
 # include is listed last so it is processed last in clean rules.
 SUBDIRS = $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
@@ -71,23 +83,20 @@ quota: libxcmd
 repair: libxlog
 
 
-ifneq ($(ENABLE_BLKID), yes)
-mkfs: libdisk
-endif
-
 ifeq ($(HAVE_BUILDDEFS), yes)
 include $(BUILDRULES)
 else
 clean:	# if configure hasn't run, nothing to clean
 endif
 
+
 # Recent versions of libtool require the -i option for copying auxiliary
 # files (config.sub, config.guess, install-sh, ltmain.sh), while older
 # versions will copy those files anyway, and don't understand -i.
-LIBTOOLIZE_INSTALL = `libtoolize -n -i >/dev/null 2>/dev/null && echo -i`
+LIBTOOLIZE_INSTALL = `$(LIBTOOLIZE_BIN) -n -i >/dev/null 2>/dev/null && echo -i`
 
 configure:
-	libtoolize -c $(LIBTOOLIZE_INSTALL) -f
+	$(LIBTOOLIZE_BIN) -c $(LIBTOOLIZE_INSTALL) -f
 	cp include/install-sh .
 	aclocal -I m4
 	autoconf
@@ -108,8 +117,6 @@ install: $(addsuffix -install,$(SUBDIRS))
 
 install-dev: $(addsuffix -install-dev,$(SUBDIRS))
 
-install-qa: install $(addsuffix -install-qa,$(SUBDIRS))
-
 %-install:
 	@echo "Installing $@"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* install
@@ -117,10 +124,6 @@ install-qa: install $(addsuffix -install-qa,$(SUBDIRS))
 %-install-dev:
 	@echo "Installing $@"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* install-dev
-
-%-install-qa:
-	@echo "Installing $@"
-	$(Q)$(MAKE) $(MAKEOPTS) -C $* install-qa
 
 distclean: clean
 	$(Q)rm -f $(LDIRT)

@@ -16,9 +16,9 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs/xqm.h"
-#include "xfs/path.h"
-#include "xfs/project.h"
+#include "xqm.h"
+#include "path.h"
+#include "project.h"
 #include <stdbool.h>
 
 /*

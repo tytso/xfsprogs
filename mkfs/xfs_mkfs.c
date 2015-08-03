@@ -16,14 +16,9 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "xfs/libxfs.h"
+#include "libxfs.h"
 #include <ctype.h>
-#ifdef ENABLE_BLKID
 #include <blkid/blkid.h>
-#else
-#include <disk/fstyp.h>
-#include <disk/volume.h>
-#endif
 #include "xfs_mkfs.h"
 
 /*
@@ -35,7 +30,6 @@ struct fs_topology {
 	int	rtswidth;	/* stripe width - rt subvolume */
 	int	lsectorsize;	/* logical sector size &*/
 	int	psectorsize;	/* physical sector size */
-	int	sectoralign;
 };
 
 /*
@@ -297,7 +291,6 @@ calc_stripe_factors(
 	}
 }
 
-#ifdef ENABLE_BLKID
 /*
  * Check for existing filesystem or partition table on device.
  * Returns:
@@ -502,85 +495,6 @@ static void get_topology(
 				   &lsectorsize, &psectorsize, force_overwrite);
 	}
 }
-#else /* ENABLE_BLKID */
-static int
-check_overwrite(
-	char		*device)
-{
-	char		*type;
-
-	if (device && *device) {
-		if ((type = fstype(device)) != NULL) {
-			fprintf(stderr,
-				_("%s: %s appears to contain an existing "
-				"filesystem (%s).\n"), progname, device, type);
-			return 1;
-		}
-		if ((type = pttype(device)) != NULL) {
-			fprintf(stderr,
-				_("%s: %s appears to contain a partition "
-				"table (%s).\n"), progname, device, type);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-static void get_topology(
-	libxfs_init_t		*xi,
-	struct fs_topology	*ft,
-	int			force_overwrite)
-{
-	struct stat statbuf;
-	char *dfile = xi->volname ? xi->volname : xi->dname;
-	int bsz = BBSIZE;
-
-        /*
-	 * If our target is a regular file, use platform_findsizes
-	 * to try to obtain the underlying filesystem's requirements
-	 * for direct IO; we'll set our sector size to that if possible.
-	 */
-	if (xi->disfile ||
-	    (!stat(dfile, &statbuf) && S_ISREG(statbuf.st_mode))) {
-		int fd;
-		int flags = O_RDONLY;
-		long long dummy;
-
-		/* with xi->disfile we may not have the file yet! */
-		if (xi->disfile)
-			flags |= O_CREAT;
-
-		fd = open(dfile, flags, 0666);
-		/* If this fails we just fall back to BBSIZE */
-		if (fd >= 0) {
-			platform_findsizes(dfile, fd, &dummy, &bsz);
-			close(fd);
-		}
-	} else {
-		int fd;
-		long long dummy;
-
-		get_subvol_stripe_wrapper(dfile, SVTYPE_DATA,
-				&ft->dsunit, &ft->dswidth, &ft->sectoralign);
-		fd = open(dfile, O_RDONLY);
-		/* If this fails we just fall back to BBSIZE */
-		if (fd >= 0) {
-			platform_findsizes(dfile, fd, &dummy, &bsz);
-			close(fd);
-		}
-	}
-
-	ft->lsectorsize = bsz;
-	ft->psectorsize = bsz;
-
-	if (xi->rtname && !xi->risfile) {
-		int dummy1;
-
-		get_subvol_stripe_wrapper(dfile, SVTYPE_RT, &dummy1,
-					  &ft->rtswidth, &dummy1);
-	}
-}
-#endif /* ENABLE_BLKID */
 
 static void
 fixup_log_stripe_unit(
@@ -1804,17 +1718,7 @@ _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 	memset(&ft, 0, sizeof(ft));
 	get_topology(&xi, &ft, force_overwrite);
 
-	if (ft.sectoralign) {
-		/*
-		 * Older Linux software RAID versions want the sector size
-		 * to match the block size to avoid switching I/O sizes.
-		 * For the legacy libdisk case we thus set the sector size to
-		 * match the block size.  For systems using libblkid we assume
-		 * that the kernel is recent enough to not require this and
-		 * ft.sectoralign will never be set.
-		 */
-		sectorsize = blocksize;
-	} else if (!ssflag) {
+	if (!ssflag) {
 		/*
 		 * Unless specified manually on the command line use the
 		 * advertised sector size of the device.  We use the physical
@@ -1842,7 +1746,7 @@ _("switching to logical sector size %d\n"),
 		}
 	}
 
-	if (ft.sectoralign || !ssflag) {
+	if (!ssflag) {
 		sectorlog = libxfs_highbit32(sectorsize);
 		if (loginternal) {
 			lsectorsize = sectorsize;

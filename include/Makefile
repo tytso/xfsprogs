@@ -18,7 +18,7 @@
 TOPDIR = ..
 include $(TOPDIR)/include/builddefs
 
-QAHFILES = libxfs.h \
+LIBHFILES = libxfs.h \
 	libxlog.h \
 	atomic.h \
 	bitops.h \
@@ -28,26 +28,27 @@ QAHFILES = libxfs.h \
 	list.h \
 	parent.h \
 	radix-tree.h \
-	swab.h \
-	xfs_arch.h \
 	xfs_btree_trace.h \
 	xfs_inode.h \
 	xfs_log_recover.h \
 	xfs_metadump.h \
 	xfs_mount.h \
 	xfs_trace.h \
-	xfs_trans.h
+	xfs_trans.h \
+	command.h \
+	input.h \
+	path.h \
+	project.h \
+	platform_defs.h \
 
 HFILES = handle.h \
 	jdm.h \
 	$(PKG_PLATFORM).h \
-	platform_defs.h \
 	xfs.h \
-	xqm.h
+	xqm.h \
+	xfs_arch.h
 
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
-DKHFILES = volume.h fstyp.h dvh.h
-LIBHFILES = command.h input.h path.h project.h
 LSRCFILES = $(shell echo $(PHFILES) | sed -e "s/$(PKG_PLATFORM).h//g")
 LSRCFILES += platform_defs.h.in builddefs.in buildmacros buildrules install-sh
 LSRCFILES += $(DKHFILES) $(LIBHFILES)
@@ -63,20 +64,13 @@ disk:
 include $(BUILDRULES)
 
 # set up include/xfs header directory
-install-headers: $(addsuffix -hdrs, $(HFILES) $(QAHFILES) $(PHFILES) $(DKHFILES) $(LIBHFILES))
+install-headers: $(addsuffix -hdrs, $(PHFILES) $(DKHFILES) $(HFILES))
 
-%-hdrs: xfs
+%-hdrs:
 	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
-
-xfs:
-	@mkdir -p xfs
 
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)
 
 install-dev: install
 	$(INSTALL) -m 644 $(HFILES) $(PKG_INC_DIR)
-
-install-qa: install-dev
-	$(INSTALL) -m 644 $(QAHFILES) $(PKG_INC_DIR)
-

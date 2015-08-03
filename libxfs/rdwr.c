@@ -30,7 +30,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-#include "xfs/libxfs.h"		/* for LIBXFS_EXIT_ON_FAILURE */
+#include "libxfs.h"		/* for LIBXFS_EXIT_ON_FAILURE */
 
 /*
  * Important design/architecture note:

@@ -14,10 +14,16 @@ clean clobber : $(addsuffix -clean,$(SUBDIRS))
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* clean
 
 ifdef HDR_SUBDIRS
+.PHONY: .xfs
+
 headers: $(addsuffix -headers, $(HDR_SUBDIRS))
-%-headers:
+
+%-headers: .xfs
 	@echo "   [HEADERS] $*"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $* NODEP=1 install-headers
+
+.xfs:
+	@mkdir -p include/xfs
 endif
 
 # Never blow away subdirs
@@ -94,7 +100,7 @@ $(_FORCE):
 # rebuild on every make invocation isn't a problem we need to care about. Just
 # do it silently so it doesn't make the build unnecessarily noisy.
 
-.PHONY : depend ltdepend install-qa
+.PHONY : depend ltdepend
 
 MAKEDEP := $(MAKEDEPEND) $(CFLAGS)
 

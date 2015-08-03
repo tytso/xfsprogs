@@ -16,6 +16,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "xfs.h"
+
 /*
  * Read/write patterns (default is always "forward")
  */
