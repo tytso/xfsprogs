@@ -85,8 +85,10 @@ header_check_uuid(xfs_mount_t *mp, xlog_rec_header_t *head)
 {
     char uu_log[64], uu_sb[64];
 
-    if (print_skip_uuid) return 0;
-    if (!platform_uuid_compare(&mp->m_sb.sb_uuid, &head->h_fs_uuid)) return 0;
+    if (print_skip_uuid)
+		return 0;
+    if (!platform_uuid_compare(&mp->m_sb.sb_uuid, &head->h_fs_uuid))
+		return 0;
 
     platform_uuid_unparse(&mp->m_sb.sb_uuid, uu_sb);
     platform_uuid_unparse(&head->h_fs_uuid, uu_log);

@@ -2628,6 +2628,8 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	sbp->sb_rextents = rtextents;
 	platform_uuid_generate(&uuid);
 	platform_uuid_copy(&sbp->sb_uuid, &uuid);
+	/* Only in memory; libxfs expects this as if read from disk */
+	platform_uuid_copy(&sbp->sb_meta_uuid, &uuid);
 	sbp->sb_logstart = logstart;
 	sbp->sb_rootino = sbp->sb_rbmino = sbp->sb_rsumino = NULLFSINO;
 	sbp->sb_rextsize = rtextblocks;

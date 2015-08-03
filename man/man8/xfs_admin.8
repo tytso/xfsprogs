@@ -98,7 +98,12 @@ The
 .I uuid
 may also be
 .BR generate ,
-which will generate a new UUID for the filesystem.
+which will generate a new UUID for the filesystem.  Note that on CRC-enabled
+filesystems, this will set an incompatible flag such that older kernels will
+not be able to mount the filesystem.  To remove this incompatible flag, use
+.BR restore ,
+which will restore the original UUID and remove the incompatible
+feature flag as needed.
 .TP
 .B \-V
 Prints the version number and exits.
