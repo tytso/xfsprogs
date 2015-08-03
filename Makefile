@@ -43,7 +43,7 @@ endif
 # header install rules to populate include/xfs correctly
 HDR_SUBDIRS = include libxfs
 
-DLIB_SUBDIRS = libxlog libxcmd libhandle libdisk
+DLIB_SUBDIRS = libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc po debian
@@ -70,10 +70,6 @@ io: libxcmd libhandle
 quota: libxcmd
 repair: libxlog
 
-
-ifneq ($(ENABLE_BLKID), yes)
-mkfs: libdisk
-endif
 
 ifeq ($(HAVE_BUILDDEFS), yes)
 include $(BUILDRULES)

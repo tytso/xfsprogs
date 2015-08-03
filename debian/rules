@@ -48,7 +48,7 @@ dibuild:
 		for dir in include libxfs; do \
 			$(MAKE) -C $$dir NODEP=1 install-headers; \
 		done; \
-		for dir in include libxfs libdisk mkfs; do \
+		for dir in include libxfs mkfs; do \
 			$(MAKE) -C $$dir; \
 		done; \
 		mv mkfs/mkfs.xfs mkfs/mkfs.xfs-$(bootpkg); \

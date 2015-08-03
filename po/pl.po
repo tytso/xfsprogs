@@ -5606,55 +5606,6 @@ msgstr "offset"
 msgid "truncates the current file at the given offset"
 msgstr "ucięcie bieżącego pliku na podanym offsecie"
 
-#: .././libdisk/dm.c:57
-#, c-format
-msgid "Warning - device mapper device, but no dmsetup(8) found\n"
-msgstr "Uwaga - urządzenie device mappera, ale nie znaleziono dmsetup(8)\n"
-
-#: .././libdisk/dm.c:73 .././libdisk/lvm.c:70
-#, c-format
-msgid "Could not open pipe\n"
-msgstr "Nie udało się otworzyć potoku\n"
-
-#: .././libdisk/dm.c:88 .././libdisk/lvm.c:85
-#, c-format
-msgid "Failed to execute %s\n"
-msgstr "Nie udało się wywołać %s\n"
-
-#: .././libdisk/dm.c:92
-#, c-format
-msgid "Failed forking dmsetup process\n"
-msgstr "Nie udało się odgałęzić procesu dmsetup\n"
-
-#: .././libdisk/drivers.c:35
-#, c-format
-msgid "Cannot stat %s: %s\n"
-msgstr "Nie można wykonać stat na %s: %s\n"
-
-#: .././libdisk/lvm.c:60
-#, c-format
-msgid "Warning - LVM device, but no lvdisplay(8) found\n"
-msgstr "Uwaga - urządzenie LVM, ale nie znaleziono lvdisplay(8)\n"
-
-#: .././libdisk/lvm.c:89
-#, c-format
-msgid "Failed forking lvdisplay process\n"
-msgstr "Nie udało się odgałęzić procesu lvdisplay\n"
-
-#: .././libdisk/md.c:61
-#, c-format
-msgid "Error getting MD array device from %s\n"
-msgstr "Błąd podczas pobierania urządzenia macierzy MD z %s\n"
-
-#: .././libdisk/md.c:68
-#, c-format
-msgid "Couldn't malloc device string\n"
-msgstr "Nie można przydzielić łańcucha nazwy urządzenia\n"
-
-#: .././libdisk/md.c:84
-#, c-format
-msgid "Error getting MD array info from %s\n"
-msgstr "Błąd podczas pobierania informacji o macierzy MD z %s\n"
 
 #: .././libxcmd/command.c:85
 #, c-format
