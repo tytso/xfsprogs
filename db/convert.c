@@ -157,7 +157,7 @@ convert_f(int argc, char **argv)
 {
 	ctype_t		c;
 	int		conmask;
-	cval_t		cvals[NCTS];
+	cval_t		cvals[NCTS] = {};
 	int		i;
 	int		mask;
 	__uint64_t	v;
