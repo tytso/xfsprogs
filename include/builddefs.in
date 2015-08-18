@@ -118,7 +118,7 @@ ifeq ($(PKG_PLATFORM),gnukfreebsd)
 PCFLAGS = -D_GNU_SOURCE $(GCCFLAGS)
 endif
 ifeq ($(PKG_PLATFORM),darwin)
-PCFLAGS = -traditional-cpp $(GCCFLAGS)
+PCFLAGS = $(GCCFLAGS)
 DEPENDFLAGS = -D__APPLE__
 endif
 ifeq ($(PKG_PLATFORM),irix)
