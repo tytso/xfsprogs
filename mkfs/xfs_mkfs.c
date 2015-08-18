@@ -966,7 +966,8 @@ main(
 	logversion = 2;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
 	Nflag = nlflag = nsflag = nvflag = nci = 0;
-	nftype = dirftype = 0;		/* inode type information in the dir */
+	dirftype = 1;		/* inode type information in the dir */
+	nftype = 0;
 	dirblocklog = dirblocksize = 0;
 	dirversion = XFS_DFL_DIR_VERSION;
 	qflag = 0;
@@ -1477,11 +1478,6 @@ main(
 					if (c < 0 || c > 1)
 						illegal(value, "m crc");
 					crcs_enabled = c;
-					if (nftype && crcs_enabled) {
-						fprintf(stderr,
-_("cannot specify both crc and ftype\n"));
-						usage();
-					}
 					break;
 				case M_FINOBT:
 					if (!value || *value == '\0')
@@ -1555,11 +1551,6 @@ _("cannot specify both crc and ftype\n"));
 					if (nftype)
 						respec('n', nopts, N_FTYPE);
 					dirftype = atoi(value);
-					if (crcs_enabled) {
-						fprintf(stderr,
-_("cannot specify both crc and ftype\n"));
-						usage();
-					}
 					nftype = 1;
 					break;
 				default:
@@ -1712,6 +1703,10 @@ _("cannot specify both crc and ftype\n"));
 		fprintf(stderr,
 _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 			XFS_MIN_CRC_BLOCKSIZE);
+		usage();
+	}
+	if (crcs_enabled && !dirftype) {
+		fprintf(stderr, _("cannot disable ftype with crcs enabled\n"));
 		usage();
 	}
 
