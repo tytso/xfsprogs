@@ -202,3 +202,11 @@ AC_DEFUN([AC_HAVE_READDIR],
     AC_SUBST(have_readdir)
   ])
 
+#
+# Check if there is mntent.h
+#
+AC_DEFUN([AC_HAVE_MNTENT],
+  [ AC_CHECK_HEADERS(mntent.h,
+    have_mntent=yes)
+    AC_SUBST(have_mntent)
+  ])

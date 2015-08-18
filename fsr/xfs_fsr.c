@@ -25,16 +25,16 @@
 
 #include <fcntl.h>
 #include <errno.h>
-#include <malloc.h>
-#include <mntent.h>
 #include <syslog.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
-#include <sys/vfs.h>
 #include <sys/statvfs.h>
 #include <sys/xattr.h>
 
+#ifdef HAVE_MNTENT
+#  include <mntent.h>
+#endif
 
 #ifndef XFS_XFLAG_NODEFRAG
 #define XFS_XFLAG_NODEFRAG 0x00002000 /* src dependancy, remove later */
