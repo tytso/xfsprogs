@@ -77,7 +77,7 @@ INSTALL_LTLIB_DEV = \
 	../$(INSTALL) -m 755 -d $(PKG_ROOT_LIB_DIR); \
 	../$(INSTALL) -T so_base $(LIBNAME).lai $(PKG_ROOT_LIB_DIR); \
 	if [ "x$(shell readlink -f $(PKG_LIB_DIR))" != \
-	     "x$(shell readlink -f $(PKG_ROOT_LIB_DIR))"; ]; then \
+	     "x$(shell readlink -f $(PKG_ROOT_LIB_DIR))" ]; then \
 		../$(INSTALL) -S $(PKG_LIB_DIR)/$(LIBNAME).a $(PKG_ROOT_LIB_DIR)/$(LIBNAME).a; \
 		../$(INSTALL) -S $(PKG_LIB_DIR)/$(LIBNAME).la $(PKG_ROOT_LIB_DIR)/$(LIBNAME).la; \
 		../$(INSTALL) -S $(PKG_ROOT_LIB_DIR)/$(LIBNAME).so $(PKG_LIB_DIR)/$(LIBNAME).so; \
