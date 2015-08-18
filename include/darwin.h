@@ -73,45 +73,37 @@ static __inline__ void platform_getoptreset(void)
 
 static __inline__ int platform_uuid_compare(uuid_t *uu1, uuid_t *uu2)
 {
-	return uuid_compare(uu1, uu2, NULL);
+	return uuid_compare((const unsigned char *) uu1, (const unsigned char*) uu2);
 }
 
 static __inline__ void platform_uuid_unparse(uuid_t *uu, char *buffer)
 {
-	uint32_t status;
-	char *s;
-	uuid_to_string(uu, &s, &status);
-	if (status == uuid_s_ok)
-		strcpy(buffer, s);
-	else buffer[0] = '\0';
-	free(s);
+	uuid_unparse(*uu, buffer);
 }
 
 static __inline__ int platform_uuid_parse(char *buffer, uuid_t *uu)
 {
-	uint32_t status;
-	uuid_from_string(buffer, uu, &status);
-	return (status == uuid_s_ok);
+	return uuid_parse(buffer, *uu);
 }
 
 static __inline__ int platform_uuid_is_null(uuid_t *uu)
 {
-	return uuid_is_nil(uu, NULL);
+	return uuid_is_null(*uu);
 }
 
 static __inline__ void platform_uuid_generate(uuid_t *uu)
 {
-	uuid_create(uu, NULL);
+	uuid_generate(*uu);
 }
 
 static __inline__ void platform_uuid_clear(uuid_t *uu)
 {
-	uuid_create_nil(uu, NULL);
+	uuid_clear(*uu);
 }
 
 static __inline__ void platform_uuid_copy(uuid_t *dst, uuid_t *src)
 {
-	memcpy(dst, src, sizeof(uuid_t));
+	uuid_copy(*dst, *src);
 }
 
 typedef unsigned char		__u8;
@@ -156,10 +148,12 @@ typedef int64_t		xfs_daddr_t;
 #define O_SYNC          0
 #endif
 
-#define ENOATTR		989     /* Attribute not found */
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */
 #define constpp		char * const *
+
+#define XATTR_SIZE_MAX 65536    /* size of an extended attribute value (64k) */
+#define XATTR_LIST_MAX 65536    /* size of extended attribute namelist (64k) */
 
 #define HAVE_FID	1
 
@@ -168,5 +162,132 @@ platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 {
 	return 0;
 }
+
+
+/*
+ * Dummy POSIX timer replacement
+ */
+#define CLOCK_REALTIME 1
+typedef uint64_t timer_t;
+typedef double   timer_c;
+typedef clock_id_t clockid_t;
+struct itimerspec
+  {
+    struct timespec it_interval;
+    struct timespec it_value;
+  };
+
+static inline int timer_create (clockid_t __clock_id,
+                         struct sigevent *__restrict __evp,
+                         timer_t *__restrict __timerid)
+{
+	return 0;
+}
+
+static inline int timer_settime (timer_t __timerid, int __flags,
+                          const struct itimerspec *__restrict __value,
+                          struct itimerspec *__restrict __ovalue)
+{
+	return 0;
+}
+
+static inline int timer_delete (timer_t __timerid)
+{
+	return 0;
+}
+
+static inline int timer_gettime (timer_t __timerid, struct itimerspec *__value)
+{
+	return 0;
+}
+
+static inline int nftw64(const char *path, int (*fn)(const char *, const struct stat *ptr, int flag, struct FTW *), int depth,
+         int flags)
+{
+	return nftw(path, fn, depth, flags);
+}
+
+#define MREMAP_FIXED 1
+#define MREMAP_MAYMOVE 2
+static inline void *mremap(void *old_address, size_t old_size,
+                    size_t new_size, int flags, ... /* void *new_address */)
+{
+	return NULL;
+}
+
+/* FSR */
+
+#define		_PATH_MOUNTED   "/etc/mtab"
+#define		USE_DUMMY_XATTR
+
+typedef int __fsblkcnt_t;
+typedef int __fsfilcnt_t;
+typedef long long int __fsblkcnt64_t;
+typedef long long int __fsfilcnt64_t;
+
+struct statvfs64
+{
+	unsigned long int f_bsize;
+	unsigned long int f_frsize;
+	__fsblkcnt64_t f_blocks;
+	__fsblkcnt64_t f_bfree;
+	__fsblkcnt64_t f_bavail;
+	__fsfilcnt64_t f_files;
+	__fsfilcnt64_t f_ffree;
+	__fsfilcnt64_t f_favail;
+	unsigned long int f_fsid;
+	int __f_unused;
+	unsigned long int f_flag;
+	unsigned long int f_namemax;
+	int __f_spare[6];
+};
+
+struct mntent
+{
+	char *mnt_fsname;		/* Device or server for filesystem.  */
+	char *mnt_dir;		/* Directory mounted on.  */
+	char *mnt_type;		/* Type of filesystem: ufs, nfs, etc.  */
+	char *mnt_opts;		/* Comma-separated options for fs.  */
+	int mnt_freq;		/* Dump frequency (in days).  */
+	int mnt_passno;		/* Pass number for `fsck'.  */
+};
+
+static inline FILE *setmntent(const char *filename, const char *type)
+{
+	return NULL;
+}
+
+static inline int endmntent(FILE *fp)
+{
+	return 0;
+}
+
+static inline struct mntent *getmntent(FILE *fp)
+{
+	return NULL;
+}
+
+static inline int addmntent(FILE *fp, const struct mntent *mnt)
+{
+	return 0;
+}
+
+static inline char *hasmntopt(const struct mntent *mnt, const char *opt)
+{
+	return NULL;
+}
+
+static inline int statvfs64 (const char *__restrict __file, 
+							 struct statvfs64 *__restrict __buf)
+{
+	return 0;
+}
+
+static inline int dummy_fsetxattr (int filedes, const char *name,
+                       const void *value, size_t size, int flags)
+{
+	return 0;
+}
+
 
 #endif	/* __XFS_DARWIN_H__ */
