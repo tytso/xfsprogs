@@ -103,12 +103,24 @@ read_directory(
 		if (!dirent)
 			break;
 
+#ifdef _DIRENT_HAVE_D_RECLEN
 		*total += dirent->d_reclen;
+#else
+		*total += dirent->d_namlen + sizeof(*dirent);
+#endif
 		count++;
 
 		if (dump) {
 			dump_dirent(offset, dirent);
+#ifdef _DIRENT_HAVE_D_OFF
 			offset = dirent->d_off;
+#else
+			/* Some platforms don't have dirent->d_off, but because
+			 * it is used only for dumping the value, it should be
+			 * safe to only set it to zero in such case.
+			 */
+			offset = 0;
+#endif
 		}
 	}
 
