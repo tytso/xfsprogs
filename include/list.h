@@ -19,6 +19,20 @@
 #define __LIST_H__
 
 /*
+ * This undef is here because BSD 4.4 added some LIST_ macros into system
+ * header file sys/queue.h. This header is included in many other system
+ * headers and thus causes "macro redefined" warnings.
+ *
+ * As OS X is kind of a derivate of BSD, this affects OS X too.
+ *
+ * To use our own LIST_ macros (copied from kernel code), we have to
+ * at first undefine the conflicting system macros.
+ *
+ */
+#undef LIST_HEAD
+#undef LIST_HEAD_INIT
+
+/*
  * Simple, generic doubly-linked list implementation.
  */
 
