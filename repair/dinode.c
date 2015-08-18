@@ -129,7 +129,7 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 		dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
 	}
 
-	if (!XFS_DINODE_GOOD_VERSION(dinoc->di_version)) {
+	if (!xfs_dinode_good_version(mp, dinoc->di_version)) {
 		__dirty_no_modify_ret(dirty);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			dinoc->di_version = 3;
@@ -2254,8 +2254,7 @@ process_dinode_int(xfs_mount_t *mp,
 		}
 	}
 
-	if (!XFS_DINODE_GOOD_VERSION(dino->di_version) ||
-	    (xfs_sb_version_hascrc(&mp->m_sb) && dino->di_version < 3) )  {
+	if (!xfs_dinode_good_version(mp, dino->di_version)) {
 		retval = 1;
 		if (!uncertain)
 			do_warn(_("bad version number 0x%x on inode %" PRIu64 "%c"),

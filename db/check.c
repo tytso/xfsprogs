@@ -2630,7 +2630,7 @@ process_inode(
 		error++;
 		return;
 	}
-	if (!XFS_DINODE_GOOD_VERSION(idic.di_version)) {
+	if (!xfs_dinode_good_version(mp, idic.di_version)) {
 		if (isfree || v)
 			dbprintf(_("bad version number %#x for inode %lld\n"),
 				idic.di_version, ino);

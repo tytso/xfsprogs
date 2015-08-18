@@ -43,6 +43,8 @@ void	xfs_dinode_from_disk(struct xfs_icdinode *to, struct xfs_dinode *from);
 bool	xfs_dinode_verify(struct xfs_mount *mp, xfs_ino_t ino,
 			  struct xfs_dinode *dip);
 
+bool	xfs_dinode_good_version(struct xfs_mount *mp, __u8 version);
+
 #if defined(DEBUG)
 void	xfs_inobp_check(struct xfs_mount *, struct xfs_buf *);
 #else
