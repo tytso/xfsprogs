@@ -24,6 +24,11 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/types.h>
+#include <ftw.h>
+#include <mach/mach_time.h>
+#include <inttypes.h>
+#include <stdio.h>
 
 #include <machine/endian.h>
 #define __BYTE_ORDER	BYTE_ORDER
