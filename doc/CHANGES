@@ -1,3 +1,13 @@
+xfsprogs-4.2.0-rc2 (18 Aug 2015)
+	- OS X build improvements (Jan Tulak)
+	- libxfs: fix code miscompilation w/ gcc 4.8.3 (Jan Kara)
+	- mkfs.xfs: default to using ftype=1 for all filesystems
+	- mkfs.xfs: CLI options parsing order fix (Eric Sandeen)
+	- xfs_repair: improve inode version checks (Roger Willcocks)
+	- libxfs: remove excessive EXPERIMENTAL feature warnings
+	  for sparse inodes (Brian Foster)
+	- xfs_db: fix new gcc 4.9.3 build warnings
+
 xfsprogs-4.2.0-rc1 (4 Aug 2015)
 	- update libxfs to match kernel 4.2-rc1
 	- libxfs and include restructuring to match kernel code
