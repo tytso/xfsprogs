@@ -724,7 +724,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 	tmp_init(mntdir);
 
 	while ((ret = xfs_bulkstat(fsfd,
-				&lastino, GRABSZ, &buf[0], &buflenout) == 0)) {
+				&lastino, GRABSZ, &buf[0], &buflenout)) == 0) {
 		xfs_bstat_t *p;
 		xfs_bstat_t *endp;
 
