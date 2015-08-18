@@ -104,6 +104,7 @@ HAVE_PREADV = @have_preadv@
 HAVE_SYNC_FILE_RANGE = @have_sync_file_range@
 HAVE_READDIR = @have_readdir@
 HAVE_MNTENT = @have_mntent@
+HAVE_FLS = @have_fls@
 
 GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall 
 #	   -Wbitwise -Wno-transparent-union -Wno-old-initializer -Wno-decl
@@ -130,6 +131,9 @@ ifeq ($(PKG_PLATFORM),freebsd)
 PLDLIBS = -L/usr/local/lib -lintl
 PCFLAGS = -I/usr/local/include $(GCCFLAGS)
 DEPENDFLAGS = -D__FreeBSD__
+endif
+ifeq ($(HAVE_FLS),yes)
+LCFLAGS+= -DHAVE_FLS
 endif
 ifeq ($(HAVE_MNTENT),yes)
 PCFLAGS+= -DHAVE_MNTENT

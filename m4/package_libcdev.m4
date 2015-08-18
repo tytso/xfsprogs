@@ -203,6 +203,18 @@ AC_DEFUN([AC_HAVE_READDIR],
   ])
 
 #
+# Check if we have a flc call (Mac OS X)
+#
+AC_DEFUN([AC_HAVE_FLS],
+  [ AC_CHECK_DECL([fls],
+       have_fls=yes,
+       [],
+       [#include <string.h>]
+       )
+    AC_SUBST(have_fls)
+  ])
+
+#
 # Check if there is mntent.h
 #
 AC_DEFUN([AC_HAVE_MNTENT],

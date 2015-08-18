@@ -5,6 +5,7 @@
  * fls: find last bit set.
  */
 
+#ifndef HAVE_FLS
 static inline int fls(int x)
 {
 	int r = 32;
@@ -32,6 +33,7 @@ static inline int fls(int x)
 	}
 	return r;
 }
+#endif /* HAVE_FLS */
 
 static inline int fls64(__u64 x)
 {
