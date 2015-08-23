@@ -75,6 +75,6 @@ iocur_crc_valid()
 		return -1;
 	if (iocur_top->bp->b_flags & LIBXFS_B_UNCHECKED)
 		return -1;
-	return (iocur_top->bp->b_error != EFSBADCRC &&
+	return (iocur_top->bp->b_error != -EFSBADCRC &&
 		(!iocur_top->ino_buf || iocur_top->ino_crc_ok));
 }

@@ -82,7 +82,7 @@ scan_sbtree(
 		do_error(_("can't read btree block %d/%d\n"), agno, root);
 		return;
 	}
-	if (bp->b_error == EFSBADCRC || bp->b_error == EFSCORRUPTED) {
+	if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
 		do_warn(_("btree block %d/%d is suspect, error %d\n"),
 			agno, root, bp->b_error);
 		suspect = 1;
@@ -145,7 +145,7 @@ scan_lbtree(
 	 * is a corruption or not and whether it got corrected and so needs
 	 * writing back. CRC errors always imply we need to write the block.
 	 */
-	if (bp->b_error == EFSBADCRC) {
+	if (bp->b_error == -EFSBADCRC) {
 		do_warn(_("btree block %d/%d is suspect, error %d\n"),
 			XFS_FSB_TO_AGNO(mp, root),
 			XFS_FSB_TO_AGBNO(mp, root), bp->b_error);
@@ -1432,7 +1432,7 @@ scan_freelist(
 		do_abort(_("can't read agfl block for ag %d\n"), agno);
 		return;
 	}
-	if (agflbuf->b_error == EFSBADCRC)
+	if (agflbuf->b_error == -EFSBADCRC)
 		do_warn(_("agfl has bad CRC for ag %d\n"), agno);
 
 	freelist = XFS_BUF_TO_AGFL_BNO(mp, agflbuf);
@@ -1705,9 +1705,9 @@ scan_ag(
 	 * immediately, though.
 	 */
 	if (!no_modify) {
-		agi_dirty += (agibuf->b_error == EFSBADCRC);
-		agf_dirty += (agfbuf->b_error == EFSBADCRC);
-		sb_dirty += (sbbuf->b_error == EFSBADCRC);
+		agi_dirty += (agibuf->b_error == -EFSBADCRC);
+		agf_dirty += (agfbuf->b_error == -EFSBADCRC);
+		sb_dirty += (sbbuf->b_error == -EFSBADCRC);
 	}
 
 	if (agi_dirty && !no_modify)

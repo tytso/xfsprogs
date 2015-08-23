@@ -1021,7 +1021,7 @@ xfs_dir3_db_read_verify(
 		break;
 	default:
 		dbprintf(_("Unknown directory buffer type!\n"));
-		xfs_buf_ioerror(bp, EFSCORRUPTED);
+		xfs_buf_ioerror(bp, -EFSCORRUPTED);
 		return;
 	}
 verify:
@@ -1033,7 +1033,7 @@ xfs_dir3_db_write_verify(
 	struct xfs_buf		*bp)
 {
 	dbprintf(_("Writing unknown directory buffer type!\n"));
-	xfs_buf_ioerror(bp, EFSCORRUPTED);
+	xfs_buf_ioerror(bp, -EFSCORRUPTED);
 }
 
 const struct xfs_buf_ops xfs_dir3_db_buf_ops = {

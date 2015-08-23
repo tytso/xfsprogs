@@ -535,8 +535,8 @@ set_cur(
 	 * Keep the buffer even if the verifier says it is corrupted.
 	 * We're a diagnostic tool, after all.
 	 */
-	if (!bp || (bp->b_error && bp->b_error != EFSCORRUPTED &&
-				   bp->b_error != EFSBADCRC))
+	if (!bp || (bp->b_error && bp->b_error != -EFSCORRUPTED &&
+				   bp->b_error != -EFSBADCRC))
 		return;
 	iocur_top->buf = bp->b_addr;
 	iocur_top->bp = bp;
