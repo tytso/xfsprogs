@@ -570,7 +570,7 @@ verify_da_path(xfs_mount_t	*mp,
 		 * entry count, verify level
 		 */
 		bad = 0;
-		if (nodehdr.magic != XFS_DA_NODE_MAGIC ||
+		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
 		    nodehdr.magic != XFS_DA3_NODE_MAGIC)  {
 			do_warn(
 	_("bad magic number %x in block %u (%" PRIu64 ") for directory inode %" PRIu64 "\n"),
