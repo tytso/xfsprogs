@@ -682,6 +682,8 @@ set_cur_inode(
 	set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, cluster_agbno),
 		numblks, DB_RING_IGN, NULL);
 	off_cur(offset << mp->m_sb.sb_inodelog, mp->m_sb.sb_inodesize);
+	if (!iocur_top->data)
+		return;
 	dip = iocur_top->data;
 	iocur_top->ino_buf = 1;
 	iocur_top->ino = ino;
