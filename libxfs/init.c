@@ -832,6 +832,15 @@ libxfs_umount(xfs_mount_t *mp)
 		pag = radix_tree_delete(&mp->m_perag_tree, agno);
 		kmem_free(pag);
 	}
+
+	kmem_free(mp->m_attr_geo);
+	kmem_free(mp->m_dir_geo);
+
+	kmem_free(mp->m_rtdev_targp);
+	if (mp->m_logdev_targp != mp->m_ddev_targp)
+		kmem_free(mp->m_logdev_targp);
+	kmem_free(mp->m_ddev_targp);
+	
 }
 
 /*

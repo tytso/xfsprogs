@@ -696,6 +696,7 @@ main(int argc, char **argv)
 	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
 			     1 << (sb->sb_sectlog - BBSHIFT),
 			     0, &xfs_sb_buf_ops);
+	libxfs_putbuf(sbp);
 
 	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);
 	if (mp == NULL) {
@@ -1165,6 +1166,8 @@ main(int argc, char **argv)
 	}
 
 	check_errors();
+	libxfs_umount(mp);
+
 	return 0;
 }
 
