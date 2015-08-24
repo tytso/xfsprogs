@@ -946,5 +946,7 @@ _("Repair of readonly mount complete.  Immediate reboot encouraged.\n"));
 
 	pftrace_done();
 
+	free(msgbuf);
+
 	return (0);
 }
