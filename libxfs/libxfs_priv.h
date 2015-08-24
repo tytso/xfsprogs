@@ -494,7 +494,8 @@ struct xfs_buf *xfs_trans_buf_item_match(struct xfs_trans *,
 #define xfs_mod_frextents(mp, delta) \
 	libxfs_mod_incore_sb(mp, XFS_TRANS_SB_FREXTENTS, delta, 0)
 int  libxfs_mod_incore_sb(struct xfs_mount *, int, int64_t, int);
-void xfs_reinit_percpu_counters(struct xfs_mount *mp);
+/* percpu counters in mp are #defined to the superblock sb_ counters */
+#define xfs_reinit_percpu_counters(mp)
 
 void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
 void xfs_trans_init(struct xfs_mount *);

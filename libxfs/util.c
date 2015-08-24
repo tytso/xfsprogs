@@ -729,12 +729,3 @@ xfs_verifier_error(
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  bp->b_bn, BBTOB(bp->b_length));
 }
-
-void
-xfs_reinit_percpu_counters(
-	struct xfs_mount	*mp)
-{
-	mp->m_icount = mp->m_sb.sb_icount;
-	mp->m_ifree = mp->m_sb.sb_ifree;
-	mp->m_fdblocks = mp->m_sb.sb_fdblocks;
-}
