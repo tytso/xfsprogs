@@ -585,6 +585,7 @@ mk_rbmino(xfs_mount_t *mp)
 			error);
 	}
 	libxfs_trans_commit(tp);
+	IRELE(ip);
 }
 
 static int
@@ -654,6 +655,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 	}
 
 	libxfs_trans_commit(tp);
+	IRELE(ip);
 	return(0);
 }
 
@@ -714,6 +716,7 @@ fill_rsumino(xfs_mount_t *mp)
 			do_warn(
 _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode %" PRIu64 "\n"),
 				bno, map.br_startblock, mp->m_sb.sb_rsumino);
+			IRELE(ip);
 			return(1);
 		}
 
@@ -726,6 +729,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 	}
 
 	libxfs_trans_commit(tp);
+	IRELE(ip);
 	return(0);
 }
 
@@ -846,6 +850,7 @@ mk_rsumino(xfs_mount_t *mp)
 			error);
 	}
 	libxfs_trans_commit(tp);
+	IRELE(ip);
 }
 
 /*
@@ -920,6 +925,7 @@ mk_root_dir(xfs_mount_t *mp)
 	libxfs_dir_init(tp, ip, ip);
 
 	libxfs_trans_commit(tp);
+	IRELE(ip);
 
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
 				XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino));
