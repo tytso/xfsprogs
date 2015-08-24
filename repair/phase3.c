@@ -27,6 +27,7 @@
 #include "err_protos.h"
 #include "dinode.h"
 #include "progress.h"
+#include "bmap.h"
 
 static void
 process_agi_unlinked(
@@ -75,6 +76,7 @@ process_ag_func(
 	wait_for_inode_prefetch(arg);
 	do_log(_("        - agno = %d\n"), agno);
 	process_aginodes(wq->mp, arg, agno, 1, 0, 1);
+	blkmap_free_final();
 	cleanup_inode_prefetch(arg);
 }
 

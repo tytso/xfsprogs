@@ -58,6 +58,7 @@ extern pthread_key_t ablkmap_key;
 
 blkmap_t	*blkmap_alloc(xfs_extnum_t nex, int whichfork);
 void		blkmap_free(blkmap_t *blkmap);
+void		blkmap_free_final(void);
 
 int		blkmap_set_ext(blkmap_t **blkmapp, xfs_fileoff_t o,
 			       xfs_fsblock_t b, xfs_filblks_t c);

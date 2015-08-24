@@ -82,7 +82,8 @@ blkmap_alloc(
  * extents) then free it to release the memory. This prevents us from pinning
  * large tracts of memory due to corrupted fork values or one-off fragmented
  * files. Otherwise we have nothing to do but keep the memory around for the
- * next inode
+ * next inode.
+ * When the thread is done, it should do an unconditional, final free.
  */
 void
 blkmap_free(
@@ -100,6 +101,20 @@ blkmap_free(
 	else
 		pthread_setspecific(ablkmap_key, NULL);
 
+	free(blkmap);
+}
+
+void
+blkmap_free_final(void)
+{
+	blkmap_t	*blkmap;
+
+	blkmap = pthread_getspecific(dblkmap_key);
+	pthread_setspecific(dblkmap_key, NULL);
+	free(blkmap);
+
+	blkmap = pthread_getspecific(ablkmap_key);
+	pthread_setspecific(ablkmap_key, NULL);
 	free(blkmap);
 }
 
