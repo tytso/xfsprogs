@@ -1,3 +1,13 @@
+xfsprogs-4.2.0-rc3 (25 Aug 2015)
+	- xfs_repair: directory verification fixes (Darrick Wong)
+	- libxfs: errno negation fixes (Darrick Wong)
+	- xfs_db: corrupt inode handling fixes (Darrick Wong)
+	- repair: memory leak fixes (Eric Sandeen)
+	- libxfs: directory corruption fix (Jan Kara)
+	- libxfs: gcc miscompile fixes (Jan Kara)
+	- libxfs: merge across bug fixes from 4.2 kernel code
+	- man pages: minor updates (Eric Sandeen)
+
 xfsprogs-4.2.0-rc2 (18 Aug 2015)
 	- OS X build improvements (Jan Tulak)
 	- libxfs: fix code miscompilation w/ gcc 4.8.3 (Jan Kara)
