@@ -229,7 +229,7 @@ stripe unit configured at mkfs time.
 The default value for version 1 logs is 32768, while the
 default value for version 2 logs is MAX(32768, log_sunit).
 .TP
-.BR logdev=device and rtdev=device
+.BR logdev=device " and " rtdev=device
 Use an external log (metadata journal) and/or real-time device.
 An XFS filesystem has up to three parts: a data section, a log
 section, and a real-time section.  The real-time section is
@@ -260,7 +260,7 @@ read-only snapshots.
 Forcibly turns off all quota accounting and enforcement
 within the filesystem.
 .TP
-.B uquota/usrquota/uqnoenforce/quota
+.B uquota/usrquota/quota/uqnoenforce/qnoenforce
 User disk quota accounting enabled, and limits (optionally)
 enforced.  Refer to xfs_quota(8) for further details.
 .TP
