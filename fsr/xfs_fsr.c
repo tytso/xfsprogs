@@ -43,14 +43,6 @@
 #define _PATH_FSRLAST		"/var/tmp/.fsrlast_xfs"
 #define _PATH_PROC_MOUNTS	"/proc/mounts"
 
-#ifdef USE_DUMMY_XATTR
-	/* OS X has fsetxattr with different number of arguments.
-	 * Because it won't work anyway (no fstab/mtab and so on),
-	 * hijack the call to a dummy function so it can at least
-	 * compile.
-	 */
-#  define fsetxattr(a,b,c,d,e) dummy_fsetxattr(a,b,c,d,e)
-#endif
 
 char *progname;
 
