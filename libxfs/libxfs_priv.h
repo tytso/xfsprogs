@@ -148,9 +148,9 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define XFS_TRANS_UNRESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
 #define XFS_TEST_ERROR(expr,a,b,c)	( expr )
 #define XFS_WANT_CORRUPTED_GOTO(mp, expr, l)	\
-		{ (mp) = (mp); if (!(expr)) { error = EFSCORRUPTED; goto l; } }
+		{ (mp) = (mp); if (!(expr)) { error = -EFSCORRUPTED; goto l; } }
 #define XFS_WANT_CORRUPTED_RETURN(mp, expr)	\
-		{ (mp) = (mp); if (!(expr)) { return EFSCORRUPTED; } }
+		{ (mp) = (mp); if (!(expr)) { return -EFSCORRUPTED; } }
 
 #ifdef __GNUC__
 #define __return_address	__builtin_return_address(0)
@@ -417,8 +417,7 @@ do { \
 })
 
 #define xfs_rotorstep				1
-#define xfs_bmap_rtalloc(a)			(ENOSYS)
-#define xfs_rtpick_extent(mp,tp,len,p)		(ENOSYS)
+#define xfs_bmap_rtalloc(a)			(-ENOSYS)
 #define xfs_get_extsz_hint(ip)			(0)
 #define xfs_inode_is_filestream(ip)		(0)
 #define xfs_filestream_lookup_ag(ip)		(0)
