@@ -631,15 +631,39 @@ libxfs_getbuf_flags(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len,
 	return __cache_lookup(&key, flags);
 }
 
-struct xfs_buf *
-libxfs_getbuf(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len)
+/*
+ * Clean the buffer flags for libxfs_getbuf*(), which wants to return
+ * an unused buffer with clean state.  This prevents CRC errors on a
+ * re-read of a corrupt block that was prefetched and freed.  This
+ * can happen with a massively corrupt directory that is discarded,
+ * but whose blocks are then recycled into expanding lost+found.
+ *
+ * Note however that if the buffer's dirty (prefetch calls getbuf)
+ * we'll leave the state alone because we don't want to discard blocks
+ * that have been fixed.
+ */
+static void
+reset_buf_state(
+	struct xfs_buf	*bp)
 {
-	return libxfs_getbuf_flags(btp, blkno, len, 0);
+	if (bp && !(bp->b_flags & LIBXFS_B_DIRTY))
+		bp->b_flags &= ~(LIBXFS_B_UNCHECKED | LIBXFS_B_STALE |
+				LIBXFS_B_UPTODATE);
 }
 
 struct xfs_buf *
-libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
-		  int nmaps, int flags)
+libxfs_getbuf(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len)
+{
+	struct xfs_buf	*bp;
+
+	bp = libxfs_getbuf_flags(btp, blkno, len, 0);
+	reset_buf_state(bp);
+	return bp;
+}
+
+static struct xfs_buf *
+__libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
+		    int nmaps, int flags)
 {
 	struct xfs_bufkey key = {0};
 	int i;
@@ -657,6 +681,17 @@ libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
 	key.nmaps = nmaps;
 
 	return __cache_lookup(&key, flags);
+}
+
+struct xfs_buf *
+libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
+		  int nmaps, int flags)
+{
+	struct xfs_buf	*bp;
+
+	bp = __libxfs_getbuf_map(btp, map, nmaps, flags);
+	reset_buf_state(bp);
+	return bp;
 }
 
 void
@@ -779,7 +814,7 @@ libxfs_readbuf(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len, int flags,
 	xfs_buf_t	*bp;
 	int		error;
 
-	bp = libxfs_getbuf(btp, blkno, len);
+	bp = libxfs_getbuf_flags(btp, blkno, len, 0);
 	if (!bp)
 		return NULL;
 
@@ -860,7 +895,7 @@ libxfs_readbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
 		return libxfs_readbuf(btp, map[0].bm_bn, map[0].bm_len,
 					flags, ops);
 
-	bp = libxfs_getbuf_map(btp, map, nmaps, 0);
+	bp = __libxfs_getbuf_map(btp, map, nmaps, 0);
 	if (!bp)
 		return NULL;
 
