@@ -276,6 +276,18 @@ pf_scan_lbtree(
 
 	XFS_BUF_SET_PRIORITY(bp, isadir ? B_DIR_BMAP : B_BMAP);
 
+	/*
+	 * If the verifier flagged a problem with the buffer, we can't trust
+	 * its contents for the purposes of reading ahead.  Stop prefetching
+	 * the tree and mark the buffer unchecked so that the next read of the
+	 * buffer will retain the error status and be acted upon appropriately.
+	 */
+	if (bp->b_error) {
+		bp->b_flags |= LIBXFS_B_UNCHECKED;
+		libxfs_putbuf(bp);
+		return 0;
+	}
+
 	rc = (*func)(XFS_BUF_TO_BLOCK(bp), level - 1, isadir, args);
 
 	libxfs_putbuf(bp);
