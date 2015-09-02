@@ -1444,6 +1444,7 @@ dir2_kill_block(
 	args.firstblock = &firstblock;
 	args.flist = &flist;
 	args.whichfork = XFS_DATA_FORK;
+	args.geo = mp->m_dir_geo;
 	if (da_bno >= mp->m_dir_geo->leafblk && da_bno < mp->m_dir_geo->freeblk)
 		error = -libxfs_da_shrink_inode(&args, da_bno, bp);
 	else
