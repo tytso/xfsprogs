@@ -1311,6 +1311,13 @@ process_leaf_attr_block(
 		* we can add it then.
 		*/
 	}
+	/*
+	 * If we're just going to zap the block, don't pretend like we
+	 * repaired it, because repairing the block stops the clear
+	 * operation.
+	 */
+	if (clearit)
+		*repair = 0;
 	if (*repair)
 		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, leaf, &leafhdr);
 
@@ -1524,6 +1531,7 @@ process_longform_attr(
 	xfs_dahash_t	next_hashval;
 	int		repairlinks = 0;
 	struct xfs_attr3_icleaf_hdr leafhdr;
+	int		error;
 
 	*repair = 0;
 
@@ -1589,6 +1597,7 @@ process_longform_attr(
 	case XFS_ATTR3_LEAF_MAGIC:
 		if (process_leaf_attr_block(mp, leaf, 0, ino, blkmap,
 				0, &next_hashval, repair)) {
+			*repair = 0;
 			/* the block is bad.  lose the attribute fork. */
 			libxfs_putbuf(bp);
 			return(1);
@@ -1604,12 +1613,16 @@ process_longform_attr(
 			libxfs_writebuf(bp, 0);
 		} else
 			libxfs_putbuf(bp);
-		return (process_node_attr(mp, ino, dip, blkmap)); /* + repair */
+		error = process_node_attr(mp, ino, dip, blkmap); /* + repair */
+		if (error)
+			*repair = 0;
+		return error;
 	default:
 		do_warn(
 	_("bad attribute leaf magic # %#x for dir ino %" PRIu64 "\n"),
 			be16_to_cpu(leaf->hdr.info.magic), ino);
 		libxfs_putbuf(bp);
+		*repair = 0;
 		return(1);
 	}
 
