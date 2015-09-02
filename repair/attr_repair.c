@@ -1508,6 +1508,44 @@ process_node_attr(
 	return (process_leaf_attr_level(mp, &da_cursor));
 }
 
+/* check v5 metadata */
+static int
+__check_attr_header(
+	struct xfs_mount	*mp,
+	struct xfs_buf		*bp,
+	xfs_ino_t		ino)
+{
+	struct xfs_da3_blkinfo	*info = bp->b_addr;
+
+	if (info->hdr.magic != cpu_to_be16(XFS_ATTR3_LEAF_MAGIC) &&
+	    info->hdr.magic != cpu_to_be16(XFS_DA3_NODE_MAGIC))
+		return 0;
+
+	/* verify owner */
+	if (be64_to_cpu(info->owner) != ino) {
+		do_warn(
+_("expected owner inode %" PRIu64 ", got %llu, attr block %" PRIu64 "\n"),
+			ino, be64_to_cpu(info->owner), bp->b_bn);
+		return 1;
+	}
+	/* verify block number */
+	if (be64_to_cpu(info->blkno) != bp->b_bn) {
+		do_warn(
+_("expected block %" PRIu64 ", got %llu, inode %" PRIu64 "attr block\n"),
+			bp->b_bn, be64_to_cpu(info->blkno), ino);
+		return 1;
+	}
+	/* verify uuid */
+	if (platform_uuid_compare(&info->uuid, &mp->m_sb.sb_meta_uuid) != 0) {
+		do_warn(
+_("wrong FS UUID, inode %" PRIu64 " attr block %" PRIu64 "\n"),
+			ino, bp->b_bn);
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Start processing for a leaf or fuller btree.
  * A leaf directory is one where the attribute fork is too big for
@@ -1563,6 +1601,13 @@ process_longform_attr(
 	}
 	if (bp->b_error == -EFSBADCRC)
 		(*repair)++;
+
+	/* is this block sane? */
+	if (__check_attr_header(mp, bp, ino)) {
+		*repair = 0;
+		libxfs_putbuf(bp);
+		return 1;
+	}
 
 	/* verify leaf block */
 	leaf = (xfs_attr_leafblock_t *)XFS_BUF_PTR(bp);
