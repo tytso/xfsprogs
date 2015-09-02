@@ -67,7 +67,7 @@ include $(BUILDRULES)
 install-headers: $(addsuffix -hdrs, $(PHFILES) $(DKHFILES) $(HFILES))
 
 %-hdrs:
-	$(Q)$(LN_S) -f $(PWD)/include/$* xfs/$*
+	$(Q)$(LN_S) -f $(CURDIR)/$* xfs/$*
 
 install: default
 	$(INSTALL) -m 755 -d $(PKG_INC_DIR)

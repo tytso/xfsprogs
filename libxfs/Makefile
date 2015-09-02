@@ -134,7 +134,7 @@ install: default
 install-headers: $(addsuffix -hdrs, $(PKGHFILES))
 
 %-hdrs:
-	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
+	$(Q)$(LN_S) -f $(CURDIR)/$* $(TOPDIR)/include/xfs/$*
 
 install-dev: install
 	$(INSTALL) -m 644 $(PKGHFILES) $(PKG_INC_DIR)
