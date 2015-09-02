@@ -562,7 +562,7 @@ verify_da_path(xfs_mount_t	*mp,
 		}
 
 		newnode = (xfs_da_intnode_t *)XFS_BUF_PTR(bp);
-		btree = M_DIROPS(mp)->node_tree_p(node);
+		btree = M_DIROPS(mp)->node_tree_p(newnode);
 		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, newnode);
 
 		/*
