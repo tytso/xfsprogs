@@ -1507,6 +1507,7 @@ longform_dir2_entry_check_data(
 	int			wantmagic;
 	struct xfs_da_args	da = {
 		.dp = ip,
+		.geo = mp->m_dir_geo,
 	};
 
 
