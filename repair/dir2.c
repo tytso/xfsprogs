@@ -200,6 +200,7 @@ _("bad dir magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
 		}
 		/* corrupt node; rebuild the dir. */
 		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
+			libxfs_putbuf(bp);
 			do_warn(
 _("corrupt tree block %u for directory inode %" PRIu64 "\n"),
 				bno, da_cursor->ino);
