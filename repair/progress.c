@@ -183,10 +183,9 @@ progress_rpt_thread (void *p)
 	 * Specify a repeating timer that fires each MSG_INTERVAL seconds.
 	 */
 
+	memset(&timespec, 0, sizeof(timespec));
 	timespec.it_value.tv_sec = msgp->interval;
-	timespec.it_value.tv_nsec = 0;
 	timespec.it_interval.tv_sec = msgp->interval;
-	timespec.it_interval.tv_nsec = 0;
 
 	if (timer_create (CLOCK_REALTIME, NULL, &timerid))
 		do_error(_("progress_rpt: cannot create timer\n"));

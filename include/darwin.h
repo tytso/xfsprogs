@@ -28,6 +28,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <ftw.h>
 #include <mach/mach_time.h>
 #include <inttypes.h>
@@ -166,6 +167,53 @@ static __inline__ int
 platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 {
 	return 0;
+}
+
+/*
+ * POSIX timer replacement.
+ * It really just do the minimum we need for xfs_repair.
+ * Also, as setitimer can't create multiple timers,
+ * the timerid things are useless - we have only one ITIMER_REAL
+ * timer.
+ */
+#define CLOCK_REALTIME ITIMER_REAL
+#define itimerspec itimerval
+typedef uint64_t timer_t;
+typedef double   timer_c;
+typedef clock_id_t clockid_t;
+
+
+static inline int timer_create (clockid_t __clock_id,
+                         struct sigevent *__restrict __evp,
+                         timer_t *__restrict timer)
+{
+	// set something, to initialize the variable, just in case
+	*timer = 0;
+	return 0;
+}
+
+static inline int timer_settime (timer_t timerid, int flags,
+                          const struct itimerspec *__restrict timerspec,
+                          struct itimerspec *__restrict ovalue)
+{
+	return setitimer(ITIMER_REAL, timerspec, ovalue);
+}
+
+static inline int timer_delete (timer_t timerid)
+{
+	struct itimerspec timespec;
+
+	timespec.it_interval.tv_sec=0;
+	timespec.it_interval.tv_usec=0;
+	timespec.it_value.tv_sec=0;
+	timespec.it_value.tv_usec=0;
+
+	return setitimer(ITIMER_REAL, &timespec, NULL);
+}
+
+static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
+{
+	return getitimer(ITIMER_REAL, value);
 }
 
 #endif	/* __XFS_DARWIN_H__ */
