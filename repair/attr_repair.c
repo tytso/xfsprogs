@@ -67,7 +67,6 @@ typedef struct da_level_state  {
 
 typedef struct da_bt_cursor  {
 	int			active;	/* highest level in tree (# levels-1) */
-	int			type;	/* 0 if dir, 1 if attr */
 	xfs_ino_t		ino;
 	xfs_dablk_t		greatest_bno;
 	xfs_dinode_t		*dip;
@@ -1477,7 +1476,6 @@ process_node_attr(
 	 */
 	memset(&da_cursor, 0, sizeof(da_bt_cursor_t));
 	da_cursor.active = 0;
-	da_cursor.type = 0;
 	da_cursor.ino = ino;
 	da_cursor.dip = dip;
 	da_cursor.greatest_bno = 0;
