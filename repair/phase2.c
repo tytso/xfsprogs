@@ -36,11 +36,13 @@ int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
 }
 
 static void
-zero_log(xfs_mount_t *mp)
+zero_log(
+	struct xfs_mount	*mp)
 {
-	int error;
-	xfs_daddr_t head_blk, tail_blk;
-	struct xlog	*log = mp->m_log;
+	int			error;
+	xfs_daddr_t		head_blk;
+	xfs_daddr_t		tail_blk;
+	struct xlog		*log = mp->m_log;
 
 	memset(log, 0, sizeof(struct xlog));
 	x.logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
@@ -65,10 +67,22 @@ zero_log(xfs_mount_t *mp)
 	}
 	log->l_sectbb_mask = (1 << log->l_sectbb_log) - 1;
 
-	if ((error = xlog_find_tail(log, &head_blk, &tail_blk))) {
-		do_warn(_("zero_log: cannot find log head/tail "
-			  "(xlog_find_tail=%d), zeroing it anyway\n"),
+	/*
+	 * Find the log head and tail and alert the user to the situation if the
+	 * log appears corrupted or contains data. In either case, we do not
+	 * proceed past this point unless the user explicitly requests to zap
+	 * the log.
+	 */
+	error = xlog_find_tail(log, &head_blk, &tail_blk);
+	if (error) {
+		do_warn(
+		_("zero_log: cannot find log head/tail (xlog_find_tail=%d)\n"),
 			error);
+		if (!no_modify && !zap_log)
+			do_error(_(
+"ERROR: The log head and/or tail cannot be discovered. Attempt to mount the\n"
+"filesystem to replay the log or use the -L option to destroy the log and\n"
+"attempt a repair.\n"));
 	} else {
 		if (verbose) {
 			do_warn(
@@ -93,19 +107,25 @@ zero_log(xfs_mount_t *mp)
 		}
 	}
 
-	if (no_modify)
-		return;
+	/*
+	 * Only clear the log when explicitly requested. Doing so is unnecessary
+	 * unless something is wrong. Further, this resets the current LSN of
+	 * the filesystem and creates more work for repair of v5 superblock
+	 * filesystems.
+	 */
+	if (!no_modify && zap_log) {
+		libxfs_log_clear(log->l_dev,
+			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
+			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
+			&mp->m_sb.sb_uuid,
+			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE);
 
-	libxfs_log_clear(log->l_dev, XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
-		(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
-		&mp->m_sb.sb_uuid,
-		xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-		mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE);
-
-	/* update the log data structure with new state */
-	error = xlog_find_tail(log, &head_blk, &tail_blk);
-	if (error || head_blk != tail_blk)
-		do_error(_("failed to clear log"));
+		/* update the log data structure with new state */
+		error = xlog_find_tail(log, &head_blk, &tail_blk);
+		if (error || head_blk != tail_blk)
+			do_error(_("failed to clear log"));
+	}
 }
 
 /*
