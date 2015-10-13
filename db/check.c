@@ -930,8 +930,7 @@ typedef struct ltab {
 
 static void
 blocktrash_b(
-	xfs_agnumber_t	agno,
-	xfs_agblock_t	agbno,
+	int		bit_offset,
 	dbm_t		type,
 	ltab_t		*ltabp,
 	int		mode)
@@ -943,27 +942,40 @@ blocktrash_b(
 	int		len;
 	int		mask;
 	int		newbit;
-	int		offset;
 	const struct xfs_buf_ops *stashed_ops;
 	static char	*modestr[] = {
 		N_("zeroed"), N_("set"), N_("flipped"), N_("randomized")
 	};
+	xfs_agnumber_t	agno;
+	xfs_agblock_t	agbno;
 
+	agno = XFS_FSB_TO_AGNO(mp, XFS_DADDR_TO_FSB(mp, iocur_top->bb));
+	agbno = XFS_FSB_TO_AGBNO(mp, XFS_DADDR_TO_FSB(mp, iocur_top->bb));
+	if (iocur_top->len == 0) {
+		dbprintf(_("zero-length block %u/%u buffer to trash??\n"),
+				agno, agbno);
+		return;
+	}
 	len = (int)((random() % (ltabp->max - ltabp->min + 1)) + ltabp->min);
-	offset = (int)(random() % (int)(mp->m_sb.sb_blocksize * NBBY));
+	/*
+	 * bit_offset >= 0: start fuzzing at this exact bit_offset.
+	 * bit_offset < 0: pick an offset at least as high at -(bit_offset + 1).
+	 */
+	if (bit_offset < 0) {
+		bit_offset = -(bit_offset + 1);
+		bit_offset += (int)(random() % (int)((iocur_top->len - bit_offset) * NBBY));
+	}
+	if (bit_offset + len >= iocur_top->len * NBBY)
+		len = (iocur_top->len * NBBY) - bit_offset;
 	newbit = 0;
-	push_cur();
-	set_cur(NULL,
-		XFS_AGB_TO_DADDR(mp, agno, agbno), blkbb, DB_RING_IGN, NULL);
 	stashed_ops = iocur_top->bp->b_ops;
 	iocur_top->bp->b_ops = NULL;
 	if ((buf = iocur_top->data) == NULL) {
 		dbprintf(_("can't read block %u/%u for trashing\n"), agno, agbno);
-		pop_cur();
 		return;
 	}
 	for (bitno = 0; bitno < len; bitno++) {
-		bit = (offset + bitno) % (mp->m_sb.sb_blocksize * NBBY);
+		bit = (bit_offset + bitno) % (mp->m_sb.sb_blocksize * NBBY);
 		byte = bit / NBBY;
 		bit %= NBBY;
 		mask = 1 << bit;
@@ -988,10 +1000,9 @@ blocktrash_b(
 	}
 	write_cur();
 	iocur_top->bp->b_ops = stashed_ops;
-	pop_cur();
 	printf(_("blocktrash: %u/%u %s block %d bit%s starting %d:%d %s\n"),
 		agno, agbno, typename[type], len, len == 1 ? "" : "s",
-		offset / NBBY, offset % NBBY, modestr[mode]);
+		bit_offset / NBBY, bit_offset % NBBY, modestr[mode]);
 }
 
 int
@@ -1019,11 +1030,9 @@ blocktrash_f(
 	uint		seed;
 	int		sopt;
 	int		tmask;
+	bool		this_block = false;
+	int		bit_offset = -1;
 
-	if (!dbmap) {
-		dbprintf(_("must run blockget first\n"));
-		return 0;
-	}
 	optind = 0;
 	count = 1;
 	min = 1;
@@ -1050,7 +1059,7 @@ blocktrash_f(
 		   (1 << DBM_RTSUM) |
 		   (1 << DBM_SYMLINK) |
 		   (1 << DBM_SB);
-	while ((c = getopt(argc, argv, "0123n:s:t:x:y:")) != EOF) {
+	while ((c = getopt(argc, argv, "0123n:o:s:t:x:y:z")) != EOF) {
 		switch (c) {
 		case '0':
 			mode = 0;
@@ -1071,6 +1080,21 @@ blocktrash_f(
 				return 0;
 			}
 			break;
+		case 'o': {
+			int relative = 0;
+			if (optarg[0] == '+') {
+				optarg++;
+				relative = 1;
+			}
+			bit_offset = (int)strtol(optarg, &p, 0);
+			if (*p != '\0' || bit_offset < 0) {
+				dbprintf(_("bad blocktrash offset %s\n"), optarg);
+				return 0;
+			}
+			if (relative)
+				bit_offset = -bit_offset - 1;
+			break;
+		}
 		case 's':
 			seed = (uint)strtoul(optarg, &p, 0);
 			sopt = 1;
@@ -1102,10 +1126,21 @@ blocktrash_f(
 				return 0;
 			}
 			break;
+		case 'z':
+			this_block = true;
+			break;
 		default:
 			dbprintf(_("bad option for blocktrash command\n"));
 			return 0;
 		}
+	}
+	if (!this_block && !dbmap) {
+		dbprintf(_("must run blockget first\n"));
+		return 0;
+	}
+	if (this_block && iocur_sp == 0) {
+		dbprintf(_("nothing on stack\n"));
+		return 0;
 	}
 	if (min > max) {
 		dbprintf(_("bad min/max for blocktrash command\n"));
@@ -1125,6 +1160,14 @@ blocktrash_f(
 		} else
 			lentab[lentablen - 1].max = i;
 	}
+	if (!sopt)
+		dbprintf(_("blocktrash: seed %u\n"), seed);
+	srandom(seed);
+	if (this_block) {
+		blocktrash_b(bit_offset, DBM_UNKNOWN,
+				&lentab[random() % lentablen], mode);
+		goto out;
+	}
 	for (blocks = 0, agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
 		for (agbno = 0, p = dbmap[agno];
 		     agbno < mp->m_sb.sb_agblocks;
@@ -1137,9 +1180,6 @@ blocktrash_f(
 		dbprintf(_("blocktrash: no matching blocks\n"));
 		goto out;
 	}
-	if (!sopt)
-		dbprintf(_("blocktrash: seed %u\n"), seed);
-	srandom(seed);
 	for (i = 0; i < count; i++) {
 		randb = (xfs_rfsblock_t)((((__int64_t)random() << 32) |
 					 random()) % blocks);
@@ -1153,8 +1193,13 @@ blocktrash_f(
 					continue;
 				if (bi++ < randb)
 					continue;
-				blocktrash_b(agno, agbno, (dbm_t)*p,
+				push_cur();
+				set_cur(NULL,
+					XFS_AGB_TO_DADDR(mp, agno, agbno),
+					blkbb, DB_RING_IGN, NULL);
+				blocktrash_b(bit_offset, (dbm_t)*p,
 					&lentab[random() % lentablen], mode);
+				pop_cur();
 				done = 1;
 				break;
 			}

@@ -232,7 +232,7 @@ enables verbose output. Messages will be printed for every block and
 inode processed.
 .RE
 .TP
-.BI "blocktrash [\-n " count "] [\-x " min "] [\-y " max "] [\-s " seed "] [\-0|1|2|3] [\-t " type "] ..."
+.BI "blocktrash [-z] [\-o " offset "] [\-n " count "] [\-x " min "] [\-y " max "] [\-s " seed "] [\-0|1|2|3] [\-t " type "] ..."
 Trash randomly selected filesystem metadata blocks.
 Trashing occurs to randomly selected bits in the chosen blocks.
 This command is available only in debugging versions of
@@ -259,6 +259,13 @@ supplies the
 .I count
 of block-trashings to perform (default 1).
 .TP
+.B \-o
+supplies the bit
+.I offset
+at which to start trashing the block.  If the value is preceded by a '+', the
+trashing will start at a randomly chosen offset that is larger than the value
+supplied.  The default is to randomly choose an offset anywhere in the block.
+.TP
 .B \-s
 supplies a
 .I seed
@@ -282,6 +289,12 @@ size of bit range to be trashed. The default value is 1.
 sets the
 .I maximum
 size of bit range to be trashed. The default value is 1024.
+.TP
+.B \-z
+trashes the block at the top of the stack.  It is not necessary to
+run
+.BI blockget
+if this option is supplied.
 .RE
 .TP
 .BI "blockuse [\-n] [\-c " count ]
