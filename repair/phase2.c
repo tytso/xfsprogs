@@ -75,7 +75,7 @@ zero_log(xfs_mount_t *mp)
 	_("zero_log: head block %" PRId64 " tail block %" PRId64 "\n"),
 				head_blk, tail_blk);
 		}
-		if (head_blk != tail_blk) {
+		if (!no_modify && head_blk != tail_blk) {
 			if (zap_log) {
 				do_warn(_(
 "ALERT: The filesystem has valuable metadata changes in a log which is being\n"
@@ -92,6 +92,9 @@ zero_log(xfs_mount_t *mp)
 			}
 		}
 	}
+
+	if (no_modify)
+		return;
 
 	libxfs_log_clear(log->l_dev, XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 		(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
@@ -136,10 +139,8 @@ phase2(
 		do_log(_("Phase 2 - using internal log\n"));
 
 	/* Zero log if applicable */
-	if (!no_modify)  {
-		do_log(_("        - zero log...\n"));
-		zero_log(mp);
-	}
+	do_log(_("        - zero log...\n"));
+	zero_log(mp);
 
 	do_log(_("        - scan filesystem freespace and inode maps...\n"));
 
