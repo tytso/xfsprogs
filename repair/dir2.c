@@ -24,6 +24,7 @@
 #include "dinode.h"
 #include "dir2.h"
 #include "bmap.h"
+#include "da_util.h"
 #include "prefetch.h"
 #include "progress.h"
 
@@ -65,638 +66,6 @@ dir2_is_badino(
 		if (l->ino == ino)
 			return 1;
 	return 0;
-}
-
-/*
- * takes a name and length (name need not be null-terminated)
- * and returns 1 if the name contains a '/' or a \0, returns 0
- * otherwise
- */
-int
-namecheck(char *name, int length)
-{
-	char *c;
-	int i;
-
-	ASSERT(length < MAXNAMELEN);
-
-	for (c = name, i = 0; i < length; i++, c++)  {
-		if (*c == '/' || *c == '\0')
-			return(1);
-	}
-
-	return(0);
-}
-
-/*
- * Multibuffer handling.
- * V2 directory blocks can be noncontiguous, needing multiple buffers.
- */
-struct xfs_buf *
-da_read_buf(
-	xfs_mount_t	*mp,
-	int		nex,
-	bmap_ext_t	*bmp,
-	const struct xfs_buf_ops *ops)
-{
-#define MAP_ARRAY_SZ 4
-	struct xfs_buf_map map_array[MAP_ARRAY_SZ];
-	struct xfs_buf_map *map;
-	struct xfs_buf	*bp;
-	int		i;
-
-	if (nex > MAP_ARRAY_SZ) {
-		map = calloc(nex, sizeof(*map));
-		if (map == NULL) {
-			do_error(_("couldn't malloc dir2 buffer list\n"));
-			exit(1);
-		}
-	} else {
-		/* common case avoids calloc/free */
-		map = map_array;
-	}
-	for (i = 0; i < nex; i++) {
-		map[i].bm_bn = XFS_FSB_TO_DADDR(mp, bmp[i].startblock);
-		map[i].bm_len = XFS_FSB_TO_BB(mp, bmp[i].blockcount);
-	}
-	bp = libxfs_readbuf_map(mp->m_dev, map, nex, 0, ops);
-	if (map != map_array)
-		free(map);
-	return bp;
-}
-
-/*
- * walk tree from root to the left-most leaf block reading in
- * blocks and setting up cursor.  passes back file block number of the
- * left-most leaf block if successful (bno).  returns 1 if successful,
- * 0 if unsuccessful.
- */
-static int
-traverse_int_dir2block(xfs_mount_t	*mp,
-		dir2_bt_cursor_t	*da_cursor,
-		xfs_dablk_t		*rbno)
-{
-	bmap_ext_t		*bmp;
-	xfs_dablk_t		bno;
-	struct xfs_buf		*bp;
-	int			i;
-	int			nex;
-	xfs_da_intnode_t	*node;
-	bmap_ext_t		lbmp;
-	struct xfs_da_geometry	*geo;
-	struct xfs_da_node_entry *btree;
-	struct xfs_da3_icnode_hdr nodehdr;
-
-	geo = mp->m_dir_geo;
-
-	/*
-	 * traverse down left-side of tree until we hit the
-	 * left-most leaf block setting up the btree cursor along
-	 * the way.
-	 */
-	bno = mp->m_dir_geo->leafblk;
-	i = -1;
-	node = NULL;
-	da_cursor->active = 0;
-
-	do {
-		/*
-		 * read in each block along the way and set up cursor
-		 */
-		nex = blkmap_getn(da_cursor->blkmap, bno,
-				geo->fsbcount, &bmp, &lbmp);
-
-		if (nex == 0)
-			goto error_out;
-
-		bp = da_read_buf(mp, nex, bmp, &xfs_da3_node_buf_ops);
-		if (bmp != &lbmp)
-			free(bmp);
-		if (!bp) {
-			do_warn(
-_("can't read block %u for directory inode %" PRIu64 "\n"),
-				bno, da_cursor->ino);
-			goto error_out;
-		}
-
-		node = bp->b_addr;
-		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
-
-		if (nodehdr.magic == XFS_DIR2_LEAFN_MAGIC ||
-		    nodehdr.magic == XFS_DIR3_LEAFN_MAGIC) {
-			if ( i != -1 ) {
-				do_warn(
-_("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
-					da_cursor->ino, bno);
-			}
-			*rbno = 0;
-			libxfs_putbuf(bp);
-			return(1);
-		}
-
-		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
-		    nodehdr.magic != XFS_DA3_NODE_MAGIC) {
-			libxfs_putbuf(bp);
-			do_warn(
-_("bad dir magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
-					nodehdr.magic,
-					da_cursor->ino, bno);
-			goto error_out;
-		}
-		/* corrupt node; rebuild the dir. */
-		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
-			libxfs_putbuf(bp);
-			do_warn(
-_("corrupt tree block %u for directory inode %" PRIu64 "\n"),
-				bno, da_cursor->ino);
-			goto error_out;
-		}
-		btree = M_DIROPS(mp)->node_tree_p(node);
-		if (nodehdr.count > geo->node_ents) {
-			do_warn(
-_("bad record count in inode %" PRIu64 ", count = %d, max = %d\n"),
-				da_cursor->ino, nodehdr.count, geo->node_ents);
-			libxfs_putbuf(bp);
-			goto error_out;
-		}
-		/*
-		 * maintain level counter
-		 */
-		if (i == -1) {
-			i = da_cursor->active = nodehdr.level;
-			if (i < 1 || i >= XFS_DA_NODE_MAXDEPTH) {
-				do_warn(
-_("bad header depth for directory inode %" PRIu64 "\n"),
-					da_cursor->ino);
-				libxfs_putbuf(bp);
-				i = -1;
-				goto error_out;
-			}
-		} else {
-			if (nodehdr.level == i - 1) {
-				i--;
-			} else {
-				do_warn(
-_("bad directory btree for directory inode %" PRIu64 "\n"),
-					da_cursor->ino);
-				libxfs_putbuf(bp);
-				goto error_out;
-			}
-		}
-
-		da_cursor->level[i].hashval = be32_to_cpu(btree[0].hashval);
-		da_cursor->level[i].bp = bp;
-		da_cursor->level[i].bno = bno;
-		da_cursor->level[i].index = 0;
-
-		/*
-		 * set up new bno for next level down
-		 */
-		bno = be32_to_cpu(btree[0].before);
-	} while (node != NULL && i > 1);
-
-	/*
-	 * now return block number and get out
-	 */
-	*rbno = da_cursor->level[0].bno = bno;
-	return(1);
-
-error_out:
-	while (i > 1 && i <= da_cursor->active) {
-		libxfs_putbuf(da_cursor->level[i].bp);
-		i++;
-	}
-
-	return(0);
-}
-
-/*
- * blow out buffer for this level and all the rest above as well
- * if error == 0, we are not expecting to encounter any unreleased
- * buffers (e.g. if we do, it's a mistake).  if error == 1, we're
- * in an error-handling case so unreleased buffers may exist.
- */
-static void
-release_dir2_cursor_int(xfs_mount_t		*mp,
-			dir2_bt_cursor_t	*cursor,
-			int			prev_level,
-			int			error)
-{
-	int	level = prev_level + 1;
-
-	if (cursor->level[level].bp != NULL)  {
-		if (!error)  {
-			do_warn(_("release_dir2_cursor_int got unexpected "
-				  "non-null bp, dabno = %u\n"),
-				cursor->level[level].bno);
-		}
-		ASSERT(error != 0);
-
-		libxfs_putbuf(cursor->level[level].bp);
-		cursor->level[level].bp = NULL;
-	}
-
-	if (level < cursor->active)
-		release_dir2_cursor_int(mp, cursor, level, error);
-
-	return;
-}
-
-static void
-release_dir2_cursor(xfs_mount_t		*mp,
-		dir2_bt_cursor_t	*cursor,
-		int			prev_level)
-{
-	release_dir2_cursor_int(mp, cursor, prev_level, 0);
-}
-
-static void
-err_release_dir2_cursor(xfs_mount_t		*mp,
-			dir2_bt_cursor_t	*cursor,
-			int			prev_level)
-{
-	release_dir2_cursor_int(mp, cursor, prev_level, 1);
-}
-
-/*
- * make sure that all entries in all blocks along the right side of
- * of the tree are used and hashval's are consistent.  level is the
- * level of the descendent block.  returns 0 if good (even if it had
- * to be fixed up), and 1 if bad.  The right edge of the tree is
- * technically a block boundary.  This routine should be used then
- * instead of verify_dir2_path().
- */
-static int
-verify_final_dir2_path(xfs_mount_t	*mp,
-		dir2_bt_cursor_t	*cursor,
-		const int		p_level)
-{
-	xfs_da_intnode_t	*node;
-	xfs_dahash_t		hashval;
-	int			bad = 0;
-	int			entry;
-	int			this_level = p_level + 1;
-	struct xfs_da_node_entry *btree;
-	struct xfs_da3_icnode_hdr nodehdr;
-
-#ifdef XR_DIR_TRACE
-	fprintf(stderr, "in verify_final_dir2_path, this_level = %d\n",
-		this_level);
-#endif
-
-	/*
-	 * the index should point to the next "unprocessed" entry
-	 * in the block which should be the final (rightmost) entry
-	 */
-	entry = cursor->level[this_level].index;
-	node = cursor->level[this_level].bp->b_addr;
-	btree = M_DIROPS(mp)->node_tree_p(node);
-	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
-
-	/*
-	 * check internal block consistency on this level -- ensure
-	 * that all entries are used, encountered and expected hashvals
-	 * match, etc.
-	 */
-	if (entry != nodehdr.count - 1) {
-		do_warn(
-		_("directory block used/count inconsistency - %d / %hu\n"),
-			entry, nodehdr.count);
-		bad++;
-	}
-	/*
-	 * hash values monotonically increasing ???
-	 */
-	if (cursor->level[this_level].hashval >=
-				be32_to_cpu(btree[entry].hashval)) {
-		do_warn(_("directory/attribute block hashvalue inconsistency, "
-			  "expected > %u / saw %u\n"),
-			cursor->level[this_level].hashval,
-			be32_to_cpu(btree[entry].hashval));
-		bad++;
-	}
-	if (nodehdr.forw != 0) {
-		do_warn(_("bad directory/attribute forward block pointer, "
-			  "expected 0, saw %u\n"),
-			nodehdr.forw);
-		bad++;
-	}
-	if (bad) {
-		do_warn(_("bad directory block in inode %" PRIu64 "\n"), cursor->ino);
-		return(1);
-	}
-	/*
-	 * keep track of greatest block # -- that gets
-	 * us the length of the directory
-	 */
-	if (cursor->level[this_level].bno > cursor->greatest_bno)
-		cursor->greatest_bno = cursor->level[this_level].bno;
-
-	/*
-	 * ok, now check descendant block number against this level
-	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
-#ifdef XR_DIR_TRACE
-		fprintf(stderr, "bad directory btree pointer, child bno should "
-				"be %d, block bno is %d, hashval is %u\n",
-			be16_to_cpu(btree[entry].before),
-			cursor->level[p_level].bno,
-			cursor->level[p_level].hashval);
-		fprintf(stderr, "verify_final_dir2_path returns 1 (bad) #1a\n");
-#endif
-		return(1);
-	}
-
-	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval)) {
-		if (!no_modify) {
-			do_warn(
-_("correcting bad hashval in non-leaf dir block\n"
-  "\tin (level %d) in inode %" PRIu64 ".\n"),
-				this_level, cursor->ino);
-			btree[entry].hashval = cpu_to_be32(
-						cursor->level[p_level].hashval);
-			cursor->level[this_level].dirty++;
-		} else {
-			do_warn(
-_("would correct bad hashval in non-leaf dir block\n"
-  "\tin (level %d) in inode %" PRIu64 ".\n"),
-				this_level, cursor->ino);
-		}
-	}
-
-	/*
-	 * Note: squirrel hashval away _before_ releasing the
-	 * buffer, preventing a use-after-free problem.
-	 */
-	hashval = be32_to_cpu(btree[entry].hashval);
-
-	/*
-	 * release/write buffer
-	 */
-	ASSERT(cursor->level[this_level].dirty == 0 ||
-		(cursor->level[this_level].dirty && !no_modify));
-
-	if (cursor->level[this_level].dirty && !no_modify)
-		libxfs_writebuf(cursor->level[this_level].bp, 0);
-	else
-		libxfs_putbuf(cursor->level[this_level].bp);
-
-	cursor->level[this_level].bp = NULL;
-
-	/*
-	 * bail out if this is the root block (top of tree)
-	 */
-	if (this_level >= cursor->active) {
-#ifdef XR_DIR_TRACE
-		fprintf(stderr, "verify_final_dir2_path returns 0 (ok)\n");
-#endif
-		return(0);
-	}
-	/*
-	 * set hashvalue to correctly reflect the now-validated
-	 * last entry in this block and continue upwards validation
-	 */
-	cursor->level[this_level].hashval = hashval;
-
-	return(verify_final_dir2_path(mp, cursor, this_level));
-}
-
-/*
- * Verifies the path from a descendant block up to the root.
- * Should be called when the descendant level traversal hits
- * a block boundary before crossing the boundary (reading in a new
- * block).
- *
- * the directory/attr btrees work differently to the other fs btrees.
- * each interior block contains records that are <hashval, bno>
- * pairs.  The bno is a file bno, not a filesystem bno.  The last
- * hashvalue in the block <bno> will be <hashval>.  BUT unlike
- * the freespace btrees, the *last* value in each block gets
- * propagated up the tree instead of the first value in each block.
- * that is, the interior records point to child blocks and the *greatest*
- * hash value contained by the child block is the one the block above
- * uses as the key for the child block.
- *
- * level is the level of the descendent block.  returns 0 if good,
- * and 1 if bad.  The descendant block may be a leaf block.
- *
- * the invariant here is that the values in the cursor for the
- * levels beneath this level (this_level) and the cursor index
- * for this level *must* be valid.
- *
- * that is, the hashval/bno info is accurate for all
- * DESCENDANTS and match what the node[index] information
- * for the current index in the cursor for this level.
- *
- * the index values in the cursor for the descendant level
- * are allowed to be off by one as they will reflect the
- * next entry at those levels to be processed.
- *
- * the hashvalue for the current level can't be set until
- * we hit the last entry in the block so, it's garbage
- * until set by this routine.
- *
- * bno and bp for the current block/level are always valid
- * since they have to be set so we can get a buffer for the
- * block.
- */
-static int
-verify_dir2_path(xfs_mount_t	*mp,
-	dir2_bt_cursor_t	*cursor,
-	const int		p_level)
-{
-	xfs_da_intnode_t	*node;
-	xfs_da_intnode_t	*newnode;
-	xfs_dablk_t		dabno;
-	struct xfs_buf		*bp;
-	int			bad;
-	int			entry;
-	int			this_level = p_level + 1;
-	bmap_ext_t		*bmp;
-	int			nex;
-	bmap_ext_t		lbmp;
-	struct xfs_da_geometry	*geo;
-	struct xfs_da_node_entry *btree;
-	struct xfs_da3_icnode_hdr nodehdr;
-
-	geo = mp->m_dir_geo;
-
-	/*
-	 * index is currently set to point to the entry that
-	 * should be processed now in this level.
-	 */
-	entry = cursor->level[this_level].index;
-	node = cursor->level[this_level].bp->b_addr;
-	btree = M_DIROPS(mp)->node_tree_p(node);
-	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
-
-	/*
-	 * if this block is out of entries, validate this
-	 * block and move on to the next block.
-	 * and update cursor value for said level
-	 */
-	if (entry >= nodehdr.count) {
-		/*
-		 * update the hash value for this level before
-		 * validating it.  bno value should be ok since
-		 * it was set when the block was first read in.
-		 */
-		cursor->level[this_level].hashval =
-			be32_to_cpu(btree[entry - 1].hashval);
-
-		/*
-		 * keep track of greatest block # -- that gets
-		 * us the length of the directory
-		 */
-		if (cursor->level[this_level].bno > cursor->greatest_bno)
-			cursor->greatest_bno = cursor->level[this_level].bno;
-
-		/*
-		 * validate the path for the current used-up block
-		 * before we trash it
-		 */
-		if (verify_dir2_path(mp, cursor, this_level))
-			return(1);
-		/*
-		 * ok, now get the next buffer and check sibling pointers
-		 */
-		dabno = nodehdr.forw;
-		ASSERT(dabno != 0);
-		nex = blkmap_getn(cursor->blkmap, dabno, geo->fsbcount,
-			&bmp, &lbmp);
-		if (nex == 0) {
-			do_warn(
-_("can't get map info for block %u of directory inode %" PRIu64 "\n"),
-				dabno, cursor->ino);
-			return(1);
-		}
-
-		bp = da_read_buf(mp, nex, bmp, &xfs_da3_node_buf_ops);
-		if (bmp != &lbmp)
-			free(bmp);
-
-		if (!bp) {
-			do_warn(
-_("can't read block %u for directory inode %" PRIu64 "\n"),
-				dabno, cursor->ino);
-			return(1);
-		}
-
-		newnode = bp->b_addr;
-		btree = M_DIROPS(mp)->node_tree_p(newnode);
-		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, newnode);
-		/*
-		 * verify magic number and back pointer, sanity-check
-		 * entry count, verify level
-		 */
-		bad = 0;
-		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
-		    nodehdr.magic != XFS_DA3_NODE_MAGIC) {
-			do_warn(
-_("bad magic number %x in block %u for directory inode %" PRIu64 "\n"),
-				nodehdr.magic,
-				dabno, cursor->ino);
-			bad++;
-		}
-		if (nodehdr.back != cursor->level[this_level].bno) {
-			do_warn(
-_("bad back pointer in block %u for directory inode %" PRIu64 "\n"),
-				dabno, cursor->ino);
-			bad++;
-		}
-		if (nodehdr.count > geo->node_ents) {
-			do_warn(
-_("entry count %d too large in block %u for directory inode %" PRIu64 "\n"),
-				nodehdr.count,
-				dabno, cursor->ino);
-			bad++;
-		}
-		if (nodehdr.level != this_level) {
-			do_warn(
-_("bad level %d in block %u for directory inode %" PRIu64 "\n"),
-				nodehdr.level,
-				dabno, cursor->ino);
-			bad++;
-		}
-		if (bad) {
-#ifdef XR_DIR_TRACE
-			fprintf(stderr, "verify_dir2_path returns 1 (bad) #4\n");
-#endif
-			libxfs_putbuf(bp);
-			return(1);
-		}
-		/*
-		 * update cursor, write out the *current* level if
-		 * required.  don't write out the descendant level
-		 */
-		ASSERT(cursor->level[this_level].dirty == 0 ||
-			(cursor->level[this_level].dirty && !no_modify));
-		/*
-		 * If block looks ok but CRC didn't match, make sure to
-		 * recompute it.
-		 */
-		if (!no_modify &&
-		    cursor->level[this_level].bp->b_error == -EFSBADCRC)
-			cursor->level[this_level].dirty = 1;
-		if (cursor->level[this_level].dirty && !no_modify)
-			libxfs_writebuf(cursor->level[this_level].bp, 0);
-		else
-			libxfs_putbuf(cursor->level[this_level].bp);
-
-		/* switch cursor to point at the new buffer we just read */
-		cursor->level[this_level].bp = bp;
-		cursor->level[this_level].dirty = 0;
-		cursor->level[this_level].bno = dabno;
-		cursor->level[this_level].hashval =
-			be32_to_cpu(btree[0].hashval);
-
-		entry = cursor->level[this_level].index = 0;
-	}
-	/*
-	 * ditto for block numbers
-	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
-#ifdef XR_DIR_TRACE
-		fprintf(stderr, "bad directory btree pointer, child bno "
-			"should be %d, block bno is %d, hashval is %u\n",
-			be32_to_cpu(btree[entry].before),
-			cursor->level[p_level].bno,
-			cursor->level[p_level].hashval);
-		fprintf(stderr, "verify_dir2_path returns 1 (bad) #1a\n");
-#endif
-		return(1);
-	}
-	/*
-	 * ok, now validate last hashvalue in the descendant
-	 * block against the hashval in the current entry
-	 */
-	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval)) {
-		if (!no_modify) {
-			do_warn(
-_("correcting bad hashval in interior dir block\n"
-  "\tin (level %d) in inode %" PRIu64 ".\n"),
-				this_level, cursor->ino);
-			btree[entry].hashval = cpu_to_be32(
-					cursor->level[p_level].hashval);
-			cursor->level[this_level].dirty++;
-		} else {
-			do_warn(
-_("would correct bad hashval in interior dir block\n"
-  "\tin (level %d) in inode %" PRIu64 ".\n"),
-				this_level, cursor->ino);
-		}
-	}
-	/*
-	 * increment index for this level to point to next entry
-	 * (which should point to the next descendant block)
-	 */
-	cursor->level[this_level].index++;
-#ifdef XR_DIR_TRACE
-       fprintf(stderr, "verify_dir2_path returns 0 (ok)\n");
-#endif
-	return(0);
 }
 
 /*
@@ -1697,7 +1066,7 @@ _("bad stale count in block %u of directory inode %" PRIu64 "\n"),
 static int
 process_leaf_level_dir2(
 	xfs_mount_t		*mp,
-	dir2_bt_cursor_t	*da_cursor,
+	da_bt_cursor_t		*da_cursor,
 	int			*repair)
 {
 	bmap_ext_t		*bmp;
@@ -1791,7 +1160,7 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 		prev_bno = da_bno;
 		da_bno = leafhdr.forw;
 		if (da_bno != 0) {
-			if (verify_dir2_path(mp, da_cursor, 0)) {
+			if (verify_da_path(mp, da_cursor, 0, XFS_DATA_FORK)) {
 				libxfs_putbuf(bp);
 				goto error_out;
 			}
@@ -1810,7 +1179,7 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 		} else
 			libxfs_putbuf(bp);
 	} while (da_bno != 0);
-	if (verify_final_dir2_path(mp, da_cursor, 0)) {
+	if (verify_final_da_path(mp, da_cursor, 0)) {
 		/*
 		 * Verify the final path up (right-hand-side) if still ok.
 		 */
@@ -1820,14 +1189,14 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 	/*
 	 * Redundant but just for testing.
 	 */
-	release_dir2_cursor(mp, da_cursor, 0);
+	release_da_cursor(mp, da_cursor, 0);
 	return 0;
 
 error_out:
 	/*
 	 * Release all buffers holding interior btree blocks.
 	 */
-	err_release_dir2_cursor(mp, da_cursor, 0);
+	err_release_da_cursor(mp, da_cursor, 0);
 	if (bmp && (bmp != &lbmp))
 		free(bmp);
 	return 1;
@@ -1846,7 +1215,7 @@ process_node_dir2(
 	int		*repair)
 {
 	xfs_dablk_t		bno;
-	dir2_bt_cursor_t	da_cursor;
+	da_bt_cursor_t		da_cursor;
 
 	/*
 	 * Try again -- traverse down left-side of tree until we hit the
@@ -1862,14 +1231,14 @@ process_node_dir2(
 	/*
 	 * Now process interior node.
 	 */
-	if (traverse_int_dir2block(mp, &da_cursor, &bno) == 0)
+	if (traverse_int_dablock(mp, &da_cursor, &bno, XFS_DATA_FORK) == 0)
 		return 1;
 
 	/*
 	 * Skip directories with a root marked XFS_DIR2_LEAFN_MAGIC
 	 */
 	if (bno == 0) {
-		release_dir2_cursor(mp, &da_cursor, 0);
+		release_da_cursor(mp, &da_cursor, 0);
 		return 0;
 	} else {
 		/*
