@@ -183,6 +183,8 @@ char	*mopts[] = {
 	"crc",
 #define M_FINOBT	1
 	"finobt",
+#define M_UUID		2
+	"uuid",
 	NULL
 };
 
@@ -983,6 +985,7 @@ main(
 	bool			finobtflag;
 	int			spinodes;
 
+	platform_uuid_generate(&uuid);
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -1522,6 +1525,12 @@ main(
 						illegal(value, "m finobt");
 					finobt = c;
 					finobtflag = true;
+					break;
+				case M_UUID:
+					if (!value || *value == '\0')
+						reqval('m', mopts, M_UUID);
+					if (platform_uuid_parse(value, &uuid))
+						illegal(optarg, "m uuid");
 					break;
 				default:
 					unknown('m', value);
@@ -2585,7 +2594,6 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	sbp->sb_dblocks = dblocks;
 	sbp->sb_rblocks = rtblocks;
 	sbp->sb_rextents = rtextents;
-	platform_uuid_generate(&uuid);
 	platform_uuid_copy(&sbp->sb_uuid, &uuid);
 	/* Only in memory; libxfs expects this as if read from disk */
 	platform_uuid_copy(&sbp->sb_meta_uuid, &uuid);
@@ -3198,7 +3206,7 @@ usage( void )
 {
 	fprintf(stderr, _("Usage: %s\n\
 /* blocksize */		[-b log=n|size=num]\n\
-/* metadata */		[-m crc=0|1,finobt=0|1]\n\
+/* metadata */		[-m crc=0|1,finobt=0|1,uuid=xxx]\n\
 /* data subvol */	[-d agcount=n,agsize=n,file,name=xxx,size=num,\n\
 			    (sunit=value,swidth=value|su=num,sw=num|noalign),\n\
 			    sectlog=n|sectsize=num\n\

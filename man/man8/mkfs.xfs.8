@@ -169,6 +169,10 @@ will create free inode btrees for filesystems created with the (default)
 option set. When the option
 .B \-m crc=0
 is used, the free inode btree feature is not supported and is disabled.
+.TP
+.BI uuid= value
+Use the given value as the filesystem UUID for the newly created filesystem.
+The default is to generate a random UUID.
 .RE
 .TP
 .BI \-d " data_section_options"
