@@ -330,6 +330,7 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 		const int		p_level)
 {
 	xfs_da_intnode_t	*node;
+	xfs_dahash_t		hashval;
 	int			bad = 0;
 	int			entry;
 	int			this_level = p_level + 1;
@@ -409,6 +410,12 @@ _("would correct bad hashval in non-leaf dir block\n"
 	}
 
 	/*
+	 * Note: squirrel hashval away _before_ releasing the
+	 * buffer, preventing a use-after-free problem.
+	 */
+	hashval = be32_to_cpu(btree[entry].hashval);
+
+	/*
 	 * release/write buffer
 	 */
 	ASSERT(cursor->level[this_level].dirty == 0 ||
@@ -430,7 +437,7 @@ _("would correct bad hashval in non-leaf dir block\n"
 	 * set hashvalue to correctl reflect the now-validated
 	 * last entry in this block and continue upwards validation
 	 */
-	cursor->level[this_level].hashval = be32_to_cpu(btree[entry].hashval);
+	cursor->level[this_level].hashval = hashval;
 
 	return(verify_final_dir2_path(mp, cursor, this_level));
 }
