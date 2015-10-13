@@ -156,26 +156,78 @@ libxfs_log_clear(
 	xfs_buf_t		*bp;
 	int			len;
 	xfs_lsn_t		lsn;
+	xfs_lsn_t		tail_lsn;
+	xfs_daddr_t		blk;
+	xfs_daddr_t		end_blk;
 
 	if (!btp->dev || !fs_uuid)
 		return -EINVAL;
 
-	if (cycle != XLOG_INIT_CYCLE)
-		return -EINVAL;
-
-	lsn = xlog_assign_lsn(cycle, 0);
-
 	/* first zero the log */
 	libxfs_device_zero(btp, start, length);
 
-	/* then write a log record header */
+	/*
+	 * Initialize the log record length and LSNs. XLOG_INIT_CYCLE is a
+	 * special reset case where we only write a single record where the lsn
+	 * and tail_lsn match. Otherwise, the record lsn starts at block 0 of
+	 * the specified cycle and points tail_lsn at the last record of the
+	 * previous cycle.
+	 */
 	len = ((version == 2) && sunit) ? BTOBB(sunit) : 2;
 	len = MAX(len, 2);
+	lsn = xlog_assign_lsn(cycle, 0);
+	if (cycle == XLOG_INIT_CYCLE)
+		tail_lsn = lsn;
+	else
+		tail_lsn = xlog_assign_lsn(cycle - 1, length - len);
+
+	/* write out the first log record */
 	bp = libxfs_getbufr(btp, start, len);
-	libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, sunit, fmt, lsn,
-			  lsn, next, bp);
+	libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, sunit, fmt,
+			  lsn, tail_lsn, next, bp);
 	bp->b_flags |= LIBXFS_B_DIRTY;
 	libxfs_putbufr(bp);
+
+	/*
+	 * There's nothing else to do if this is a log reset. The kernel detects
+	 * the rest of the log is zeroed and starts at cycle 1.
+	 */
+	if (cycle == XLOG_INIT_CYCLE)
+		return 0;
+
+	/*
+	 * Otherwise, fill everything beyond the initial record with records of
+	 * the previous cycle so the kernel head/tail detection works correctly.
+	 *
+	 * We don't particularly care about the record size or content here.
+	 * It's only important that the headers are in place such that the
+	 * kernel finds 1.) a clean log and 2.) the correct current cycle value.
+	 * Therefore, bump up the record size to the max to use larger I/Os and
+	 * improve performance.
+	 */
+	cycle--;
+	blk = start + len;
+	end_blk = start + length;
+
+	len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
+	while (blk < end_blk) {
+		lsn = xlog_assign_lsn(cycle, blk - start);
+		tail_lsn = xlog_assign_lsn(cycle, blk - start - len);
+
+		bp = libxfs_getbufr(btp, blk, len);
+		/*
+		 * Note: pass the full buffer length as the sunit to initialize
+		 * the entire buffer.
+		 */
+		libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, BBTOB(len),
+				  fmt, lsn, tail_lsn, next, bp);
+		bp->b_flags |= LIBXFS_B_DIRTY;
+		libxfs_putbufr(bp);
+
+		len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
+		blk += len;
+	}
+
 	return 0;
 }
 
