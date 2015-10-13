@@ -849,7 +849,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 			libxfs_putbuf(bp);
 	} while (da_bno != 0);
 
-	if (verify_final_da_path(mp, da_cursor, 0))  {
+	if (verify_final_da_path(mp, da_cursor, 0, XFS_ATTR_FORK))  {
 		/*
 		 * verify the final path up (right-hand-side) if still ok
 		 */

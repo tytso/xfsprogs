@@ -78,5 +78,6 @@ int
 verify_final_da_path(
 	xfs_mount_t	*mp,
 	da_bt_cursor_t	*cursor,
-	const int	p_level);
+	const int	p_level,
+	int		whichfork);
 #endif	/* _XR_DA_UTIL_H */

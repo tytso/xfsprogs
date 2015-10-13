@@ -1179,7 +1179,7 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 		} else
 			libxfs_putbuf(bp);
 	} while (da_bno != 0);
-	if (verify_final_da_path(mp, da_cursor, 0)) {
+	if (verify_final_da_path(mp, da_cursor, 0, XFS_DATA_FORK)) {
 		/*
 		 * Verify the final path up (right-hand-side) if still ok.
 		 */
