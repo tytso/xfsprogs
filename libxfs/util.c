@@ -729,3 +729,11 @@ xfs_verifier_error(
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  bp->b_bn, BBTOB(bp->b_length));
 }
+
+bool
+xfs_log_check_lsn(
+	struct xfs_mount	*mp,
+	xfs_lsn_t		lsn)
+{
+	return true;
+}
