@@ -26,6 +26,11 @@ AC_ARG_ENABLE(gettext,
 	enable_gettext=yes)
 AC_SUBST(enable_gettext)
 
+AC_ARG_ENABLE(blkid,
+[ --enable-blkid=[yes/no] Enable use of block device id library [default=yes]],,
+	enable_blkid=yes)
+AC_SUBST(enable_blkid)
+
 AC_ARG_ENABLE(readline,
 [ --enable-readline=[yes/no] Enable readline command editing [default=no]],
 	test $enable_readline = yes && libreadline="-lreadline",
@@ -117,8 +122,11 @@ AC_HAVE_PREADV
 AC_HAVE_SYNC_FILE_RANGE
 AC_HAVE_MNTENT
 AC_HAVE_FLS
-AC_HAVE_BLKID_TOPO
 AC_HAVE_READDIR
+
+if test "$enable_blkid" = yes; then
+AC_HAVE_BLKID_TOPO
+fi
 
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([char *])

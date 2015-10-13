@@ -18,7 +18,9 @@
 
 #include "libxfs.h"
 #include <ctype.h>
-#include <blkid/blkid.h>
+#ifdef ENABLE_BLKID
+#  include <blkid/blkid.h>
+#endif /* ENABLE_BLKID */
 #include "xfs_mkfs.h"
 
 /*
@@ -298,6 +300,7 @@ calc_stripe_factors(
  *	 0 for nothing found
  *	-1 for internal error
  */
+#ifdef ENABLE_BLKID
 static int
 check_overwrite(
 	char		*device)
@@ -451,6 +454,38 @@ out_free_probe:
 		_("warning: unable to probe device topology for device %s\n"),
 		device);
 }
+#else /* ifdef ENABLE_BLKID */
+/*
+ * Without blkid, we can't do a good check for signatures.
+ * So instead of some messy attempts, just disable any checks
+ * and always return 'nothing found'.
+ */
+#  warning BLKID is disabled, so signature detection and block device\
+ access are not working!
+static int
+check_overwrite(
+	char		*device)
+{
+	return 1;
+}
+
+static void blkid_get_topology(
+	const char	*device,
+	int		*sunit,
+	int		*swidth,
+	int		*lsectorsize,
+	int		*psectorsize,
+	int		force_overwrite)
+{
+	/*
+	 * Shouldn't make any difference (no blkid = no block device access),
+	 * but make sure this dummy replacement returns with at least some
+	 * sanity.
+	 */
+	*lsectorsize = *psectorsize = 512;
+}
+
+#endif /* ENABLE_BLKID */
 
 static void get_topology(
 	libxfs_init_t		*xi,
