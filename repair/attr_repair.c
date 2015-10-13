@@ -606,6 +606,14 @@ verify_da_path(xfs_mount_t	*mp,
 		ASSERT(cursor->level[this_level].dirty == 0 ||
 			(cursor->level[this_level].dirty && !no_modify));
 
+		/*
+		 * If block looks ok but CRC didn't match, make sure to
+		 * recompute it.
+		 */
+		if (!no_modify &&
+		    cursor->level[this_level].bp->b_error == -EFSBADCRC)
+			cursor->level[this_level].dirty = 1;
+
 		if (cursor->level[this_level].dirty && !no_modify)
 			libxfs_writebuf(cursor->level[this_level].bp, 0);
 		else
@@ -618,14 +626,6 @@ verify_da_path(xfs_mount_t	*mp,
 		cursor->level[this_level].hashval =
 					be32_to_cpu(btree[0].hashval);
 		entry = cursor->level[this_level].index = 0;
-
-		/*
-		 * We want to rewrite the buffer on a CRC error seeing as it
-		 * contains what appears to be a valid node block, but only if
-		 * we are fixing errors.
-		 */
-		if (bp->b_error == -EFSBADCRC && !no_modify)
-			cursor->level[this_level].dirty++;
 	}
 	/*
 	 * ditto for block numbers
@@ -1363,8 +1363,6 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 				da_bno, dev_bno, ino);
 			goto error_out;
 		}
-		if (bp->b_error == -EFSBADCRC)
-			repair++;
 
 		leaf = bp->b_addr;
 		xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
@@ -1419,6 +1417,12 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		}
 
 		current_hashval = greatest_hashval;
+                /*
+		 * If block looks ok but CRC didn't match, make sure to
+		 * recompute it.
+		 */
+		if (!no_modify && bp->b_error == -EFSBADCRC)
+			repair++;
 
 		if (repair && !no_modify)
 			libxfs_writebuf(bp, 0);
