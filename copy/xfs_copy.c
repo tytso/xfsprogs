@@ -352,6 +352,7 @@ wbuf_init(wbuf *buf, int data_size, int data_align, int min_io_size, int id)
 			return NULL;
 	}
 	ASSERT(min_io_size % BBSIZE == 0);
+	buf->data_align = data_align;
 	buf->min_io_size = min_io_size;
 	buf->size = data_size;
 	buf->id = id;
