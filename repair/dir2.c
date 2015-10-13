@@ -92,7 +92,7 @@ namecheck(char *name, int length)
  * Multibuffer handling.
  * V2 directory blocks can be noncontiguous, needing multiple buffers.
  */
-static struct xfs_buf *
+struct xfs_buf *
 da_read_buf(
 	xfs_mount_t	*mp,
 	int		nex,
@@ -143,8 +143,11 @@ traverse_int_dir2block(xfs_mount_t	*mp,
 	int			nex;
 	xfs_da_intnode_t	*node;
 	bmap_ext_t		lbmp;
+	struct xfs_da_geometry	*geo;
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
+
+	geo = mp->m_dir_geo;
 
 	/*
 	 * traverse down left-side of tree until we hit the
@@ -161,7 +164,7 @@ traverse_int_dir2block(xfs_mount_t	*mp,
 		 * read in each block along the way and set up cursor
 		 */
 		nex = blkmap_getn(da_cursor->blkmap, bno,
-				mp->m_dir_geo->fsbcount, &bmp, &lbmp);
+				geo->fsbcount, &bmp, &lbmp);
 
 		if (nex == 0)
 			goto error_out;
@@ -207,13 +210,11 @@ _("corrupt tree block %u for directory inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 		btree = M_DIROPS(mp)->node_tree_p(node);
-		if (nodehdr.count > mp->m_dir_geo->node_ents)  {
-			libxfs_putbuf(bp);
+		if (nodehdr.count > geo->node_ents)  {
 			do_warn(
 _("bad record count in inode %" PRIu64 ", count = %d, max = %d\n"),
-				da_cursor->ino,
-				nodehdr.count,
-				mp->m_dir_geo->node_ents);
+				da_cursor->ino, nodehdr.count, geo->node_ents);
+			libxfs_putbuf(bp);
 			goto error_out;
 		}
 		/*
@@ -488,8 +489,11 @@ verify_dir2_path(xfs_mount_t	*mp,
 	bmap_ext_t		*bmp;
 	int			nex;
 	bmap_ext_t		lbmp;
+	struct xfs_da_geometry	*geo;
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
+
+	geo = mp->m_dir_geo;
 
 	/*
 	 * index is currently set to point to the entry that
@@ -532,7 +536,7 @@ verify_dir2_path(xfs_mount_t	*mp,
 		 */
 		dabno = nodehdr.forw;
 		ASSERT(dabno != 0);
-		nex = blkmap_getn(cursor->blkmap, dabno, mp->m_dir_geo->fsbcount,
+		nex = blkmap_getn(cursor->blkmap, dabno, geo->fsbcount,
 			&bmp, &lbmp);
 		if (nex == 0) {
 			do_warn(
@@ -574,7 +578,7 @@ _("bad back pointer in block %u for directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.count > mp->m_dir_geo->node_ents)  {
+		if (nodehdr.count > geo->node_ents)  {
 			do_warn(
 _("entry count %d too large in block %u for directory inode %" PRIu64 "\n"),
 				nodehdr.count,

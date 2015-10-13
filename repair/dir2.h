@@ -58,6 +58,14 @@ typedef struct dir2_bt_cursor  {
 	struct blkmap		*blkmap;
 } dir2_bt_cursor_t;
 
+#include "bmap.h"	/* Goes away in later refactoring */
+struct xfs_buf *
+da_read_buf(
+	xfs_mount_t	*mp,
+	int		nex,
+	bmap_ext_t	*bmp,
+	const struct xfs_buf_ops *ops);
+
 int
 process_dir2(
 	xfs_mount_t	*mp,

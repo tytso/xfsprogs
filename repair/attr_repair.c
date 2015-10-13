@@ -138,13 +138,19 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		xfs_dablk_t		*rbno,
 		int			whichfork)
 {
+	bmap_ext_t		*bmp;
 	xfs_dablk_t		bno;
 	int			i;
+	int			nex;
 	xfs_da_intnode_t	*node;
+	bmap_ext_t		lbmp;
 	xfs_fsblock_t		fsbno;
 	xfs_buf_t		*bp;
+	struct xfs_da_geometry	*geo;
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
+
+	geo = mp->m_attr_geo;
 
 	/*
 	 * traverse down left-side of tree until we hit the
@@ -160,13 +166,16 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		/*
 		 * read in each block along the way and set up cursor
 		 */
-		fsbno = blkmap_get(da_cursor->blkmap, bno);
+		nex = blkmap_getn(da_cursor->blkmap, bno,
+				geo->fsbcount, &bmp, &lbmp);
 
-		if (fsbno == NULLFSBLOCK)
+		if (nex == 0)
 			goto error_out;
 
-		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
-				XFS_FSB_TO_BB(mp, 1), 0, &xfs_da3_node_buf_ops);
+		bp = da_read_buf(mp, nex, bmp, &xfs_da3_node_buf_ops);
+		if (bmp != &lbmp)
+			free(bmp);
+
 		if (!bp) {
 			if (whichfork == XFS_DATA_FORK)
 				do_warn(
@@ -192,12 +201,10 @@ traverse_int_dablock(xfs_mount_t	*mp,
 			goto error_out;
 		}
 
-		if (nodehdr.count > mp->m_attr_geo->node_ents)  {
+		if (nodehdr.count > geo->node_ents)  {
 			do_warn(_("bad record count in inode %" PRIu64 ", "
 				  "count = %d, max = %d\n"),
-				da_cursor->ino,
-				nodehdr.count,
-				mp->m_attr_geo->node_ents);
+				da_cursor->ino, nodehdr.count, geo->node_ents);
 			libxfs_putbuf(bp);
 			goto error_out;
 		}
@@ -492,8 +499,14 @@ verify_da_path(xfs_mount_t	*mp,
 	int			bad;
 	int			entry;
 	int			this_level = p_level + 1;
+	bmap_ext_t		*bmp;
+	int			nex;
+	bmap_ext_t		lbmp;
+	struct xfs_da_geometry	*geo;
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
+
+	geo = mp->m_attr_geo;
 
 	/*
 	 * index is currently set to point to the entry that
@@ -536,17 +549,21 @@ verify_da_path(xfs_mount_t	*mp,
 		 */
 		dabno = nodehdr.forw;
 		ASSERT(dabno != 0);
-		fsbno = blkmap_get(cursor->blkmap, dabno);
-
-		if (fsbno == NULLFSBLOCK) {
-			do_warn(_("can't get map info for block %u "
-				  "of directory inode %" PRIu64 "\n"),
+		nex = blkmap_getn(cursor->blkmap, dabno, geo->fsbcount,
+			&bmp, &lbmp);
+		if (nex == 0) {
+			do_warn(
+_("can't get map info for block %u of directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
 			return(1);
 		}
 
-		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
-				XFS_FSB_TO_BB(mp, 1), 0, &xfs_da3_node_buf_ops);
+		fsbno = bmp[0].startblock;
+
+		bp = da_read_buf(mp, nex, bmp, &xfs_da3_node_buf_ops);
+		if (bmp != &lbmp)
+			free(bmp);
+
 		if (!bp) {
 			do_warn(
 	_("can't read block %u (%" PRIu64 ") for directory inode %" PRIu64 "\n"),
@@ -577,7 +594,7 @@ verify_da_path(xfs_mount_t	*mp,
 				dabno, fsbno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.count > mp->m_attr_geo->node_ents) {
+		if (nodehdr.count > geo->node_ents) {
 			do_warn(
 	_("entry count %d too large in block %u (%" PRIu64 ") for directory inode %" PRIu64 "\n"),
 				nodehdr.count,
