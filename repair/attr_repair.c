@@ -188,7 +188,7 @@ traverse_int_dablock(xfs_mount_t	*mp,
 			goto error_out;
 		}
 
-		node = (xfs_da_intnode_t *)XFS_BUF_PTR(bp);
+		node = bp->b_addr;
 		btree = M_DIROPS(mp)->node_tree_p(node);
 		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
@@ -335,7 +335,7 @@ verify_final_da_path(xfs_mount_t	*mp,
 	 * in the block which should be the final (rightmost) entry
 	 */
 	entry = cursor->level[this_level].index;
-	node = (xfs_da_intnode_t *)XFS_BUF_PTR(cursor->level[this_level].bp);
+	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
 	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
@@ -513,7 +513,7 @@ verify_da_path(xfs_mount_t	*mp,
 	 * should be processed now in this level.
 	 */
 	entry = cursor->level[this_level].index;
-	node = (xfs_da_intnode_t *)XFS_BUF_PTR(cursor->level[this_level].bp);
+	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
 	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
@@ -571,7 +571,7 @@ _("can't get map info for block %u of directory inode %" PRIu64 "\n"),
 			return(1);
 		}
 
-		newnode = (xfs_da_intnode_t *)XFS_BUF_PTR(bp);
+		newnode = bp->b_addr;
 		btree = M_DIROPS(mp)->node_tree_p(newnode);
 		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, newnode);
 
@@ -1040,7 +1040,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		ASSERT(mp->m_sb.sb_blocksize == XFS_BUF_COUNT(bp));
 
 		length = MIN(XFS_BUF_COUNT(bp) - hdrsize, valuelen - amountdone);
-		memmove(value, XFS_BUF_PTR(bp) + hdrsize, length);
+		memmove(value, bp->b_addr + hdrsize, length);
 		amountdone += length;
 		value += length;
 		i++;
@@ -1620,7 +1620,7 @@ process_longform_attr(
 	}
 
 	/* verify leaf block */
-	leaf = (xfs_attr_leafblock_t *)XFS_BUF_PTR(bp);
+	leaf = bp->b_addr;
 	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
 
 	/* check sibling pointers in leaf block or root block 0 before

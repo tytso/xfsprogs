@@ -347,7 +347,7 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	 * in the block which should be the final (rightmost) entry
 	 */
 	entry = cursor->level[this_level].index;
-	node = (xfs_da_intnode_t *)(cursor->level[this_level].bp->b_addr);
+	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
 	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
