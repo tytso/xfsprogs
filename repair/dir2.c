@@ -183,7 +183,7 @@ _("can't read block %u for directory inode %" PRIu64 "\n"),
 		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
 		if (nodehdr.magic == XFS_DIR2_LEAFN_MAGIC ||
-		    nodehdr.magic == XFS_DIR3_LEAFN_MAGIC)  {
+		    nodehdr.magic == XFS_DIR3_LEAFN_MAGIC) {
 			if ( i != -1 ) {
 				do_warn(
 _("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
@@ -195,7 +195,7 @@ _("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
 		}
 
 		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
-		    nodehdr.magic != XFS_DA3_NODE_MAGIC)  {
+		    nodehdr.magic != XFS_DA3_NODE_MAGIC) {
 			libxfs_putbuf(bp);
 			do_warn(
 _("bad dir magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
@@ -212,7 +212,7 @@ _("corrupt tree block %u for directory inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 		btree = M_DIROPS(mp)->node_tree_p(node);
-		if (nodehdr.count > geo->node_ents)  {
+		if (nodehdr.count > geo->node_ents) {
 			do_warn(
 _("bad record count in inode %" PRIu64 ", count = %d, max = %d\n"),
 				da_cursor->ino, nodehdr.count, geo->node_ents);
@@ -233,9 +233,9 @@ _("bad header depth for directory inode %" PRIu64 "\n"),
 				goto error_out;
 			}
 		} else {
-			if (nodehdr.level == i - 1)  {
+			if (nodehdr.level == i - 1) {
 				i--;
-			} else  {
+			} else {
 				do_warn(
 _("bad directory btree for directory inode %" PRIu64 "\n"),
 					da_cursor->ino);
@@ -262,7 +262,7 @@ _("bad directory btree for directory inode %" PRIu64 "\n"),
 	return(1);
 
 error_out:
-	while (i > 1 && i <= da_cursor->active)  {
+	while (i > 1 && i <= da_cursor->active) {
 		libxfs_putbuf(da_cursor->level[i].bp);
 		i++;
 	}
@@ -358,7 +358,7 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	 * that all entries are used, encountered and expected hashvals
 	 * match, etc.
 	 */
-	if (entry != nodehdr.count - 1)  {
+	if (entry != nodehdr.count - 1) {
 		do_warn(
 		_("directory block used/count inconsistency - %d / %hu\n"),
 			entry, nodehdr.count);
@@ -368,20 +368,20 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	 * hash values monotonically increasing ???
 	 */
 	if (cursor->level[this_level].hashval >=
-				be32_to_cpu(btree[entry].hashval))  {
+				be32_to_cpu(btree[entry].hashval)) {
 		do_warn(_("directory/attribute block hashvalue inconsistency, "
 			  "expected > %u / saw %u\n"),
 			cursor->level[this_level].hashval,
 			be32_to_cpu(btree[entry].hashval));
 		bad++;
 	}
-	if (nodehdr.forw != 0)  {
+	if (nodehdr.forw != 0) {
 		do_warn(_("bad directory/attribute forward block pointer, "
 			  "expected 0, saw %u\n"),
 			nodehdr.forw);
 		bad++;
 	}
-	if (bad)  {
+	if (bad) {
 		do_warn(_("bad directory block in inode %" PRIu64 "\n"), cursor->ino);
 		return(1);
 	}
@@ -408,8 +408,8 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	}
 
 	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval))  {
-		if (!no_modify)  {
+				be32_to_cpu(btree[entry].hashval)) {
+		if (!no_modify) {
 			do_warn(
 _("correcting bad hashval in non-leaf dir block\n"
   "\tin (level %d) in inode %" PRIu64 ".\n"),
@@ -417,7 +417,7 @@ _("correcting bad hashval in non-leaf dir block\n"
 			btree[entry].hashval = cpu_to_be32(
 						cursor->level[p_level].hashval);
 			cursor->level[this_level].dirty++;
-		} else  {
+		} else {
 			do_warn(
 _("would correct bad hashval in non-leaf dir block\n"
   "\tin (level %d) in inode %" PRIu64 ".\n"),
@@ -454,7 +454,7 @@ _("would correct bad hashval in non-leaf dir block\n"
 		return(0);
 	}
 	/*
-	 * set hashvalue to correctl reflect the now-validated
+	 * set hashvalue to correctly reflect the now-validated
 	 * last entry in this block and continue upwards validation
 	 */
 	cursor->level[this_level].hashval = hashval;
@@ -536,7 +536,7 @@ verify_dir2_path(xfs_mount_t	*mp,
 	 * block and move on to the next block.
 	 * and update cursor value for said level
 	 */
-	if (entry >= nodehdr.count)  {
+	if (entry >= nodehdr.count) {
 		/*
 		 * update the hash value for this level before
 		 * validating it.  bno value should be ok since
@@ -599,27 +599,27 @@ _("bad magic number %x in block %u for directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.back != cursor->level[this_level].bno)  {
+		if (nodehdr.back != cursor->level[this_level].bno) {
 			do_warn(
 _("bad back pointer in block %u for directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.count > geo->node_ents)  {
+		if (nodehdr.count > geo->node_ents) {
 			do_warn(
 _("entry count %d too large in block %u for directory inode %" PRIu64 "\n"),
 				nodehdr.count,
 				dabno, cursor->ino);
 			bad++;
 		}
-		if (nodehdr.level != this_level)  {
+		if (nodehdr.level != this_level) {
 			do_warn(
 _("bad level %d in block %u for directory inode %" PRIu64 "\n"),
 				nodehdr.level,
 				dabno, cursor->ino);
 			bad++;
 		}
-		if (bad)  {
+		if (bad) {
 #ifdef XR_DIR_TRACE
 			fprintf(stderr, "verify_dir2_path returns 1 (bad) #4\n");
 #endif
@@ -643,6 +643,8 @@ _("bad level %d in block %u for directory inode %" PRIu64 "\n"),
 			libxfs_writebuf(cursor->level[this_level].bp, 0);
 		else
 			libxfs_putbuf(cursor->level[this_level].bp);
+
+		/* switch cursor to point at the new buffer we just read */
 		cursor->level[this_level].bp = bp;
 		cursor->level[this_level].dirty = 0;
 		cursor->level[this_level].bno = dabno;
@@ -670,8 +672,8 @@ _("bad level %d in block %u for directory inode %" PRIu64 "\n"),
 	 * block against the hashval in the current entry
 	 */
 	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval))  {
-		if (!no_modify)  {
+				be32_to_cpu(btree[entry].hashval)) {
+		if (!no_modify) {
 			do_warn(
 _("correcting bad hashval in interior dir block\n"
   "\tin (level %d) in inode %" PRIu64 ".\n"),
@@ -679,7 +681,7 @@ _("correcting bad hashval in interior dir block\n"
 			btree[entry].hashval = cpu_to_be32(
 					cursor->level[p_level].hashval);
 			cursor->level[this_level].dirty++;
-		} else  {
+		} else {
 			do_warn(
 _("would correct bad hashval in interior dir block\n"
   "\tin (level %d) in inode %" PRIu64 ".\n"),
