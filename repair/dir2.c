@@ -337,6 +337,11 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
 
+#ifdef XR_DIR_TRACE
+	fprintf(stderr, "in verify_final_dir2_path, this_level = %d\n",
+		this_level);
+#endif
+
 	/*
 	 * the index should point to the next "unprocessed" entry
 	 * in the block which should be the final (rightmost) entry
@@ -388,8 +393,17 @@ verify_final_dir2_path(xfs_mount_t	*mp,
 	/*
 	 * ok, now check descendant block number against this level
 	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before))
+	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
+#ifdef XR_DIR_TRACE
+		fprintf(stderr, "bad directory btree pointer, child bno should "
+				"be %d, block bno is %d, hashval is %u\n",
+			be16_to_cpu(btree[entry].before),
+			cursor->level[p_level].bno,
+			cursor->level[p_level].hashval);
+		fprintf(stderr, "verify_final_dir2_path returns 1 (bad) #1a\n");
+#endif
 		return(1);
+	}
 
 	if (cursor->level[p_level].hashval !=
 				be32_to_cpu(btree[entry].hashval))  {
@@ -431,8 +445,12 @@ _("would correct bad hashval in non-leaf dir block\n"
 	/*
 	 * bail out if this is the root block (top of tree)
 	 */
-	if (this_level >= cursor->active)
+	if (this_level >= cursor->active) {
+#ifdef XR_DIR_TRACE
+		fprintf(stderr, "verify_final_dir2_path returns 0 (ok)\n");
+#endif
 		return(0);
+	}
 	/*
 	 * set hashvalue to correctl reflect the now-validated
 	 * last entry in this block and continue upwards validation
@@ -600,6 +618,9 @@ _("bad level %d in block %u for directory inode %" PRIu64 "\n"),
 			bad++;
 		}
 		if (bad)  {
+#ifdef XR_DIR_TRACE
+			fprintf(stderr, "verify_dir2_path returns 1 (bad) #4\n");
+#endif
 			libxfs_putbuf(bp);
 			return(1);
 		}
@@ -631,8 +652,17 @@ _("bad level %d in block %u for directory inode %" PRIu64 "\n"),
 	/*
 	 * ditto for block numbers
 	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before))
+	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
+#ifdef XR_DIR_TRACE
+		fprintf(stderr, "bad directory btree pointer, child bno "
+			"should be %d, block bno is %d, hashval is %u\n",
+			be32_to_cpu(btree[entry].before),
+			cursor->level[p_level].bno,
+			cursor->level[p_level].hashval);
+		fprintf(stderr, "verify_dir2_path returns 1 (bad) #1a\n");
+#endif
 		return(1);
+	}
 	/*
 	 * ok, now validate last hashvalue in the descendant
 	 * block against the hashval in the current entry
@@ -659,6 +689,9 @@ _("would correct bad hashval in interior dir block\n"
 	 * (which should point to the next descendant block)
 	 */
 	cursor->level[this_level].index++;
+#ifdef XR_DIR_TRACE
+       fprintf(stderr, "verify_dir2_path returns 0 (ok)\n");
+#endif
 	return(0);
 }
 
