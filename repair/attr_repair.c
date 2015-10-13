@@ -212,9 +212,17 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		/*
 		 * maintain level counter
 		 */
-		if (i == -1)
+		if (i == -1) {
 			i = da_cursor->active = nodehdr.level;
-		else  {
+			if (i < 1 || i >= XFS_DA_NODE_MAXDEPTH) {
+				do_warn(
+_("bad header depth for directory inode %" PRIu64 "\n"),
+					da_cursor->ino);
+				libxfs_putbuf(bp);
+				i = -1;
+				goto error_out;
+			}
+		} else  {
 			if (nodehdr.level == i - 1)  {
 				i--;
 			} else  {
