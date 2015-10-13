@@ -62,8 +62,9 @@ pthread_mutex_t	mainwait;
 #define ACTIVE		1
 #define INACTIVE	2
 
-xfs_off_t write_log_trailer(int fd, wbuf *w, xfs_mount_t *mp);
-xfs_off_t write_log_header(int fd, wbuf *w, xfs_mount_t *mp);
+xfs_off_t	write_log_trailer(int fd, wbuf *w, xfs_mount_t *mp);
+xfs_off_t	write_log_header(int fd, wbuf *w, xfs_mount_t *mp);
+static void	format_logs(struct xfs_mount *);
 
 /* general purpose message reporting routine */
 
@@ -518,7 +519,7 @@ main(int argc, char **argv)
 	int		i, j;
 	int		howfar = 0;
 	int		open_flags;
-	xfs_off_t	pos, end_pos;
+	xfs_off_t	pos;
 	size_t		length;
 	int		c;
 	__uint64_t	size, sizeb;
@@ -1160,29 +1161,11 @@ main(int argc, char **argv)
 	}
 
 	if (kids > 0)  {
-		if (!duplicate)  {
-
+		if (!duplicate)
 			/* write a clean log using the specified UUID */
-			for (j = 0, tcarg = targ; j < num_targets; j++)  {
-				w_buf.owner = tcarg;
-				w_buf.length = rounddown(w_buf.size,
-							 w_buf.min_io_size);
-				pos = write_log_header(
-							source_fd, &w_buf, mp);
-				end_pos = write_log_trailer(
-							source_fd, &w_buf, mp);
-				w_buf.position = pos;
-				memset(w_buf.data, 0, w_buf.length);
-
-				while (w_buf.position < end_pos)  {
-					do_write(tcarg, NULL);
-					w_buf.position += w_buf.length;
-				}
-				tcarg++;
-			}
-		} else {
+			format_logs(mp);
+		else
 			num_ags = 1;
-		}
 
 		/* reread and rewrite superblocks (UUID and in-progress) */
 		/* [backwards, so inprogress bit only updated when done] */
@@ -1283,4 +1266,42 @@ write_log_trailer(int fd, wbuf *buf, xfs_mount_t *mp)
 	}
 
 	return buf->position;
+}
+
+/*
+ * Clear a log by writing a record at the head, the tail and zeroing everything
+ * in between.
+ */
+static void
+clear_log(
+	struct xfs_mount	*mp,
+	thread_args		*tcarg)
+{
+	xfs_off_t		pos;
+	xfs_off_t		end_pos;
+
+	w_buf.owner = tcarg;
+	w_buf.length = rounddown(w_buf.size, w_buf.min_io_size);
+	pos = write_log_header(source_fd, &w_buf, mp);
+	end_pos = write_log_trailer(source_fd, &w_buf, mp);
+	w_buf.position = pos;
+	memset(w_buf.data, 0, w_buf.length);
+
+	while (w_buf.position < end_pos)  {
+		do_write(tcarg, NULL);
+		w_buf.position += w_buf.length;
+	}
+}
+
+static void
+format_logs(
+	struct xfs_mount	*mp)
+{
+	thread_args		*tcarg;
+	int			i;
+
+	for (i = 0, tcarg = targ; i < num_targets; i++)  {
+		clear_log(mp, tcarg);
+		tcarg++;
+	}
 }
