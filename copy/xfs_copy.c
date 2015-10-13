@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include "xfs_copy.h"
+#include "libxlog.h"
 
 #define	rounddown(x, y)	(((x)/(y))*(y))
 #define uuid_equal(s,d) (platform_uuid_compare((s),(d)) == 0)
@@ -127,6 +128,12 @@ do_message(int flags, int code, const char *fmt, ...)
 				_("Aborting XFS copy - reason")); \
 			exit(1); \
 		} while (0)
+
+/* workaround craziness in the xlog routines */
+int xlog_recover_do_trans(struct xlog *log, struct xlog_recover *t, int p)
+{
+	return 0;
+}
 
 void
 check_errors(void)
@@ -522,6 +529,7 @@ main(int argc, char **argv)
 	ag_header_t	ag_hdr;
 	xfs_mount_t	*mp;
 	xfs_mount_t	mbuf;
+	struct xlog	xlog;
 	xfs_buf_t	*sbp;
 	xfs_sb_t	*sb;
 	xfs_agnumber_t	num_ags, agno;
@@ -715,6 +723,31 @@ main(int argc, char **argv)
 		do_log(_("%s: %s has a real-time section.\n"
 			"%s: Aborting.\n"), progname, source_name, progname);
 		exit(1);
+	}
+
+
+	/*
+	 * Set up the mount pointer to access the log and check whether the log
+	 * is clean. Fail on a dirty or corrupt log in non-duplicate mode
+	 * because the log is formatted as part of the copy and we don't want to
+	 * destroy data. We also need the current log cycle to format v5
+	 * superblock logs correctly.
+	 */
+	memset(&xlog, 0, sizeof(struct xlog));
+	mp->m_log = &xlog;
+	c = xlog_is_dirty(mp, mp->m_log, &xargs, 0);
+	if (!duplicate) {
+		if (c == 1) {
+			do_log(_(
+"Error: source filesystem log is dirty. Mount the filesystem to replay the\n"
+"log, unmount and retry xfs_copy.\n"));
+			exit(1);
+		} else if (c < 0) {
+			do_log(_(
+"Error: could not determine the log head or tail of the source filesystem.\n"
+"Mount the filesystem to replay the log or run xfs_repair.\n"));
+			exit(1);
+		}
 	}
 
 	source_blocksize = mp->m_sb.sb_blocksize;

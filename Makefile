@@ -81,7 +81,7 @@ growfs: libxcmd
 io: libxcmd libhandle
 quota: libxcmd
 repair: libxlog
-
+copy: libxlog
 
 ifeq ($(HAVE_BUILDDEFS), yes)
 include $(BUILDRULES)
