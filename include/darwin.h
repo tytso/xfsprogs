@@ -216,4 +216,9 @@ static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
 	return getitimer(ITIMER_REAL, value);
 }
 
+/* FSR */
+
+#define statvfs64 statfs
+#define		_PATH_MOUNTED   "/etc/mtab"
+
 #endif	/* __XFS_DARWIN_H__ */

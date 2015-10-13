@@ -948,7 +948,11 @@ fsrfile_common(
 			fname, strerror(errno));
 		return -1;
 	}
+#ifndef statvfs64
 	bsize = vfss.f_frsize ? vfss.f_frsize : vfss.f_bsize;
+#else
+	bsize = vfss.f_bsize;
+#endif
 	if (statp->bs_blksize * statp->bs_blocks >
 	    vfss.f_bfree * bsize - minimumfree) {
 		fsrprintf(_("insufficient freespace for: %s: "
@@ -1728,7 +1732,11 @@ xfs_getrt(int fd, struct statvfs64 *sfbp)
 		close(fd);
 		return -1;
 	}
+#ifndef statvfs64
 	bsize = (sfbp->f_frsize ? sfbp->f_frsize : sfbp->f_bsize);
+#else
+	bsize = sfbp->f_bsize;
+#endif
 	factor = fsgeom.blocksize / bsize;         /* currently this is == 1 */
 	sfbp->f_bfree = (cnt.freertx * fsgeom.rtextsize) * factor;
 	return 0;
