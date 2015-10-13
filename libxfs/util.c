@@ -730,10 +730,43 @@ xfs_verifier_error(
 		  bp->b_bn, BBTOB(bp->b_length));
 }
 
+/*
+ * This is called from I/O verifiers on v5 superblock filesystems. In the
+ * kernel, it validates the metadata LSN parameter against the current LSN of
+ * the active log. We don't have an active log in userspace so this kind of
+ * validation is not required. Therefore, this function always returns true in
+ * userspace.
+ *
+ * xfs_repair piggybacks off this mechanism to help track the largest metadata
+ * LSN in use on a filesystem. Keep a record of the largest LSN seen such that
+ * repair can validate it against the state of the log.
+ */
+xfs_lsn_t	libxfs_max_lsn = 0;
+pthread_mutex_t	libxfs_max_lsn_lock = PTHREAD_MUTEX_INITIALIZER;
+
 bool
 xfs_log_check_lsn(
 	struct xfs_mount	*mp,
 	xfs_lsn_t		lsn)
 {
+	int			cycle = CYCLE_LSN(lsn);
+	int			block = BLOCK_LSN(lsn);
+	int			max_cycle;
+	int			max_block;
+
+	if (lsn == NULLCOMMITLSN)
+		return true;
+
+	pthread_mutex_lock(&libxfs_max_lsn_lock);
+
+	max_cycle = CYCLE_LSN(libxfs_max_lsn);
+	max_block = BLOCK_LSN(libxfs_max_lsn);
+
+	if ((cycle > max_cycle) ||
+	    (cycle == max_cycle && block > max_block))
+		libxfs_max_lsn = lsn;
+
+	pthread_mutex_unlock(&libxfs_max_lsn_lock);
+
 	return true;
 }

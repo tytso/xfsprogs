@@ -134,6 +134,7 @@ typedef struct {
 #define LIBXFS_DIRECT		0x0020	/* can use direct I/O, not buffered */
 
 extern char	*progname;
+extern xfs_lsn_t libxfs_max_lsn;
 extern int	libxfs_init (libxfs_init_t *);
 extern void	libxfs_destroy (void);
 extern int	libxfs_device_to_fd (dev_t);
