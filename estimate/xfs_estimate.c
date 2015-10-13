@@ -45,7 +45,7 @@ cvtnum(char *s)
 	return 0LL;
 }
 
-int ffn(const char *, const struct stat64 *, int, struct FTW *);
+int ffn(const char *, const struct stat *, int, struct FTW *);
 
 #define BLOCKSIZE	4096
 #define INODESIZE	256
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 		ndirs=0LL;		/* number of directories */
 		nspecial=0LL;		/* number of special files */
 
-		nftw64(argv[optind], ffn, 40, FTW_PHYS | FTW_MOUNT);
+		nftw(argv[optind], ffn, 40, FTW_PHYS | FTW_MOUNT);
 
 		if (__debug) {
 			printf(_("dirsize=%llu\n"), dirsize);
@@ -214,7 +214,7 @@ main(int argc, char **argv)
 }
 
 int
-ffn(const char *path, const struct stat64 *stb, int flags, struct FTW *f)
+ffn(const char *path, const struct stat *stb, int flags, struct FTW *f)
 {
 	/* cases are in most-encountered to least-encountered order */
 	dirsize+=PERDIRENTRY+strlen(path);
