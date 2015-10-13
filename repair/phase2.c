@@ -98,7 +98,7 @@ zero_log(xfs_mount_t *mp)
 		(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 		&mp->m_sb.sb_uuid,
 		xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-		mp->m_sb.sb_logsunit, XLOG_FMT);
+		mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE);
 }
 
 /*

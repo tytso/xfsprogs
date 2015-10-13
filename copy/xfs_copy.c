@@ -1212,8 +1212,8 @@ write_log_header(int fd, wbuf *buf, xfs_mount_t *mp)
 
 	offset = libxfs_log_header(p, &buf->owner->uuid,
 			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-			mp->m_sb.sb_logsunit, XLOG_FMT,
-			next_log_chunk, buf);
+			mp->m_sb.sb_logsunit, XLOG_FMT, NULLCOMMITLSN,
+			NULLCOMMITLSN, next_log_chunk, buf);
 	do_write(buf->owner);
 
 	return roundup(logstart + offset, buf->length);

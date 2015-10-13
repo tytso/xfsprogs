@@ -150,13 +150,20 @@ libxfs_log_clear(
 	uuid_t			*fs_uuid,
 	int			version,
 	int			sunit,
-	int			fmt)
+	int			fmt,
+	int			cycle)
 {
 	xfs_buf_t		*bp;
 	int			len;
+	xfs_lsn_t		lsn;
 
 	if (!btp->dev || !fs_uuid)
 		return -EINVAL;
+
+	if (cycle != XLOG_INIT_CYCLE)
+		return -EINVAL;
+
+	lsn = xlog_assign_lsn(cycle, 0);
 
 	/* first zero the log */
 	libxfs_device_zero(btp, start, length);
@@ -165,8 +172,8 @@ libxfs_log_clear(
 	len = ((version == 2) && sunit) ? BTOBB(sunit) : 2;
 	len = MAX(len, 2);
 	bp = libxfs_getbufr(btp, start, len);
-	libxfs_log_header(XFS_BUF_PTR(bp),
-			  fs_uuid, version, sunit, fmt, next, bp);
+	libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, sunit, fmt, lsn,
+			  lsn, next, bp);
 	bp->b_flags |= LIBXFS_B_DIRTY;
 	libxfs_putbufr(bp);
 	return 0;
@@ -179,6 +186,8 @@ libxfs_log_header(
 	int			version,
 	int			sunit,
 	int			fmt,
+	xfs_lsn_t		lsn,
+	xfs_lsn_t		tail_lsn,
 	libxfs_get_block_t	*nextfunc,
 	void			*private)
 {
@@ -187,11 +196,16 @@ libxfs_log_header(
 	__be32			cycle_lsn;
 	int			i, len;
 
+	if (lsn == NULLCOMMITLSN)
+		lsn = xlog_assign_lsn(XLOG_INIT_CYCLE, 0);
+	if (tail_lsn == NULLCOMMITLSN)
+		tail_lsn = lsn;
+
 	len = ((version == 2) && sunit) ? BTOBB(sunit) : 1;
 
 	memset(p, 0, BBSIZE);
 	head->h_magicno = cpu_to_be32(XLOG_HEADER_MAGIC_NUM);
-	head->h_cycle = cpu_to_be32(1);
+	head->h_cycle = cpu_to_be32(CYCLE_LSN(lsn));
 	head->h_version = cpu_to_be32(version);
 	if (len != 1)
 		head->h_len = cpu_to_be32(sunit - BBSIZE);
@@ -203,8 +217,8 @@ libxfs_log_header(
 	head->h_fmt = cpu_to_be32(fmt);
 	head->h_size = cpu_to_be32(XLOG_HEADER_CYCLE_SIZE);
 
-	head->h_lsn = cpu_to_be64(xlog_assign_lsn(1, 0));
-	head->h_tail_lsn = cpu_to_be64(xlog_assign_lsn(1, 0));
+	head->h_lsn = cpu_to_be64(lsn);
+	head->h_tail_lsn = cpu_to_be64(tail_lsn);
 
 	memcpy(&head->h_fs_uuid, fs_uuid, sizeof(uuid_t));
 
