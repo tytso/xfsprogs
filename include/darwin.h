@@ -220,6 +220,7 @@ static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
 /* FSR */
 
 #define statvfs64 statfs
+#define lstat64 lstat
 #define		_PATH_MOUNTED   "/etc/mtab"
 
 #endif	/* __XFS_DARWIN_H__ */
