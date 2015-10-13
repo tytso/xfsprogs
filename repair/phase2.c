@@ -126,6 +126,13 @@ zero_log(
 		if (error || head_blk != tail_blk)
 			do_error(_("failed to clear log"));
 	}
+
+	/*
+	 * Finally, seed the max LSN from the current state of the log if this
+	 * is a v5 filesystem.
+	 */
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		libxfs_max_lsn = log->l_last_sync_lsn;
 }
 
 /*
