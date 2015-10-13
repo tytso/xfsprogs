@@ -59,9 +59,6 @@ typedef unsigned char	da_freemap_t;
  */
 typedef struct da_level_state  {
 	xfs_buf_t	*bp;		/* block bp */
-#ifdef XR_DIR_TRACE
-	xfs_da_intnode_t *n;		/* bp data */
-#endif
 	xfs_dablk_t	bno;		/* file block number */
 	xfs_dahash_t	hashval;	/* last verified hashval */
 	int		index;		/* current index in block */
@@ -232,9 +229,6 @@ traverse_int_dablock(xfs_mount_t	*mp,
 		da_cursor->level[i].bp = bp;
 		da_cursor->level[i].bno = bno;
 		da_cursor->level[i].index = 0;
-#ifdef XR_DIR_TRACE
-		da_cursor->level[i].n = XFS_BUF_TO_DA_INTNODE(bp);
-#endif
 
 		/*
 		 * set up new bno for next level down
@@ -624,9 +618,6 @@ verify_da_path(xfs_mount_t	*mp,
 		cursor->level[this_level].bno = dabno;
 		cursor->level[this_level].hashval =
 					be32_to_cpu(btree[0].hashval);
-#ifdef XR_DIR_TRACE
-		cursor->level[this_level].n = newnode;
-#endif
 		entry = cursor->level[this_level].index = 0;
 
 		/*
