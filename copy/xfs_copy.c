@@ -64,7 +64,7 @@ pthread_mutex_t	mainwait;
 
 xfs_off_t	write_log_trailer(int fd, wbuf *w, xfs_mount_t *mp);
 xfs_off_t	write_log_header(int fd, wbuf *w, xfs_mount_t *mp);
-static void	format_logs(struct xfs_mount *);
+static int	format_logs(struct xfs_mount *);
 
 /* general purpose message reporting routine */
 
@@ -1293,15 +1293,72 @@ clear_log(
 	}
 }
 
+/*
+ * Format the log to a particular cycle number. This is required for version 5
+ * superblock filesystems to provide metadata LSN validity guarantees.
+ */
 static void
+format_log(
+	struct xfs_mount	*mp,
+	thread_args		*tcarg,
+	wbuf			*buf)
+{
+	int			logstart;
+	int			length;
+	int			cycle = XLOG_INIT_CYCLE;
+
+	buf->owner = tcarg;
+	buf->length = buf->size;
+	buf->position = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart) << BBSHIFT;
+
+	logstart = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logstart);
+	length = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
+
+	/*
+	 * Bump the cycle number on v5 superblock filesystems to guarantee that
+	 * all existing metadata LSNs are valid (behind the current LSN) on the
+	 * target fs.
+	 */
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		cycle = mp->m_log->l_curr_cycle + 1;
+
+	/*
+	 * Format the entire log into the memory buffer and write it out. If the
+	 * write fails, mark the target inactive so the failure is reported.
+	 */
+	libxfs_log_clear(NULL, buf->data, logstart, length, &buf->owner->uuid,
+			 xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			 mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
+	if (do_write(buf->owner, buf))
+		target[tcarg->id].state = INACTIVE;
+}
+
+static int
 format_logs(
 	struct xfs_mount	*mp)
 {
 	thread_args		*tcarg;
 	int			i;
+	wbuf			logbuf;
+	int			logsize;
+
+	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		logsize = XFS_FSB_TO_B(mp, mp->m_sb.sb_logblocks);
+		if (!wbuf_init(&logbuf, logsize, w_buf.data_align,
+			       w_buf.min_io_size, w_buf.id))
+			return -ENOMEM;
+	}
 
 	for (i = 0, tcarg = targ; i < num_targets; i++)  {
-		clear_log(mp, tcarg);
+		if (xfs_sb_version_hascrc(&mp->m_sb))
+			format_log(mp, tcarg, &logbuf);
+		else
+			clear_log(mp, tcarg);
 		tcarg++;
 	}
+
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		free(logbuf.data);
+
+	return 0;
 }
