@@ -1025,6 +1025,7 @@ fsr_setup_attr_fork(
 	int		tfd,
 	xfs_bstat_t	*bstatp)
 {
+#ifdef HAVE_FSETXATTR
 	struct stat64	tstatbuf;
 	int		i;
 	int		diff = 0;
@@ -1199,6 +1200,7 @@ out:
 	if (dflag && diff)
 		fsrprintf(_("failed to match fork offset\n"));;
 
+#endif /* HAVE_FSETXATTR */
 	return 0;
 }
 
