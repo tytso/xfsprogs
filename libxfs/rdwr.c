@@ -133,38 +133,54 @@ static void unmount_record(void *p)
 	memcpy((char *)p + sizeof(xlog_op_header_t), &magic, sizeof(magic));
 }
 
-static char *next(char *ptr, int offset, void *private)
+static char *next(
+	char		*ptr,
+	int		offset,
+	void		*private)
 {
-	xfs_buf_t	*buf = (xfs_buf_t *)private;
+	struct xfs_buf	*buf = (struct xfs_buf *)private;
 
-	if (XFS_BUF_COUNT(buf) < (int)(ptr - XFS_BUF_PTR(buf)) + offset)
+	if (buf &&
+	    (XFS_BUF_COUNT(buf) < (int)(ptr - XFS_BUF_PTR(buf)) + offset))
 		abort();
+
 	return ptr + offset;
 }
 
+/*
+ * Format the log. The caller provides either a buftarg which is used to access
+ * the log via buffers or a direct pointer to a buffer that encapsulates the
+ * entire log.
+ */
 int
 libxfs_log_clear(
 	struct xfs_buftarg	*btp,
+	char			*dptr,
 	xfs_daddr_t		start,
-	uint			length,
+	uint			length,		/* basic blocks */
 	uuid_t			*fs_uuid,
 	int			version,
-	int			sunit,
+	int			sunit,		/* bytes */
 	int			fmt,
 	int			cycle)
 {
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp = NULL;
 	int			len;
 	xfs_lsn_t		lsn;
 	xfs_lsn_t		tail_lsn;
 	xfs_daddr_t		blk;
 	xfs_daddr_t		end_blk;
+	char			*ptr;
 
-	if (!btp->dev || !fs_uuid)
+	if (((btp && dptr) || (!btp && !dptr)) ||
+	    (btp && !btp->dev) || !fs_uuid)
 		return -EINVAL;
 
 	/* first zero the log */
-	libxfs_device_zero(btp, start, length);
+	if (btp)
+		libxfs_device_zero(btp, start, length);
+	else
+		memset(dptr, 0, BBTOB(length));
 
 	/*
 	 * Initialize the log record length and LSNs. XLOG_INIT_CYCLE is a
@@ -182,11 +198,17 @@ libxfs_log_clear(
 		tail_lsn = xlog_assign_lsn(cycle - 1, length - len);
 
 	/* write out the first log record */
-	bp = libxfs_getbufr(btp, start, len);
-	libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, sunit, fmt,
-			  lsn, tail_lsn, next, bp);
-	bp->b_flags |= LIBXFS_B_DIRTY;
-	libxfs_putbufr(bp);
+	ptr = dptr;
+	if (btp) {
+		bp = libxfs_getbufr(btp, start, len);
+		ptr = XFS_BUF_PTR(bp);
+	}
+	libxfs_log_header(ptr, fs_uuid, version, sunit, fmt, lsn, tail_lsn,
+			  next, bp);
+	if (bp) {
+		bp->b_flags |= LIBXFS_B_DIRTY;
+		libxfs_putbufr(bp);
+	}
 
 	/*
 	 * There's nothing else to do if this is a log reset. The kernel detects
@@ -207,6 +229,8 @@ libxfs_log_clear(
 	 */
 	cycle--;
 	blk = start + len;
+	if (dptr)
+		dptr += BBTOB(len);
 	end_blk = start + length;
 
 	len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
@@ -214,18 +238,26 @@ libxfs_log_clear(
 		lsn = xlog_assign_lsn(cycle, blk - start);
 		tail_lsn = xlog_assign_lsn(cycle, blk - start - len);
 
-		bp = libxfs_getbufr(btp, blk, len);
+		ptr = dptr;
+		if (btp) {
+			bp = libxfs_getbufr(btp, blk, len);
+			ptr = XFS_BUF_PTR(bp);
+		}
 		/*
 		 * Note: pass the full buffer length as the sunit to initialize
 		 * the entire buffer.
 		 */
-		libxfs_log_header(XFS_BUF_PTR(bp), fs_uuid, version, BBTOB(len),
-				  fmt, lsn, tail_lsn, next, bp);
-		bp->b_flags |= LIBXFS_B_DIRTY;
-		libxfs_putbufr(bp);
+		libxfs_log_header(ptr, fs_uuid, version, BBTOB(len), fmt, lsn,
+				  tail_lsn, next, bp);
+		if (bp) {
+			bp->b_flags |= LIBXFS_B_DIRTY;
+			libxfs_putbufr(bp);
+		}
 
-		len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
 		blk += len;
+		if (dptr)
+			dptr += BBTOB(len);
+		len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
 	}
 
 	return 0;

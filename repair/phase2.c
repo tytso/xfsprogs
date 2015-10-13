@@ -114,7 +114,7 @@ zero_log(
 	 * filesystems.
 	 */
 	if (!no_modify && zap_log) {
-		libxfs_log_clear(log->l_dev,
+		libxfs_log_clear(log->l_dev, NULL,
 			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			&mp->m_sb.sb_uuid,

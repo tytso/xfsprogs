@@ -283,7 +283,7 @@ sb_logzero(uuid_t *uuidp)
 
 	dbprintf(_("Clearing log and setting UUID\n"));
 
-	error =  libxfs_log_clear(mp->m_logdev_targp,
+	error =  libxfs_log_clear(mp->m_logdev_targp, NULL,
 			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			uuidp,

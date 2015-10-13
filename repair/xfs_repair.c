@@ -584,8 +584,9 @@ format_log_max_lsn(
 	}
 
 	do_warn(_("Format log to cycle %d.\n"), new_cycle);
-	libxfs_log_clear(log->l_dev, logstart, logblocks, &mp->m_sb.sb_uuid,
-			 logversion, mp->m_sb.sb_logsunit, XLOG_FMT, new_cycle);
+	libxfs_log_clear(log->l_dev, NULL, logstart, logblocks,
+			 &mp->m_sb.sb_uuid, logversion, mp->m_sb.sb_logsunit,
+			 XLOG_FMT, new_cycle);
 }
 
 int

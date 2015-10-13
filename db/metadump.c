@@ -2514,6 +2514,10 @@ copy_log(void)
 {
 	struct xlog	log;
 	int		dirty;
+	xfs_daddr_t	logstart;
+	int		logblocks;
+	int		logversion;
+	int		cycle = XLOG_INIT_CYCLE;
 
 	if (show_progress)
 		print_progress("Copying log");
@@ -2538,8 +2542,16 @@ copy_log(void)
 		/* clear out a clean log */
 		if (show_progress)
 			print_progress("Zeroing clean log");
-		memset(iocur_top->data, 0,
-			mp->m_sb.sb_logblocks * mp->m_sb.sb_blocksize);
+
+		logstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
+		logblocks = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
+		logversion = xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1;
+		if (xfs_sb_version_hascrc(&mp->m_sb))
+			cycle = log.l_curr_cycle + 1;
+
+		libxfs_log_clear(NULL, iocur_top->data, logstart, logblocks,
+				 &mp->m_sb.sb_uuid, logversion,
+				 mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
 		break;
 	case 1:
 		/* keep the dirty log */
