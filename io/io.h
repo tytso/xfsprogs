@@ -161,3 +161,6 @@ extern void		readdir_init(void);
 #else
 #define readdir_init()		do { } while (0)
 #endif
+
+extern void		reflink_init(void);
+extern void		dedupe_init(void);

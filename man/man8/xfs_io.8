@@ -490,6 +490,73 @@ Recursively display all the specified segments starting at the specified
 .B \-s
 Display the starting lseek(2) offset. This offset will be a calculated value when
 both data and holes are displayed together or performing a recusively display.
+.RE
+.PD
+.TP
+.TP
+.BI "reflink  [ \-w ] [ \-W ] src_file [src_offset dst_offset length]"
+On filesystems that support the
+.B XFS_IOC_CLONE_RANGE
+or
+.B BTRFS_IOC_CLONE_RANGE
+ioctls, map
+.I length
+bytes at offset
+.I dst_offset
+in the open file to the same physical blocks that are mapped at offset
+.I src_offset
+in the file
+.I src_file
+, replacing any contents that may already have been there.  If a program
+writes into a reflinked block range of either file, the dirty blocks will be
+cloned, written to, and remapped ("copy on write") in the affected file,
+leaving the other file(s) unchanged.  If src_offset, dst_offset, and length
+are omitted, all contents of src_file will be reflinked into the open file.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-w
+Call
+.BR fdatasync (2)
+after executing the ioctl.
+.TP
+.B \-W
+Call
+.BR fsync (2)
+after executing the command.
+.RE
+.PD
+.TP
+.TP
+.BI "dedupe  [ \-w ] [ \-W ] src_file src_offset dst_offset length"
+On filesystems that support the
+.B XFS_IOC_FILE_EXTENT_SAME
+or
+.B BTRFS_IOC_FILE_EXTENT_SAME
+ioctls, map
+.I length
+bytes at offset
+.I dst_offset
+in the open file to the same physical blocks that are mapped at offset
+.I src_offset
+in the file
+.I src_file
+, but only if the contents of both ranges are identical.  This is known as
+block-based deduplication.  If a program writes into a reflinked block range of
+either file, the dirty blocks will be cloned, written to, and remapped ("copy
+on write") in the affected file, leaving the other file(s) unchanged.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-w
+Call
+.BR fdatasync (2)
+after executing the ioctl.
+.TP
+.B \-W
+Call
+.BR fsync (2)
+after executing the command.
 .TP
 
 .SH MEMORY MAPPED I/O COMMANDS
