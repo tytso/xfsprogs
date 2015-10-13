@@ -944,6 +944,7 @@ blocktrash_b(
 	int		mask;
 	int		newbit;
 	int		offset;
+	const struct xfs_buf_ops *stashed_ops;
 	static char	*modestr[] = {
 		N_("zeroed"), N_("set"), N_("flipped"), N_("randomized")
 	};
@@ -952,8 +953,10 @@ blocktrash_b(
 	offset = (int)(random() % (int)(mp->m_sb.sb_blocksize * NBBY));
 	newbit = 0;
 	push_cur();
-	set_cur(&typtab[DBM_UNKNOWN],
+	set_cur(NULL,
 		XFS_AGB_TO_DADDR(mp, agno, agbno), blkbb, DB_RING_IGN, NULL);
+	stashed_ops = iocur_top->bp->b_ops;
+	iocur_top->bp->b_ops = NULL;
 	if ((buf = iocur_top->data) == NULL) {
 		dbprintf(_("can't read block %u/%u for trashing\n"), agno, agbno);
 		pop_cur();
@@ -984,6 +987,7 @@ blocktrash_b(
 			buf[byte] &= ~mask;
 	}
 	write_cur();
+	iocur_top->bp->b_ops = stashed_ops;
 	pop_cur();
 	printf(_("blocktrash: %u/%u %s block %d bit%s starting %d:%d %s\n"),
 		agno, agbno, typename[type], len, len == 1 ? "" : "s",
@@ -1040,9 +1044,11 @@ blocktrash_f(
 		   (1 << DBM_BTINO) |
 		   (1 << DBM_DIR) |
 		   (1 << DBM_INODE) |
+		   (1 << DBM_LOG) |
 		   (1 << DBM_QUOTA) |
 		   (1 << DBM_RTBITMAP) |
 		   (1 << DBM_RTSUM) |
+		   (1 << DBM_SYMLINK) |
 		   (1 << DBM_SB);
 	while ((c = getopt(argc, argv, "0123n:s:t:x:y:")) != EOF) {
 		switch (c) {
@@ -1106,7 +1112,7 @@ blocktrash_f(
 		return 0;
 	}
 	if (tmask == 0)
-		tmask = goodmask;
+		tmask = goodmask & ~((1 << DBM_LOG) | (1 << DBM_SB));
 	lentab = xmalloc(sizeof(ltab_t));
 	lentab->min = lentab->max = min;
 	lentablen = 1;
