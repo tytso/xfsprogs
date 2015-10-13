@@ -229,6 +229,7 @@ int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
 int
 sb_logcheck(void)
 {
+	struct xlog	log;
 	int		dirty;
 
 	if (mp->m_sb.sb_logstart) {
@@ -247,7 +248,7 @@ sb_logcheck(void)
 
 	libxfs_buftarg_init(mp, x.ddev, x.logdev, x.rtdev);
 
-	dirty = xlog_is_dirty(mp, &x, 0);
+	dirty = xlog_is_dirty(mp, &log, &x, 0);
 	if (dirty == -1) {
 		dbprintf(_("ERROR: cannot find log head/tail, run xfs_repair\n"));
 		return 0;

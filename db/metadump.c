@@ -2512,7 +2512,8 @@ copy_sb_inodes(void)
 static int
 copy_log(void)
 {
-	int dirty;
+	struct xlog	log;
+	int		dirty;
 
 	if (show_progress)
 		print_progress("Copying log");
@@ -2530,7 +2531,7 @@ copy_log(void)
 	if (!obfuscate && !zero_stale_data)
 		goto done;
 
-	dirty = xlog_is_dirty(mp, &x, 0);
+	dirty = xlog_is_dirty(mp, &log, &x, 0);
 
 	switch (dirty) {
 	case 0:
