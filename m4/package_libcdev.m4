@@ -235,3 +235,16 @@ AC_DEFUN([AC_HAVE_MNTENT],
     have_mntent=yes)
     AC_SUBST(have_mntent)
   ])
+
+#
+# Check if we have a mremap call (not on Mac OS X)
+#
+AC_DEFUN([AC_HAVE_MREMAP],
+  [ AC_CHECK_DECL([mremap],
+       have_mremap=yes,
+       [],
+       [#define _GNU_SOURCE
+        #include <sys/mman.h>]
+       )
+    AC_SUBST(have_mremap)
+  ])

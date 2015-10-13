@@ -33,6 +33,7 @@
 #include <mach/mach_time.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 #include <machine/endian.h>
 #define __BYTE_ORDER	BYTE_ORDER

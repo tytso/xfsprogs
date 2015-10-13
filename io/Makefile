@@ -90,6 +90,10 @@ CFILES += readdir.c
 LCFLAGS += -DHAVE_READDIR
 endif
 
+ifeq ($(HAVE_MREMAP),yes)
+LCFLAGS += -DHAVE_MREMAP
+endif
+
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)
