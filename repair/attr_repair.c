@@ -201,6 +201,15 @@ traverse_int_dablock(xfs_mount_t	*mp,
 			goto error_out;
 		}
 
+		/* corrupt node; rebuild the dir. */
+		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
+			libxfs_putbuf(bp);
+			do_warn(
+_("corrupt tree block %u for directory inode %" PRIu64 "\n"),
+				bno, da_cursor->ino);
+			goto error_out;
+		}
+
 		if (nodehdr.count > geo->node_ents)  {
 			do_warn(_("bad record count in inode %" PRIu64 ", "
 				  "count = %d, max = %d\n"),
