@@ -531,6 +531,63 @@ _("sb realtime summary inode %" PRIu64 " %sinconsistent with calculated value %u
 
 }
 
+/*
+ * v5 superblock metadata track the LSN of last modification and thus require
+ * that the current LSN is always moving forward. The current LSN is reset if
+ * the log has been cleared, which puts the log behind parts of the filesystem
+ * on-disk and can disrupt log recovery.
+ *
+ * We have tracked the maximum LSN of every piece of metadata that has been read
+ * in via the read verifiers. Compare the max LSN with the log and if the log is
+ * behind, bump the cycle number and reformat the log.
+ */
+static void
+format_log_max_lsn(
+	struct xfs_mount	*mp)
+{
+	struct xlog		*log = mp->m_log;
+	int			max_cycle;
+	int			max_block;
+	int			new_cycle;
+	xfs_daddr_t		logstart;
+	xfs_daddr_t		logblocks;
+	int			logversion;
+
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return;
+
+	/*
+	 * If the log is ahead of the highest metadata LSN we've seen, we're
+	 * safe and there's nothing to do.
+	 */
+	max_cycle = CYCLE_LSN(libxfs_max_lsn);
+	max_block = BLOCK_LSN(libxfs_max_lsn);
+	if (max_cycle < log->l_curr_cycle ||
+	    (max_cycle == log->l_curr_cycle && max_block < log->l_curr_block))
+		return;
+
+	/*
+	 * Going to the next cycle should be sufficient but we bump by a few
+	 * counts to help cover any metadata LSNs we could have missed.
+	 */
+	new_cycle = max_cycle + 3;
+	logstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
+	logblocks = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
+	logversion = xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1;
+
+	do_warn(_("Maximum metadata LSN (%d:%d) is ahead of log (%d:%d).\n"),
+		max_cycle, max_block, log->l_curr_cycle, log->l_curr_block);
+
+	if (no_modify) {
+		do_warn(_("Would format log to cycle %d.\n"), new_cycle);
+		return;
+	}
+
+	do_warn(_("Format log to cycle %d.\n"), new_cycle);
+	libxfs_log_clear(log->l_dev, logstart, logblocks, &mp->m_sb.sb_uuid,
+			 logversion, mp->m_sb.sb_logsunit, XLOG_FMT, new_cycle);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -896,6 +953,12 @@ _("Warning:  project quota information would be cleared.\n"
 		stop_progress_rpt();
 
 	if (no_modify)  {
+		/*
+		 * Warn if the current LSN is problematic and the log requires a
+		 * reformat.
+		 */
+		format_log_max_lsn(mp);
+
 		do_log(
 	_("No modify flag set, skipping filesystem flush and exiting.\n"));
 		if (verbose)
@@ -931,11 +994,14 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 	libxfs_writebuf(sbp, 0);
 
 	/*
-	 * Done, flush all cached buffers and inodes.
+	 * Done. Flush all cached buffers and inodes first to ensure all
+	 * verifiers are run (where we discover the max metadata LSN), reformat
+	 * the log if necessary and unmount.
 	 */
 	libxfs_bcache_flush();
-
+	format_log_max_lsn(mp);
 	libxfs_umount(mp);
+
 	if (x.rtdev)
 		libxfs_device_close(x.rtdev);
 	if (x.logdev && x.logdev != x.ddev)
