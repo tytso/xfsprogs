@@ -122,7 +122,8 @@ static void unmount_record(void *p)
 	} magic = { XLOG_UNMOUNT_TYPE, 0, 0 };
 
 	memset(p, 0, BBSIZE);
-	op->oh_tid = cpu_to_be32(1);
+	/* dummy tid to mark this as written from userspace */
+	op->oh_tid = cpu_to_be32(0xb0c0d0d0);
 	op->oh_len = cpu_to_be32(sizeof(magic));
 	op->oh_clientid = XFS_LOG;
 	op->oh_flags = XLOG_UNMOUNT_TRANS;
@@ -188,10 +189,6 @@ libxfs_log_header(
 
 	len = ((version == 2) && sunit) ? BTOBB(sunit) : 1;
 
-	/* note that oh_tid actually contains the cycle number
-	 * and the tid is stored in h_cycle_data[0] - that's the
-	 * way things end up on disk.
-	 */
 	memset(p, 0, BBSIZE);
 	head->h_magicno = cpu_to_be32(XLOG_HEADER_MAGIC_NUM);
 	head->h_cycle = cpu_to_be32(1);
@@ -203,7 +200,6 @@ libxfs_log_header(
 	head->h_crc = cpu_to_le32(0);
 	head->h_prev_block = cpu_to_be32(-1);
 	head->h_num_logops = cpu_to_be32(1);
-	head->h_cycle_data[0] = cpu_to_be32(0xb0c0d0d0);
 	head->h_fmt = cpu_to_be32(fmt);
 	head->h_size = cpu_to_be32(XLOG_HEADER_CYCLE_SIZE);
 
@@ -212,11 +208,25 @@ libxfs_log_header(
 
 	memcpy(&head->h_fs_uuid, fs_uuid, sizeof(uuid_t));
 
-	len = MAX(len, 2);
 	p = nextfunc(p, BBSIZE, private);
 	unmount_record(p);
 
+	/*
+	 * The kernel expects to see either a log record header magic or the LSN
+	 * cycle at the top of every log block (for example, see
+	 * xlog_[un]pack_data() and xlog_get_cycle()). Pack the unmount record
+	 * block appropriately here.
+	 */
 	cycle_lsn = CYCLE_LSN_DISK(head->h_lsn);
+	head->h_cycle_data[0] = *(__be32 *)p;
+	*(__be32 *)p = cycle_lsn;
+
+	/*
+	 * Now zero any remaining blocks in the record and stamp with the cycle.
+	 * Note that we don't need to swap into h_cycle_data because it has
+	 * already been initialized to zero.
+	 */
+	len = MAX(len, 2);
 	for (i = 2; i < len; i++) {
 		p = nextfunc(p, BBSIZE, private);
 		memset(p, 0, BBSIZE);
