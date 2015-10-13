@@ -170,20 +170,26 @@ check_errors(void)
  * are taken care of when the buffer's read in
  */
 int
-do_write(thread_args *args)
+do_write(
+	thread_args	*args,
+	wbuf		*buf)
 {
-	int	res, error = 0;
+	int		res;
+	int		error = 0;
 
-	if (target[args->id].position != w_buf.position)  {
-		if (lseek64(args->fd, w_buf.position, SEEK_SET) < 0)  {
+	if (!buf)
+		buf = &w_buf;
+
+	if (target[args->id].position != buf->position)  {
+		if (lseek64(args->fd, buf->position, SEEK_SET) < 0)  {
 			error = target[args->id].err_type = 1;
 		} else  {
-			target[args->id].position = w_buf.position;
+			target[args->id].position = buf->position;
 		}
 	}
 
-	if ((res = write(target[args->id].fd, w_buf.data,
-				w_buf.length)) == w_buf.length)  {
+	if ((res = write(target[args->id].fd, buf->data,
+				buf->length)) == buf->length)  {
 		target[args->id].position += res;
 	} else  {
 		error = 2;
@@ -191,7 +197,7 @@ do_write(thread_args *args)
 
 	if (error) {
 		target[args->id].error = errno;
-		target[args->id].position = w_buf.position;
+		target[args->id].position = buf->position;
 	}
 	return error;
 }
@@ -203,7 +209,7 @@ begin_reader(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&args->wait);
-		if (do_write(args))
+		if (do_write(args, NULL))
 			goto handle_error;
 	        pthread_mutex_lock(&glob_masks.mutex);
 		if (--glob_masks.num_working == 0)
@@ -1168,7 +1174,7 @@ main(int argc, char **argv)
 				memset(w_buf.data, 0, w_buf.length);
 
 				while (w_buf.position < end_pos)  {
-					do_write(tcarg);
+					do_write(tcarg, NULL);
 					w_buf.position += w_buf.length;
 				}
 				tcarg++;
@@ -1190,7 +1196,7 @@ main(int argc, char **argv)
 
 			for (j = 0, tcarg = targ; j < num_targets; j++)  {
 				sb_update_uuid(sb, &ag_hdr, tcarg);
-				do_write(tcarg);
+				do_write(tcarg, NULL);
 				tcarg++;
 			}
 		}
@@ -1212,7 +1218,7 @@ next_log_chunk(char *p, int offset, void *private)
 	if (buf->length < (int)(p - buf->data) + offset) {
 		/* need to flush this one, then start afresh */
 
-		do_write(buf->owner);
+		do_write(buf->owner, NULL);
 		memset(buf->data, 0, buf->length);
 		return buf->data;
 	}
@@ -1247,7 +1253,7 @@ write_log_header(int fd, wbuf *buf, xfs_mount_t *mp)
 			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
 			mp->m_sb.sb_logsunit, XLOG_FMT, NULLCOMMITLSN,
 			NULLCOMMITLSN, next_log_chunk, buf);
-	do_write(buf->owner);
+	do_write(buf->owner, NULL);
 
 	return roundup(logstart + offset, buf->length);
 }
@@ -1272,7 +1278,7 @@ write_log_trailer(int fd, wbuf *buf, xfs_mount_t *mp)
 		read_wbuf(fd, buf, mp);
 		offset = (int)(logend - buf->position);
 		memset(buf->data, 0, offset);
-		do_write(buf->owner);
+		do_write(buf->owner, NULL);
 	}
 
 	return buf->position;
