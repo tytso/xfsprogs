@@ -17,6 +17,7 @@
  */
 
 #include "libxfs.h"
+#include "libxlog.h"
 #include <signal.h>
 #include "command.h"
 #include "init.h"
@@ -28,17 +29,18 @@
 #include "malloc.h"
 #include "type.h"
 
-static char	**cmdline;
-static int	ncmdline;
-char		*fsdevice;
-int		blkbb;
-int		exitcode;
-int		expert_mode;
-int		force;
-xfs_mount_t	xmount;
-xfs_mount_t	*mp;
-libxfs_init_t	x;
-xfs_agnumber_t	cur_agno = NULLAGNUMBER;
+static char		**cmdline;
+static int		ncmdline;
+char			*fsdevice;
+int			blkbb;
+int			exitcode;
+int			expert_mode;
+int			force;
+struct xfs_mount	xmount;
+struct xfs_mount	*mp;
+struct xlog		xlog;
+libxfs_init_t		x;
+xfs_agnumber_t		cur_agno = NULLAGNUMBER;
 
 static void
 usage(void)
@@ -154,6 +156,7 @@ init(
 			progname, fsdevice);
 		exit(1);
 	}
+	mp->m_log = &xlog;
 	blkbb = 1 << mp->m_blkbb_log;
 
 	/*

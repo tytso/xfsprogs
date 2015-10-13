@@ -229,7 +229,6 @@ int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
 int
 sb_logcheck(void)
 {
-	struct xlog	log;
 	int		dirty;
 
 	if (mp->m_sb.sb_logstart) {
@@ -248,7 +247,7 @@ sb_logcheck(void)
 
 	libxfs_buftarg_init(mp, x.ddev, x.logdev, x.rtdev);
 
-	dirty = xlog_is_dirty(mp, &log, &x, 0);
+	dirty = xlog_is_dirty(mp, mp->m_log, &x, 0);
 	if (dirty == -1) {
 		dbprintf(_("ERROR: cannot find log head/tail, run xfs_repair\n"));
 		return 0;
@@ -269,20 +268,32 @@ sb_logcheck(void)
 static int
 sb_logzero(uuid_t *uuidp)
 {
+	int	cycle = XLOG_INIT_CYCLE;
+	int	error;
+
 	if (!sb_logcheck())
 		return 0;
 
+	/*
+	 * The log must always move forward on v5 superblocks. Bump it to the
+	 * next cycle.
+	 */
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		cycle = mp->m_log->l_curr_cycle + 1;
+
 	dbprintf(_("Clearing log and setting UUID\n"));
 
-	if (libxfs_log_clear(mp->m_logdev_targp,
+	error =  libxfs_log_clear(mp->m_logdev_targp,
 			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			uuidp,
 			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-			mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE)) {
+			mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
+	if (error) {
 		dbprintf(_("ERROR: cannot clear the log\n"));
 		return 0;
 	}
+
 	return 1;
 }
 
