@@ -177,19 +177,13 @@ traverse_int_dablock(xfs_mount_t	*mp,
 			free(bmp);
 
 		if (!bp) {
-			if (whichfork == XFS_DATA_FORK)
-				do_warn(
-	_("can't read block %u (fsbno %" PRIu64 ") for directory inode %" PRIu64 "\n"),
-					bno, fsbno, da_cursor->ino);
-			else
-				do_warn(
+			do_warn(
 	_("can't read block %u (fsbno %" PRIu64 ") for attrbute fork of inode %" PRIu64 "\n"),
 					bno, fsbno, da_cursor->ino);
 			goto error_out;
 		}
 
 		node = bp->b_addr;
-		btree = M_DIROPS(mp)->node_tree_p(node);
 		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
 
 		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
@@ -210,6 +204,7 @@ _("corrupt tree block %u for directory inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 
+		btree = M_DIROPS(mp)->node_tree_p(node);
 		if (nodehdr.count > geo->node_ents)  {
 			do_warn(_("bad record count in inode %" PRIu64 ", "
 				  "count = %d, max = %d\n"),
@@ -235,14 +230,9 @@ _("bad header depth for directory inode %" PRIu64 "\n"),
 			if (nodehdr.level == i - 1)  {
 				i--;
 			} else  {
-				if (whichfork == XFS_DATA_FORK)
-					do_warn(_("bad directory btree for "
-						  "directory inode %" PRIu64 "\n"),
-						da_cursor->ino);
-				else
-					do_warn(_("bad attribute fork btree "
-						  "for inode %" PRIu64 "\n"),
-						da_cursor->ino);
+				do_warn(_("bad attribute fork btree "
+					  "for inode %" PRIu64 "\n"),
+					da_cursor->ino);
 				libxfs_putbuf(bp);
 				goto error_out;
 			}

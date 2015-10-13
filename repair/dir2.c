@@ -172,7 +172,7 @@ traverse_int_dir2block(xfs_mount_t	*mp,
 		bp = da_read_buf(mp, nex, bmp, &xfs_da3_node_buf_ops);
 		if (bmp != &lbmp)
 			free(bmp);
-		if (bp == NULL) {
+		if (!bp) {
 			do_warn(
 _("can't read block %u for directory inode %" PRIu64 "\n"),
 				bno, da_cursor->ino);
@@ -192,8 +192,10 @@ _("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
 			*rbno = 0;
 			libxfs_putbuf(bp);
 			return(1);
-		} else if (!(nodehdr.magic == XFS_DA_NODE_MAGIC ||
-			     nodehdr.magic == XFS_DA3_NODE_MAGIC))  {
+		}
+
+		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
+		    nodehdr.magic != XFS_DA3_NODE_MAGIC)  {
 			libxfs_putbuf(bp);
 			do_warn(
 _("bad dir magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
@@ -574,7 +576,7 @@ _("can't get map info for block %u of directory inode %" PRIu64 "\n"),
 		if (bmp != &lbmp)
 			free(bmp);
 
-		if (bp == NULL) {
+		if (!bp) {
 			do_warn(
 _("can't read block %u for directory inode %" PRIu64 "\n"),
 				dabno, cursor->ino);
@@ -589,8 +591,8 @@ _("can't read block %u for directory inode %" PRIu64 "\n"),
 		 * entry count, verify level
 		 */
 		bad = 0;
-		if (!(nodehdr.magic == XFS_DA_NODE_MAGIC ||
-		      nodehdr.magic == XFS_DA3_NODE_MAGIC)) {
+		if (nodehdr.magic != XFS_DA_NODE_MAGIC &&
+		    nodehdr.magic != XFS_DA3_NODE_MAGIC) {
 			do_warn(
 _("bad magic number %x in block %u for directory inode %" PRIu64 "\n"),
 				nodehdr.magic,
