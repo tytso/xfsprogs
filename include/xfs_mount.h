@@ -98,6 +98,12 @@ typedef struct xfs_mount {
 		int	qi_dqperchunk;
 	}			*m_quotainfo;
 
+	/*
+	 * xlog is defined in libxlog and thus is not intialized by libxfs. This
+	 * allows an application to initialize and store a reference to the log
+	 * if warranted.
+	 */
+	struct xlog		*m_log;
 } xfs_mount_t;
 
 /*

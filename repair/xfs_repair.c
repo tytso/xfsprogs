@@ -539,6 +539,7 @@ main(int argc, char **argv)
 	xfs_dsb_t	*dsb;
 	xfs_buf_t	*sbp;
 	xfs_mount_t	xfs_m;
+	struct xlog	log = {0};
 	char		*msgbuf;
 	struct xfs_sb	psb;
 	int		rval;
@@ -620,7 +621,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* prepare the mount structure */
+	/*
+	 * Prepare the mount structure. Point the log reference to our local
+	 * copy so it's available to the various phases. The log bits are
+	 * initialized in phase 2.
+	 */
 	memset(&xfs_m, 0, sizeof(xfs_mount_t));
 	mp = libxfs_mount(&xfs_m, &psb, x.ddev, x.logdev, x.rtdev, 0);
 
@@ -630,6 +635,7 @@ main(int argc, char **argv)
 			progname);
 		exit(1);
 	}
+	mp->m_log = &log;
 
 	/*
 	 * set XFS-independent status vars from the mount/sb structure

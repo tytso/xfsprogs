@@ -39,33 +39,33 @@ static void
 zero_log(xfs_mount_t *mp)
 {
 	int error;
-	struct xlog	log;
 	xfs_daddr_t head_blk, tail_blk;
+	struct xlog	*log = mp->m_log;
 
-	memset(&log, 0, sizeof(log));
+	memset(log, 0, sizeof(struct xlog));
 	x.logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
 	x.logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
 	x.lbsize = BBSIZE;
 	if (xfs_sb_version_hassector(&mp->m_sb))
 		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
 
-	log.l_dev = mp->m_logdev_targp;
-	log.l_logBBsize = x.logBBsize;
-	log.l_logBBstart = x.logBBstart;
-	log.l_sectBBsize  = BTOBB(x.lbsize);
-	log.l_mp = mp;
+	log->l_dev = mp->m_logdev_targp;
+	log->l_logBBsize = x.logBBsize;
+	log->l_logBBstart = x.logBBstart;
+	log->l_sectBBsize  = BTOBB(x.lbsize);
+	log->l_mp = mp;
 	if (xfs_sb_version_hassector(&mp->m_sb)) {
-		log.l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
-		ASSERT(log.l_sectbb_log <= mp->m_sectbb_log);
+		log->l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
+		ASSERT(log->l_sectbb_log <= mp->m_sectbb_log);
 		/* for larger sector sizes, must have v2 or external log */
-		ASSERT(log.l_sectbb_log == 0 ||
-			log.l_logBBstart == 0 ||
+		ASSERT(log->l_sectbb_log == 0 ||
+			log->l_logBBstart == 0 ||
 			xfs_sb_version_haslogv2(&mp->m_sb));
 		ASSERT(mp->m_sb.sb_logsectlog >= BBSHIFT);
 	}
-	log.l_sectbb_mask = (1 << log.l_sectbb_log) - 1;
+	log->l_sectbb_mask = (1 << log->l_sectbb_log) - 1;
 
-	if ((error = xlog_find_tail(&log, &head_blk, &tail_blk))) {
+	if ((error = xlog_find_tail(log, &head_blk, &tail_blk))) {
 		do_warn(_("zero_log: cannot find log head/tail "
 			  "(xlog_find_tail=%d), zeroing it anyway\n"),
 			error);
@@ -93,12 +93,16 @@ zero_log(xfs_mount_t *mp)
 		}
 	}
 
-	libxfs_log_clear(log.l_dev,
-		XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
+	libxfs_log_clear(log->l_dev, XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 		(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 		&mp->m_sb.sb_uuid,
 		xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
 		mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE);
+
+	/* update the log data structure with new state */
+	error = xlog_find_tail(log, &head_blk, &tail_blk);
+	if (error || head_blk != tail_blk)
+		do_error(_("failed to clear log"));
 }
 
 /*
