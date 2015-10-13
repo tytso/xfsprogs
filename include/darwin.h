@@ -18,6 +18,9 @@
 #ifndef __XFS_DARWIN_H__
 #define __XFS_DARWIN_H__
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
 #include <uuid/uuid.h>
 #include <libgen.h>
 #include <sys/vm.h>
