@@ -397,8 +397,8 @@ attr_list_by_handle(
 	alhreq.buffer = buf;
 	alhreq.buflen = bufsize;
 	/* prevent needless EINVAL from the kernel */
-	if (alhreq.buflen > XATTR_LIST_MAX)
-		alhreq.buflen = XATTR_LIST_MAX;
+	if (alhreq.buflen > XFS_XATTR_LIST_MAX)
+		alhreq.buflen = XFS_XATTR_LIST_MAX;
 
 	error = xfsctl(path, fd, XFS_IOC_ATTRLIST_BY_HANDLE, &alhreq);
 

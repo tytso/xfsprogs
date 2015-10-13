@@ -168,8 +168,8 @@ jdm_attr_list(	jdm_fshandle_t *fshp,
 	int rval;
 
 	/* prevent needless EINVAL from the kernel */
-	if (bufsz > XATTR_LIST_MAX)
-		bufsz = XATTR_LIST_MAX;
+	if (bufsz > XFS_XATTR_LIST_MAX)
+		bufsz = XFS_XATTR_LIST_MAX;
 
 	jdm_fill_filehandle( &filehandle, fshandlep, statp );
 	rval = attr_list_by_handle (( void * )&filehandle,
