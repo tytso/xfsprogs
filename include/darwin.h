@@ -39,6 +39,11 @@
 # ifndef SYS_fsctl
 #  define SYS_fsctl	242
 # endif
+
+#ifndef XATTR_LIST_MAX
+#define XATTR_LIST_MAX  65536
+#endif
+
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {
 	return syscall(SYS_fsctl, path, cmd, p, 0);
