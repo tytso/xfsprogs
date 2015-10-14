@@ -960,15 +960,17 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 		 * btree, we'd do it right here.  For now, if there's a
 		 * problem, we'll bail out and presumably clear the inode.
 		 */
-		if (!verify_dfsbno(mp, be64_to_cpu(pp[i])))  {
-			do_warn(_("bad bmap btree ptr 0x%llx in ino %" PRIu64 "\n"),
-			       (unsigned long long) be64_to_cpu(pp[i]), lino);
+		if (!verify_dfsbno(mp, get_unaligned_be64(&pp[i])))  {
+			do_warn(
+_("bad bmap btree ptr 0x%" PRIx64 " in ino %" PRIu64 "\n"),
+				get_unaligned_be64(&pp[i]), lino);
 			return(1);
 		}
 
-		if (scan_lbtree(be64_to_cpu(pp[i]), level, scan_bmapbt, type,
-				whichfork, lino, tot, nex, blkmapp, &cursor,
-				1, check_dups, magic, &xfs_bmbt_buf_ops))
+		if (scan_lbtree(get_unaligned_be64(&pp[i]), level, scan_bmapbt,
+				type, whichfork, lino, tot, nex, blkmapp,
+				&cursor, 1, check_dups, magic,
+				&xfs_bmbt_buf_ops))
 			return(1);
 		/*
 		 * fix key (offset) mismatches between the keys in root
@@ -977,28 +979,27 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 		 * blocks but the parent hasn't been updated
 		 */
 		if (!check_dups && cursor.level[level-1].first_key !=
-					be64_to_cpu(pkey[i].br_startoff))  {
+				   get_unaligned_be64(&pkey[i].br_startoff)) {
 			if (!no_modify)  {
 				do_warn(
-	_("correcting key in bmbt root (was %llu, now %" PRIu64") in inode "
-	  "%" PRIu64" %s fork\n"),
-				       (unsigned long long)
-					       be64_to_cpu(pkey[i].br_startoff),
-					cursor.level[level-1].first_key,
-					XFS_AGINO_TO_INO(mp, agno, ino),
-					forkname);
+_("correcting key in bmbt root (was %" PRIu64 ", now %" PRIu64") in inode "
+  "%" PRIu64" %s fork\n"),
+				       get_unaligned_be64(&pkey[i].br_startoff),
+				       cursor.level[level-1].first_key,
+				       XFS_AGINO_TO_INO(mp, agno, ino),
+				       forkname);
 				*dirty = 1;
-				pkey[i].br_startoff = cpu_to_be64(
-					cursor.level[level-1].first_key);
+				put_unaligned_be64(
+					cursor.level[level-1].first_key,
+					&pkey[i].br_startoff);
 			} else  {
 				do_warn(
-	_("bad key in bmbt root (is %llu, would reset to %" PRIu64 ") in inode "
-	  "%" PRIu64 " %s fork\n"),
-				       (unsigned long long)
-					       be64_to_cpu(pkey[i].br_startoff),
-					cursor.level[level-1].first_key,
-					XFS_AGINO_TO_INO(mp, agno, ino),
-					forkname);
+_("bad key in bmbt root (is %" PRIu64 ", would reset to %" PRIu64 ") in inode "
+  "%" PRIu64 " %s fork\n"),
+				       get_unaligned_be64(&pkey[i].br_startoff),
+				       cursor.level[level-1].first_key,
+				       XFS_AGINO_TO_INO(mp, agno, ino),
+				       forkname);
 			}
 		}
 		/*

@@ -330,7 +330,7 @@ pf_scanfunc_bmap(
 	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
 
 	for (i = 0; i < numrecs; i++) {
-		dbno = be64_to_cpu(pp[i]);
+		dbno = get_unaligned_be64(&pp[i]);
 		if (!verify_dfsbno(mp, dbno))
 			return 0;
 		if (!pf_scan_lbtree(dbno, level, isadir, args, pf_scanfunc_bmap))
@@ -372,7 +372,7 @@ pf_read_btinode(
 	pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(dsize, 0));
 
 	for (i = 0; i < numrecs; i++) {
-		dbno = be64_to_cpu(pp[i]);
+		dbno = get_unaligned_be64(&pp[i]);
 		if (!verify_dfsbno(mp, dbno))
 			break;
 		if (!pf_scan_lbtree(dbno, level, isadir, args, pf_scanfunc_bmap))

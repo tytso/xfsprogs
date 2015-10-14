@@ -211,8 +211,8 @@ libxfs_bmbt_disk_get_all(
 {
 	struct xfs_bmbt_rec_host hrec;
 
-	hrec.l0 = be64_to_cpu(rp->l0);
-	hrec.l1 = be64_to_cpu(rp->l1);
+	hrec.l0 = get_unaligned_be64(&rp->l0);
+	hrec.l1 = get_unaligned_be64(&rp->l1);
 	libxfs_bmbt_get_all(&hrec, irec);
 }
 
