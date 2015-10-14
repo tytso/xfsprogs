@@ -762,7 +762,7 @@ pf_queuing_worker(
 			 * sparse state in cluster sized chunks as cluster size
 			 * is the min. granularity of sparse irec regions.
 			 */
-			if ((sparse & ((1 << inodes_per_cluster) - 1)) == 0)
+			if ((sparse & ((1ULL << inodes_per_cluster) - 1)) == 0)
 				pf_queue_io(args, &map, 1,
 					    (cur_irec->ino_isa_dir != 0) ?
 					     B_DIR_INODE : B_INODE);

@@ -625,7 +625,7 @@ set_inode_parent(
 		else
 			irec->ino_un.plist = ptbl;
 
-		ptbl->pmask = 1LL << offset;
+		ptbl->pmask = 1ULL << offset;
 		ptbl->pentries = (xfs_ino_t*)memalign(sizeof(xfs_ino_t),
 							sizeof(xfs_ino_t));
 		if (!ptbl->pentries)
@@ -638,8 +638,8 @@ set_inode_parent(
 		return;
 	}
 
-	if (ptbl->pmask & (1LL << offset))  {
-		bitmask = 1LL;
+	if (ptbl->pmask & (1ULL << offset))  {
+		bitmask = 1ULL;
 		target = 0;
 
 		for (i = 0; i < offset; i++)  {
@@ -655,7 +655,7 @@ set_inode_parent(
 		return;
 	}
 
-	bitmask = 1LL;
+	bitmask = 1ULL;
 	cnt = target = 0;
 
 	for (i = 0; i < XFS_INODES_PER_CHUNK; i++)  {
@@ -691,7 +691,7 @@ set_inode_parent(
 	ptbl->cnt++;
 #endif
 	ptbl->pentries[target] = parent;
-	ptbl->pmask |= (1LL << offset);
+	ptbl->pmask |= (1ULL << offset);
 }
 
 xfs_ino_t
@@ -707,8 +707,8 @@ get_inode_parent(ino_tree_node_t *irec, int offset)
 	else
 		ptbl = irec->ino_un.plist;
 
-	if (ptbl->pmask & (1LL << offset))  {
-		bitmask = 1LL;
+	if (ptbl->pmask & (1ULL << offset))  {
+		bitmask = 1ULL;
 		target = 0;
 
 		for (i = 0; i < offset; i++)  {
