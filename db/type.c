@@ -77,7 +77,7 @@ static const typ_t	__typtab[] = {
 static const typ_t	__typtab_crc[] = {
 	{ TYP_AGF, "agf", handle_struct, agf_hfld, &xfs_agf_buf_ops },
 	{ TYP_AGFL, "agfl", handle_struct, agfl_crc_hfld, &xfs_agfl_buf_ops },
-	{ TYP_AGI, "agi", handle_struct, agi_hfld, &xfs_agfl_buf_ops },
+	{ TYP_AGI, "agi", handle_struct, agi_hfld, &xfs_agi_buf_ops },
 	{ TYP_ATTR, "attr3", handle_struct, attr3_hfld,
 		&xfs_attr3_db_buf_ops },
 	{ TYP_BMAPBTA, "bmapbta", handle_struct, bmapbta_crc_hfld,
@@ -113,7 +113,7 @@ static const typ_t	__typtab_crc[] = {
 static const typ_t	__typtab_spcrc[] = {
 	{ TYP_AGF, "agf", handle_struct, agf_hfld, &xfs_agf_buf_ops },
 	{ TYP_AGFL, "agfl", handle_struct, agfl_crc_hfld, &xfs_agfl_buf_ops },
-	{ TYP_AGI, "agi", handle_struct, agi_hfld, &xfs_agfl_buf_ops },
+	{ TYP_AGI, "agi", handle_struct, agi_hfld, &xfs_agi_buf_ops },
 	{ TYP_ATTR, "attr3", handle_struct, attr3_hfld,
 		&xfs_attr3_db_buf_ops },
 	{ TYP_BMAPBTA, "bmapbta", handle_struct, bmapbta_crc_hfld,
