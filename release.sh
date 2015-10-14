@@ -2,6 +2,12 @@
 #
 # Automate generation of a new release
 #
+# Need to first update these files:
+#
+# VERSION (with new version number)
+# docs/CHANGES (with changelog and version/date string)
+# configure.ac (with new version string)
+# debian/changelog (with new release entry, only for release version)
 
 . ./VERSION
 
