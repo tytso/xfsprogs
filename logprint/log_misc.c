@@ -243,9 +243,6 @@ int
 xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 {
     xfs_buf_log_format_t *f;
-    xfs_agi_t		 *agi;
-    xfs_agf_t		 *agf;
-    xfs_disk_dquot_t	 *dq;
     xlog_op_header_t	 *head = NULL;
     int			 num, skip;
     int			 super_block = 0;
@@ -325,7 +322,11 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 		}
 		super_block = 0;
 	} else if (be32_to_cpu(*(__be32 *)(*ptr)) == XFS_AGI_MAGIC) {
-		agi = (xfs_agi_t *)(*ptr);
+  	  	struct xfs_agi	*agi, agi_s;
+
+		/* memmove because *ptr may not be 8-byte aligned */
+		agi = &agi_s;
+		memmove(agi, *ptr, sizeof(struct xfs_agi));
 		printf(_("AGI Buffer: XAGI  "));
 		/*
 		 * v4 filesystems only contain the fields before the uuid.
@@ -375,7 +376,11 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 			}
 		}
 	} else if (be32_to_cpu(*(__be32 *)(*ptr)) == XFS_AGF_MAGIC) {
-		agf = (xfs_agf_t *)(*ptr);
+    		struct xfs_agf	*agf, agf_s;
+
+		/* memmove because *ptr may not be 8-byte aligned */
+		agf = &agf_s;
+		memmove(agf, *ptr, sizeof(struct xfs_agf));
 		printf(_("AGF Buffer: XAGF  "));
 		/*
 		 * v4 filesystems only contain the fields before the uuid.
@@ -408,7 +413,11 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 				be32_to_cpu(agf->agf_longest));
 		}
 	} else if (be32_to_cpu(*(__be32 *)(*ptr)) == XFS_DQUOT_MAGIC) {
-		dq = (xfs_disk_dquot_t *)(*ptr);
+		struct xfs_disk_dquot *dq, dq_s;
+
+		/* memmove because *ptr may not be 8-byte aligned */
+		dq = &dq_s;
+		memmove(dq, *ptr, sizeof(struct xfs_disk_dquot));
 		printf(_("DQUOT Buffer: DQ  "));
 		if (be32_to_cpu(head->oh_len) <
 				sizeof(xfs_disk_dquot_t)) {
