@@ -1872,8 +1872,8 @@ scanfunc_bmap(
 		xfs_agnumber_t	ag;
 		xfs_agblock_t	bno;
 
-		ag = XFS_FSB_TO_AGNO(mp, be64_to_cpu(pp[i]));
-		bno = XFS_FSB_TO_AGBNO(mp, be64_to_cpu(pp[i]));
+		ag = XFS_FSB_TO_AGNO(mp, get_unaligned_be64(&pp[i]));
+		bno = XFS_FSB_TO_AGBNO(mp, get_unaligned_be64(&pp[i]));
 
 		if (bno == 0 || bno > mp->m_sb.sb_agblocks ||
 				ag > mp->m_sb.sb_agcount) {
@@ -1938,8 +1938,8 @@ process_btinode(
 		xfs_agnumber_t	ag;
 		xfs_agblock_t	bno;
 
-		ag = XFS_FSB_TO_AGNO(mp, be64_to_cpu(pp[i]));
-		bno = XFS_FSB_TO_AGBNO(mp, be64_to_cpu(pp[i]));
+		ag = XFS_FSB_TO_AGNO(mp, get_unaligned_be64(&pp[i]));
+		bno = XFS_FSB_TO_AGBNO(mp, get_unaligned_be64(&pp[i]));
 
 		if (bno == 0 || bno > mp->m_sb.sb_agblocks ||
 				ag > mp->m_sb.sb_agcount) {
