@@ -47,12 +47,6 @@
 # error unknown platform... have fun porting!
 #endif
 
-#ifdef DEBUG
-# define ASSERT(EX)	assert(EX)
-#else
-# define ASSERT(EX)	((void) 0)
-#endif
-
 /*
  * sparse kernel source annotations
  */

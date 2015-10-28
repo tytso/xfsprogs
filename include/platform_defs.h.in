@@ -83,4 +83,10 @@ typedef unsigned short umode_t;
 #define NBBY 8
 #endif
 
+#ifdef DEBUG
+# define ASSERT(EX)	assert(EX)
+#else
+# define ASSERT(EX)	((void) 0)
+#endif
+
 #endif	/* __XFS_PLATFORM_DEFS_H__ */
