@@ -81,7 +81,6 @@ sendfile_f(
 	long long	count, total;
 	size_t		blocksize, sectsize;
 	struct timeval	t1, t2;
-	char		s1[64], s2[64], ts[64];
 	char		*infile = NULL;
 	int		Cflag, qflag;
 	int		c, fd = -1;
@@ -152,20 +151,7 @@ sendfile_f(
 	gettimeofday(&t2, NULL);
 	t2 = tsub(t2, t1);
 
-	/* Finally, report back -- -C gives a parsable format */
-	timestr(&t2, ts, sizeof(ts), Cflag ? VERBOSE_FIXED_TIME : 0);
-	if (!Cflag) {
-		cvtstr((double)total, s1, sizeof(s1));
-		cvtstr(tdiv((double)total, t2), s2, sizeof(s2));
-		printf(_("sent %lld/%lld bytes from offset %lld\n"),
-			total, count, (long long)offset);
-		printf(_("%s, %d ops; %s (%s/sec and %.4f ops/sec)\n"),
-			s1, c, ts, s2, tdiv((double)c, t2));
-	} else {/* bytes,ops,time,bytes/sec,ops/sec */
-		printf("%lld,%d,%s,%.3f,%.3f\n",
-			total, c, ts,
-			tdiv((double)total, t2), tdiv((double)c, t2));
-	}
+	report_io_times("sent", &t2, (long long)offset, count, total, c, Cflag);
 done:
 	if (infile)
 		close(fd);

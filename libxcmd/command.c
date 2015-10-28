@@ -192,3 +192,30 @@ command_loop(void)
 		doneline(input, v);
 	}
 }
+
+void
+report_io_times(
+	const char		*verb,
+	struct timeval		*t2,
+	long long		offset,
+	long long		count,
+	long long		total,
+	int			ops,
+	int			compact)
+{
+	char			s1[64], s2[64], ts[64];
+
+	timestr(t2, ts, sizeof(ts), compact ? VERBOSE_FIXED_TIME : 0);
+	if (!compact) {
+		cvtstr((double)total, s1, sizeof(s1));
+		cvtstr(tdiv((double)total, *t2), s2, sizeof(s2));
+		printf(_("%s %lld/%lld bytes at offset %lld\n"),
+			verb, total, count, (long long)offset);
+		printf(_("%s, %d ops; %s (%s/sec and %.4f ops/sec)\n"),
+			s1, ops, ts, s2, tdiv((double)ops, *t2));
+	} else {/* bytes,ops,time,bytes/sec,ops/sec */
+		printf("%lld,%d,%s,%.3f,%.3f\n",
+			total, ops, ts,
+			tdiv((double)total, *t2), tdiv((double)ops, *t2));
+	}
+}
