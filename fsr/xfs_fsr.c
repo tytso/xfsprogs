@@ -176,7 +176,6 @@ aborter(int unused)
  * here - the code that handles defragmentation of invidual files takes care
  * of that.
  */
-
 static char *
 find_mountpoint_check(struct stat64 *sb, struct mntent *t, struct stat64 *ms)
 {
@@ -200,9 +199,9 @@ find_mountpoint_check(struct stat64 *sb, struct mntent *t, struct stat64 *ms)
 			return NULL;
 
 		/*
-			* Make sure the mountpoint given by mtab is accessible
-			* before using it.
-			*/
+		 * Make sure the mountpoint given by mtab is accessible
+		 * before using it.
+		 */
 		if (stat64(t->mnt_dir, &sb2) < 0)
 			return NULL;
 	}
@@ -224,7 +223,7 @@ find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
 		exit(1);
 	}
 
-	while ( (t = platform_mntent_next(&cursor)) != NULL) {
+	while ((t = platform_mntent_next(&cursor)) != NULL) {
 		mntp = find_mountpoint_check(sb, t, &ms);
 		if (mntp == NULL)
 			continue;
@@ -409,12 +408,10 @@ static void
 initallfs(char *mtab)
 {
 	struct mntent_cursor cursor;
-	char *mntp = NULL;
 	struct mntent *mp = NULL;
 	int mi;
 	char *cp;
 	struct stat64 sb;
-	struct stat64 ms;
 
 	/* malloc a number of descriptors, increased later if needed */
 	if (!(fsbase = (fsdesc_t *)malloc(fsbufsize * sizeof(fsdesc_t)))) {
@@ -432,12 +429,7 @@ initallfs(char *mtab)
 		exit(1);
 	}
 
-	while ( (mp = platform_mntent_next(&cursor)) != NULL) {
-		mntp = find_mountpoint_check(&sb, mp, &ms);
-		if (mntp == NULL)
-			continue;
-		break;
-
+	while ((mp = platform_mntent_next(&cursor)) != NULL) {
 		int rw = 0;
 
 		if (strcmp(mp->mnt_type, MNTTYPE_XFS ) != 0 ||
