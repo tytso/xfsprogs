@@ -37,6 +37,7 @@
 #include <sys/sysmacros.h>
 #include <sys/fs/xfs_fsops.h>
 #include <sys/fs/xfs_itable.h>
+#include <mntent.h>
 
 #define __int8_t	char
 #define __int16_t	short
@@ -422,5 +423,33 @@ static __inline__ char * strsep(char **s, const char *ct)
 #define	_AIOCB64_T_DEFINED		1
 
 #define	XFS_XFLAG_NODEFRAG		0x00002000
+
+/**
+ * Abstraction of mountpoints.
+ */
+struct mntent_cursor {
+	FILE *mtabp;
+};
+
+static inline int platform_mntent_open(struct mntent_cursor * cursor, char *mtab)
+{
+	cursor->mtabp = setmntent(mtab, "r");
+	if (!cursor->mtabp) {
+		fprintf(stderr, "Error: cannot read %s\n", mtab);
+		return 1;
+	}
+	return 0;
+}
+
+static inline struct mntent * platform_mntent_next(struct mntent_cursor * cursor)
+{
+	return getmntent(cursor->mtabp);
+}
+
+static inline void platform_mntent_close(struct mntent_cursor * cursor)
+{
+	endmntent(cursor->mtabp);
+}
+
 
 #endif	/* __XFS_IRIX_H__ */

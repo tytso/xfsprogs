@@ -219,8 +219,70 @@ static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
 
 /* FSR */
 
+#  include <sys/mount.h>
+#  include <sys/param.h>
+#include <sys/ucred.h>
+#include <errno.h>
 #define statvfs64 statfs
 #define lstat64 lstat
 #define		_PATH_MOUNTED   "/etc/mtab"
+
+struct mntent
+{
+	char *mnt_fsname;
+	char *mnt_dir;
+	char *mnt_type;
+	char *mnt_opts;
+	int mnt_freq;
+	int mnt_passno;
+};
+
+static inline void mntinfo2mntent (struct statfs * stats, struct mntent * mnt) {
+	mnt->mnt_fsname = stats->f_mntfromname;
+	mnt->mnt_dir = stats->f_mntonname;
+	mnt->mnt_type = stats->f_fstypename;
+}
+
+
+
+/**
+ * Abstraction of mountpoints.
+ */
+struct mntent_cursor {
+	FILE *mtabp;
+	struct statfs *stats;
+	int count;
+	int i;
+};
+
+/**
+ * OS X uses getmntinfo, which doesn't use a mtab file. So we just ignore it.
+ */
+static inline int platform_mntent_open(struct mntent_cursor * cursor, char *mtab)
+{
+	if ((cursor->count = getmntinfo(&cursor->stats, 0)) < 0) {
+		fprintf(stderr, "Error: getmntinfo() failed: %s\n", strerror(errno));
+		return 1;
+	}
+	cursor->i = 0;
+	return 0;
+}
+
+static inline struct mntent * platform_mntent_next(struct mntent_cursor * cursor)
+{
+	struct mntent * t = NULL;
+	if (cursor->i >= cursor->count){
+		return NULL;
+	}
+	mntinfo2mntent(&cursor->stats[cursor->i], t);
+	cursor->i++;
+	return t;
+}
+
+static inline void platform_mntent_close(struct mntent_cursor * cursor)
+{
+	cursor->count = 0;
+	cursor->i = 0;
+}
 
 #endif	/* __XFS_DARWIN_H__ */

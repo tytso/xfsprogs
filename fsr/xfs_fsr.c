@@ -32,10 +32,6 @@
 #include <sys/statvfs.h>
 #include <sys/xattr.h>
 
-#ifdef HAVE_MNTENT
-#  include <mntent.h>
-#endif
-
 #ifndef XFS_XFLAG_NODEFRAG
 #define XFS_XFLAG_NODEFRAG 0x00002000 /* src dependancy, remove later */
 #endif
@@ -180,54 +176,61 @@ aborter(int unused)
  * here - the code that handles defragmentation of invidual files takes care
  * of that.
  */
+
+static char *
+find_mountpoint_check(struct stat64 *sb, struct mntent *t, struct stat64 *ms)
+{
+	if (S_ISDIR(sb->st_mode)) {		/* mount point */
+		if (stat64(t->mnt_dir, ms) < 0)
+			return NULL;
+		if (sb->st_ino != ms->st_ino)
+			return NULL;
+		if (sb->st_dev != ms->st_dev)
+			return NULL;
+		if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
+			return NULL;
+	} else {				/* device */
+		struct stat64 sb2;
+
+		if (stat64(t->mnt_fsname, ms) < 0)
+			return NULL;
+		if (sb->st_rdev != ms->st_rdev)
+			return NULL;
+		if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
+			return NULL;
+
+		/*
+			* Make sure the mountpoint given by mtab is accessible
+			* before using it.
+			*/
+		if (stat64(t->mnt_dir, &sb2) < 0)
+			return NULL;
+	}
+
+	return t->mnt_dir;
+
+}
+
 static char *
 find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
 {
-	struct mntent *t;
+	struct mntent_cursor cursor;
 	struct stat64 ms;
-	FILE *mtabp;
+	struct mntent *t = NULL;
 	char *mntp = NULL;
 
-	mtabp = setmntent(mtab, "r");
-	if (!mtabp) {
-		fprintf(stderr, _("%s: cannot read %s\n"),
-			progname, mtab);
+	if (platform_mntent_open(&cursor, mtab) != 0){
+		fprintf(stderr, "Error: can't get mntent entries.\n");
 		exit(1);
 	}
 
-	while ((t = getmntent(mtabp))) {
-		if (S_ISDIR(sb->st_mode)) {		/* mount point */
-			if (stat64(t->mnt_dir, &ms) < 0)
-				continue;
-			if (sb->st_ino != ms.st_ino)
-				continue;
-			if (sb->st_dev != ms.st_dev)
-				continue;
-			if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
-				continue;
-		} else {				/* device */
-			struct stat64 sb2;
-
-			if (stat64(t->mnt_fsname, &ms) < 0)
-				continue;
-			if (sb->st_rdev != ms.st_rdev)
-				continue;
-			if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
-				continue;
-
-			/*
-			 * Make sure the mountpoint given by mtab is accessible
-			 * before using it.
-			 */
-			if (stat64(t->mnt_dir, &sb2) < 0)
-				continue;
-		}
-
-		mntp = t->mnt_dir;
+	while ( (t = platform_mntent_next(&cursor)) != NULL) {
+		mntp = find_mountpoint_check(sb, t, &ms);
+		if (mntp == NULL)
+			continue;
 		break;
 	}
-
-	endmntent(mtabp);
+	platform_mntent_close(&cursor);
 	return mntp;
 }
 
@@ -405,17 +408,13 @@ usage(int ret)
 static void
 initallfs(char *mtab)
 {
-	FILE *fp;
-	struct mntent *mp;
+	struct mntent_cursor cursor;
+	char *mntp = NULL;
+	struct mntent *mp = NULL;
 	int mi;
 	char *cp;
 	struct stat64 sb;
-
-	fp = setmntent(mtab, "r");
-	if (fp == NULL) {
-		fsrprintf(_("could not open mtab file: %s\n"), mtab);
-		exit(1);
-	}
+	struct stat64 ms;
 
 	/* malloc a number of descriptors, increased later if needed */
 	if (!(fsbase = (fsdesc_t *)malloc(fsbufsize * sizeof(fsdesc_t)))) {
@@ -427,7 +426,18 @@ initallfs(char *mtab)
 	/* find all rw xfs file systems */
 	mi = 0;
 	fs = fsbase;
-	while ((mp = getmntent(fp))) {
+
+	if (platform_mntent_open(&cursor, mtab) != 0){
+		fprintf(stderr, "Error: can't get mntent entries.\n");
+		exit(1);
+	}
+
+	while ( (mp = platform_mntent_next(&cursor)) != NULL) {
+		mntp = find_mountpoint_check(&sb, mp, &ms);
+		if (mntp == NULL)
+			continue;
+		break;
+
 		int rw = 0;
 
 		if (strcmp(mp->mnt_type, MNTTYPE_XFS ) != 0 ||
@@ -477,9 +487,10 @@ initallfs(char *mtab)
 		mi++;
 		fs++;
 	}
+	platform_mntent_close(&cursor);
+
 	numfs = mi;
 	fsend = (fsbase + numfs);
-	endmntent(fp);
 	if (numfs == 0) {
 		fsrprintf(_("no rw xfs file systems in mtab: %s\n"), mtab);
 		exit(0);

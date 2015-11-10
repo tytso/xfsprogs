@@ -30,6 +30,7 @@
 #include <endian.h>
 #include <stdbool.h>
 #include <asm/types.h>
+#include <mntent.h>
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {
@@ -144,5 +145,32 @@ typedef loff_t		xfs_off_t;
 typedef __uint64_t	xfs_ino_t;
 typedef __uint32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
+
+/**
+ * Abstraction of mountpoints.
+ */
+struct mntent_cursor {
+	FILE *mtabp;
+};
+
+static inline int platform_mntent_open(struct mntent_cursor * cursor, char *mtab)
+{
+	cursor->mtabp = setmntent(mtab, "r");
+	if (!cursor->mtabp) {
+		fprintf(stderr, "Error: cannot read %s\n", mtab);
+		return 1;
+	}
+	return 0;
+}
+
+static inline struct mntent * platform_mntent_next(struct mntent_cursor * cursor)
+{
+	return getmntent(cursor->mtabp);
+}
+
+static inline void platform_mntent_close(struct mntent_cursor * cursor)
+{
+	endmntent(cursor->mtabp);
+}
 
 #endif	/* __XFS_LINUX_H__ */

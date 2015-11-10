@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <libgen.h>
 #include <paths.h>
+#include <mntent.h>
 
 #define constpp	char * const *
 
@@ -124,6 +125,33 @@ static __inline__ int
 platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 {
 	return 0;
+}
+
+/**
+ * Abstraction of mountpoints.
+ */
+struct mntent_cursor {
+	FILE *mtabp;
+};
+
+static inline int platform_mntent_open(struct mntent_cursor * cursor, char *mtab)
+{
+	cursor->mtabp = setmntent(mtab, "r");
+	if (!cursor->mtabp) {
+		fprintf(stderr, "Error: cannot read %s\n", mtab);
+		return 1;
+	}
+	return 0;
+}
+
+static inline struct mntent * platform_mntent_next(struct mntent_cursor * cursor)
+{
+	return getmntent(cursor->mtabp);
+}
+
+static inline void platform_mntent_close(struct mntent_cursor * cursor)
+{
+	endmntent(cursor->mtabp);
 }
 
 #endif	/* __XFS_KFREEBSD_H__ */
