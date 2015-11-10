@@ -163,4 +163,3 @@ extern void		readdir_init(void);
 #endif
 
 extern void		reflink_init(void);
-extern void		dedupe_init(void);

@@ -84,7 +84,6 @@ init_commands(void)
 	sync_range_init();
 	truncate_init();
 	reflink_init();
-	dedupe_init();
 }
 
 static int

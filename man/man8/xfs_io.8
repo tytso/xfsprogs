@@ -494,7 +494,7 @@ both data and holes are displayed together or performing a recusively display.
 .PD
 .TP
 .TP
-.BI "reflink  [ \-w ] [ \-W ] src_file [src_offset dst_offset length]"
+.BI "reflink  [ \-C ] [ \-q ] src_file [src_offset dst_offset length]"
 On filesystems that support the
 .B XFS_IOC_CLONE_RANGE
 or
@@ -515,20 +515,16 @@ are omitted, all contents of src_file will be reflinked into the open file.
 .RS 1.0i
 .PD 0
 .TP 0.4i
-.B \-w
-Call
-.BR fdatasync (2)
-after executing the ioctl.
+.B \-C
+Print timing statistics in a condensed format.
 .TP
-.B \-W
-Call
-.BR fsync (2)
-after executing the command.
+.B \-q
+Do not print timing statistics at all.
 .RE
 .PD
 .TP
 .TP
-.BI "dedupe  [ \-w ] [ \-W ] src_file src_offset dst_offset length"
+.BI "dedupe  [ \-C ] [ \-q ] src_file src_offset dst_offset length"
 On filesystems that support the
 .B XFS_IOC_FILE_EXTENT_SAME
 or
@@ -548,16 +544,11 @@ on write") in the affected file, leaving the other file(s) unchanged.
 .RS 1.0i
 .PD 0
 .TP 0.4i
-.B \-w
-Call
-.BR fdatasync (2)
-after executing the ioctl.
+.B \-C
+Print timing statistics in a condensed format.
 .TP
-.B \-W
-Call
-.BR fsync (2)
-after executing the command.
-.TP
+.B \-q
+Do not print timing statistics at all.
 
 .SH MEMORY MAPPED I/O COMMANDS
 .TP

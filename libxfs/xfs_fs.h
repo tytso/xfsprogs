@@ -569,41 +569,46 @@ typedef struct xfs_swapext
 /*	XFS_IOC_GETFSUUID ---------- deprecated 140	 */
 
 /* reflink ioctls; these MUST match the btrfs ioctl definitions */
-struct xfs_ioctl_clone_range_args {
+/* from struct btrfs_ioctl_clone_range_args */
+struct xfs_clone_args {
 	__s64 src_fd;
 	__u64 src_offset;
 	__u64 src_length;
 	__u64 dest_offset;
 };
 
-#define XFS_SAME_DATA_DIFFERS	1
-/* For extent-same ioctl */
-struct xfs_ioctl_file_extent_same_info {
+/* extent-same (dedupe) ioctls; these MUST match the btrfs ioctl definitions */
+#define XFS_EXTENT_DATA_SAME	0
+#define XFS_EXTENT_DATA_DIFFERS	1
+
+/* from struct btrfs_ioctl_file_extent_same_info */
+struct xfs_extent_data_info {
 	__s64 fd;		/* in - destination file */
 	__u64 logical_offset;	/* in - start of extent in destination */
 	__u64 bytes_deduped;	/* out - total # of bytes we were able
 				 * to dedupe from this file */
 	/* status of this dedupe operation:
-	 * 0 if dedup succeeds
 	 * < 0 for error
-	 * == XFS_SAME_DATA_DIFFERS if data differs
+	 * == XFS_EXTENT_DATA_SAME if dedupe succeeds
+	 * == XFS_EXTENT_DATA_DIFFERS if data differs
 	 */
 	__s32 status;		/* out - see above description */
 	__u32 reserved;
 };
 
-struct xfs_ioctl_file_extent_same_args {
+/* from struct btrfs_ioctl_file_extent_same_args */
+struct xfs_extent_data {
 	__u64 logical_offset;	/* in - start of extent in source */
 	__u64 length;		/* in - length of extent */
 	__u16 dest_count;	/* in - total elements in info array */
 	__u16 reserved1;
 	__u32 reserved2;
-	struct xfs_ioctl_file_extent_same_info info[0];
+	struct xfs_extent_data_info info[0];
 };
 
 #define XFS_IOC_CLONE		 _IOW (0x94, 9, int)
-#define XFS_IOC_CLONE_RANGE	 _IOW (0x94, 13, struct xfs_ioctl_clone_range_args)
-#define XFS_IOC_FILE_EXTENT_SAME _IOWR(0x94, 54, struct xfs_ioctl_file_extent_same_args)
+#define XFS_IOC_CLONE_RANGE	 _IOW (0x94, 13, struct xfs_clone_args)
+#define XFS_IOC_FILE_EXTENT_SAME _IOWR(0x94, 54, struct xfs_extent_data)
 
 #ifndef HAVE_BBMACROS
 /*
