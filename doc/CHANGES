@@ -1,3 +1,11 @@
+xfsprogs-4.3.0-rc2 (14 Oct 2015)
+	- xfs_fsr: abstract mntinfo/mntent differences (Jan Tulak)
+	- xfs_io: update reflink/dedupe ioctl definitions and implementation
+	  (Darrick Wong)
+	- libxcmd: factoring of runtime reporting (Darrick Wong)
+	- man page fixes (Ville Skyttä)
+	- removal of ASSERT from exported headers
+
 xfsprogs-4.3.0-rc1 (14 Oct 2015)
 	- xfs_io: reflink and dedupe operation support (Darrick Wong)
 	- xfs_db: blockget/blocktrash support for v5 filesystems
