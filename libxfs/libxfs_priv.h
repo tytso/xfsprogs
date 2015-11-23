@@ -147,10 +147,25 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define XFS_TRANS_RESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
 #define XFS_TRANS_UNRESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
 #define XFS_TEST_ERROR(expr,a,b,c)	( expr )
-#define XFS_WANT_CORRUPTED_GOTO(mp, expr, l)	\
-		{ (mp) = (mp); if (!(expr)) { error = -EFSCORRUPTED; goto l; } }
-#define XFS_WANT_CORRUPTED_RETURN(mp, expr)	\
-		{ (mp) = (mp); if (!(expr)) { return -EFSCORRUPTED; } }
+#define XFS_WANT_CORRUPTED_GOTO(mp, expr, l)				\
+{									\
+	if (!(expr)) {							\
+		if ((mp)->m_flags & LIBXFS_MOUNT_WANT_CORRUPTED)	\
+			printf("WANT_CORRUPTED_GOTO at %s:%d\n",	\
+				__func__, __LINE__);			\
+		error = -EFSCORRUPTED;					\
+		goto l;							\
+	}								\
+}
+#define XFS_WANT_CORRUPTED_RETURN(mp, expr)				\
+{									\
+	if (!(expr)) {							\
+		if ((mp)->m_flags & LIBXFS_MOUNT_WANT_CORRUPTED)	\
+			printf("WANT_CORRUPTED_RETURN at %s:%d\n",	\
+				__func__, __LINE__);			\
+		return -EFSCORRUPTED;					\
+	}								\
+}
 
 #ifdef __GNUC__
 #define __return_address	__builtin_return_address(0)

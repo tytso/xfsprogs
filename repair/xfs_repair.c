@@ -695,6 +695,10 @@ main(int argc, char **argv)
 	}
 	mp->m_log = &log;
 
+	/* Spit out function & line on these corruption macros */
+	if (verbose > 2)
+		mp->m_flags |= LIBXFS_MOUNT_WANT_CORRUPTED;
+
 	/*
 	 * set XFS-independent status vars from the mount/sb structure
 	 */
