@@ -1104,14 +1104,12 @@ fsr_setup_attr_fork(
 			}
 			continue;
 		} else if (i == 0) {
-			struct fsxattr	fsx;
 			/*
 			 * First pass, and temp file already has an inline
 			 * xattr, probably due to selinux.
 			 *
 			 * It's *possible* that the temp file attr area
-			 * is larger than the target file's, if the 
-			 * target file's attrs are not inline:
+			 * is larger than the target file's:
 			 *
 			 *  Target		 Temp
 			 * +-------+ 0		+-------+ 0
@@ -1121,28 +1119,18 @@ fsr_setup_attr_fork(
 			 * |	   |		v-------v forkoff
 			 * |	   |		|       |
 			 * v-------v forkoff	| Attr  | local
-			 * | Attr  | ext/btree	|       |
+			 * | Attr  | 		|       |
 			 * +-------+		+-------+
-			 *
-			 * FSGETXATTRA will tell us nr of attr extents in
-			 * target, if any.  If none, it's local:
 			 */
-
-			memset(&fsx, 0, sizeof(fsx));
-			if (ioctl(fd, XFS_IOC_FSGETXATTRA, &fsx)) {
-				fsrprintf(_("FSGETXATTRA failed on target\n"));
-				return -1;
-			}
 
 			/*
-			 * If target attr area is less than the temp's (diff < 0)
-			 * and the target is not local, write a big attr to
-			 * the temp file to knock the attr out of local format,
-			 * to match the target.  (This should actually *increase*
-			 * the temp file's forkoffset when the attr moves out
-			 * of the inode)
+			 * If target attr area is less than the temp's
+			 * (diff < 0) write a big attr to the temp file to knock
+			 * the attr out of local format.
+			 * (This should actually *increase* the temp file's
+			 * forkoffset when the attr moves out of the inode)
 			 */
- 			if (diff < 0 && fsx.fsx_nextents > 0) {
+			if (diff < 0) {
 				char val[2048];
 				memset(val, 'X', 2048);
 				if (fsetxattr(tfd, name, val, 2048, 0)) {
