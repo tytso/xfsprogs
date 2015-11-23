@@ -725,9 +725,9 @@ void
 xfs_verifier_error(
 	struct xfs_buf		*bp)
 {
-	xfs_alert(NULL, "Metadata %s detected at block 0x%llx/0x%x",
+	xfs_alert(NULL, "Metadata %s detected at %s block 0x%llx/0x%x",
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
-		  bp->b_bn, BBTOB(bp->b_length));
+		  bp->b_ops->name, bp->b_bn, BBTOB(bp->b_length));
 }
 
 /*

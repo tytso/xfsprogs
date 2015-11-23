@@ -1037,6 +1037,7 @@ xfs_dir3_db_write_verify(
 }
 
 const struct xfs_buf_ops xfs_dir3_db_buf_ops = {
+	.name = "xfs_dir3",
 	.verify_read = xfs_dir3_db_read_verify,
 	.verify_write = xfs_dir3_db_write_verify,
 };

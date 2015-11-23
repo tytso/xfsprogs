@@ -221,7 +221,8 @@ write_buf(
 		bp->b_ops->verify_write(bp);
 		if (bp->b_error) {
 			print_warning(
-				"obfuscation corrupted block at bno 0x%llx/0x%x",
+			    "obfuscation corrupted block at %s bno 0x%llx/0x%x",
+				bp->b_ops->name,
 				(long long)bp->b_bn, bp->b_bcount);
 		}
 	}

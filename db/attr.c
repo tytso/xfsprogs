@@ -570,6 +570,7 @@ xfs_attr3_db_write_verify(
 }
 
 const struct xfs_buf_ops xfs_attr3_db_buf_ops = {
+	.name = "xfs_attr3",
 	.verify_read = xfs_attr3_db_read_verify,
 	.verify_write = xfs_attr3_db_write_verify,
 };
