@@ -177,44 +177,41 @@ aborter(int unused)
  * of that.
  */
 static char *
-find_mountpoint_check(struct stat64 *sb, struct mntent *t, struct stat64 *ms)
+find_mountpoint_check(struct stat64 *sb, struct mntent *t)
 {
+	struct stat64 ms;
+
 	if (S_ISDIR(sb->st_mode)) {		/* mount point */
-		if (stat64(t->mnt_dir, ms) < 0)
+		if (stat64(t->mnt_dir, &ms) < 0)
 			return NULL;
-		if (sb->st_ino != ms->st_ino)
+		if (sb->st_ino != ms.st_ino)
 			return NULL;
-		if (sb->st_dev != ms->st_dev)
+		if (sb->st_dev != ms.st_dev)
 			return NULL;
 		if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
 			return NULL;
 	} else {				/* device */
-		struct stat64 sb2;
-
-		if (stat64(t->mnt_fsname, ms) < 0)
+		if (stat64(t->mnt_fsname, &ms) < 0)
 			return NULL;
-		if (sb->st_rdev != ms->st_rdev)
+		if (sb->st_rdev != ms.st_rdev)
 			return NULL;
 		if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
 			return NULL;
-
 		/*
 		 * Make sure the mountpoint given by mtab is accessible
 		 * before using it.
 		 */
-		if (stat64(t->mnt_dir, &sb2) < 0)
+		if (stat64(t->mnt_dir, &ms) < 0)
 			return NULL;
 	}
 
 	return t->mnt_dir;
-
 }
 
 static char *
 find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
 {
 	struct mntent_cursor cursor;
-	struct stat64 ms;
 	struct mntent *t = NULL;
 	char *mntp = NULL;
 
@@ -224,7 +221,7 @@ find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
 	}
 
 	while ((t = platform_mntent_next(&cursor)) != NULL) {
-		mntp = find_mountpoint_check(sb, t, &ms);
+		mntp = find_mountpoint_check(sb, t);
 		if (mntp == NULL)
 			continue;
 		break;
@@ -408,7 +405,7 @@ static void
 initallfs(char *mtab)
 {
 	struct mntent_cursor cursor;
-	struct mntent *mp = NULL;
+	struct mntent *mnt= NULL;
 	int mi;
 	char *cp;
 	struct stat64 sb;
@@ -429,15 +426,15 @@ initallfs(char *mtab)
 		exit(1);
 	}
 
-	while ((mp = platform_mntent_next(&cursor)) != NULL) {
+	while ((mnt = platform_mntent_next(&cursor)) != NULL) {
 		int rw = 0;
 
-		if (strcmp(mp->mnt_type, MNTTYPE_XFS ) != 0 ||
-		    stat64(mp->mnt_fsname, &sb) == -1 ||
+		if (strcmp(mnt->mnt_type, MNTTYPE_XFS ) != 0 ||
+		    stat64(mnt->mnt_fsname, &sb) == -1 ||
 		    !S_ISBLK(sb.st_mode))
 			continue;
 
-		cp = strtok(mp->mnt_opts,",");
+		cp = strtok(mnt->mnt_opts,",");
 		do {
 			if (strcmp("rw", cp) == 0)
 				rw++;
@@ -445,7 +442,7 @@ initallfs(char *mtab)
 		if (rw == 0) {
 			if (dflag)
 				fsrprintf(_("Skipping %s: not mounted rw\n"),
-					mp->mnt_fsname);
+					mnt->mnt_fsname);
 			continue;
 		}
 
@@ -465,15 +462,15 @@ initallfs(char *mtab)
 			fs = (fsbase + mi);  /* Needed ? */
 		}
 
-		fs->dev = strdup(mp->mnt_fsname);
-		fs->mnt = strdup(mp->mnt_dir);
+		fs->dev = strdup(mnt->mnt_fsname);
+		fs->mnt = strdup(mnt->mnt_dir);
 
 		if (fs->dev == NULL) {
-			fsrprintf(_("strdup(%s) failed\n"), mp->mnt_fsname);
+			fsrprintf(_("strdup(%s) failed\n"), mnt->mnt_fsname);
 			exit(1);
 		}
 		if (fs->mnt == NULL) {
-			fsrprintf(_("strdup(%s) failed\n"), mp->mnt_dir);
+			fsrprintf(_("strdup(%s) failed\n"), mnt->mnt_dir);
 			exit(1);
 		}
 		mi++;
