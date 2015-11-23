@@ -1,4 +1,12 @@
-xfsprogs-4.3.0-rc2 (14 Oct 2015)
+xfsprogs-4.3.0 (23 Nov 2015)
+	- xfs_fsr: cleanups to recent changes (Eric Sandeen)
+	- xfs_fsr: improved temp file attr fork handling (Eric Sandeen)
+	- libxfs: output verifier names in warnings (Eric Sandeen)
+	- xfs_repair: enable verifier corruption warnings on very verbose
+	  output settings (Eric Sandeen)
+	- debian: update initramfs in postinst script (Steve McIntyre)
+
+xfsprogs-4.3.0-rc2 (10 Nov 2015)
 	- xfs_fsr: abstract mntinfo/mntent differences (Jan Tulak)
 	- xfs_io: update reflink/dedupe ioctl definitions and implementation
 	  (Darrick Wong)
