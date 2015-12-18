@@ -154,7 +154,7 @@ typedef char	*(libxfs_get_block_t)(char *, int, void *);
  */
 #define XLOG_INIT_CYCLE	1
 extern int	libxfs_log_clear(struct xfs_buftarg *, char *, xfs_daddr_t,
-				 uint, uuid_t *, int, int, int, int);
+				 uint, uuid_t *, int, int, int, int, bool);
 extern int	libxfs_log_header(char *, uuid_t *, int, int, int, xfs_lsn_t,
 				  xfs_lsn_t, libxfs_get_block_t *, void *);
 

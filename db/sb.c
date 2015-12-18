@@ -288,7 +288,7 @@ sb_logzero(uuid_t *uuidp)
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			uuidp,
 			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-			mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
+			mp->m_sb.sb_logsunit, XLOG_FMT, cycle, true);
 	if (error) {
 		dbprintf(_("ERROR: cannot clear the log\n"));
 		return 0;

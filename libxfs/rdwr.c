@@ -162,7 +162,8 @@ libxfs_log_clear(
 	int			version,
 	int			sunit,		/* bytes */
 	int			fmt,
-	int			cycle)
+	int			cycle,
+	bool			max)
 {
 	struct xfs_buf		*bp = NULL;
 	int			len;
@@ -218,6 +219,14 @@ libxfs_log_clear(
 		return 0;
 
 	/*
+	 * Bump the record size for a full log format if the caller allows it.
+	 * This is primarily for performance reasons and most callers don't care
+	 * about record size since the log is clean after we're done.
+	 */
+	if (max)
+		len = BTOBB(BDSTRAT_SIZE);
+
+	/*
 	 * Otherwise, fill everything beyond the initial record with records of
 	 * the previous cycle so the kernel head/tail detection works correctly.
 	 *
@@ -233,7 +242,7 @@ libxfs_log_clear(
 		dptr += BBTOB(len);
 	end_blk = start + length;
 
-	len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
+	len = min(end_blk - blk, len);
 	while (blk < end_blk) {
 		lsn = xlog_assign_lsn(cycle, blk - start);
 		tail_lsn = xlog_assign_lsn(cycle, blk - start - len);
@@ -257,7 +266,7 @@ libxfs_log_clear(
 		blk += len;
 		if (dptr)
 			dptr += BBTOB(len);
-		len = min(end_blk - blk, BTOBB(BDSTRAT_SIZE));
+		len = min(end_blk - blk, len);
 	}
 
 	return 0;

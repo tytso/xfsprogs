@@ -2552,7 +2552,7 @@ copy_log(void)
 
 		libxfs_log_clear(NULL, iocur_top->data, logstart, logblocks,
 				 &mp->m_sb.sb_uuid, logversion,
-				 mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
+				 mp->m_sb.sb_logsunit, XLOG_FMT, cycle, true);
 		break;
 	case 1:
 		/* keep the dirty log */

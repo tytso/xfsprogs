@@ -1328,7 +1328,7 @@ format_log(
 	 */
 	libxfs_log_clear(NULL, buf->data, logstart, length, &buf->owner->uuid,
 			 xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
-			 mp->m_sb.sb_logsunit, XLOG_FMT, cycle);
+			 mp->m_sb.sb_logsunit, XLOG_FMT, cycle, true);
 	if (do_write(buf->owner, buf))
 		target[tcarg->id].state = INACTIVE;
 }
