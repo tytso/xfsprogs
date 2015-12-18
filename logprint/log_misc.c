@@ -1294,6 +1294,8 @@ xlog_print_extended_headers(
 
 	num_required = howmany(len, XLOG_HEADER_CYCLE_SIZE);
 	num_hdrs = be32_to_cpu(hdr->h_size) / XLOG_HEADER_CYCLE_SIZE;
+	if (be32_to_cpu(hdr->h_size) % XLOG_HEADER_CYCLE_SIZE)
+		num_hdrs++;
 
 	if (num_required > num_hdrs) {
 	    print_xlog_bad_reqd_hdrs((*blkno)-1, num_required, num_hdrs);
