@@ -279,6 +279,7 @@ libxfs_log_header(
 	char			*p = caddr;
 	__be32			cycle_lsn;
 	int			i, len;
+	int			hdrs = 1;
 
 	if (lsn == NULLCOMMITLSN)
 		lsn = xlog_assign_lsn(XLOG_INIT_CYCLE, 0);
@@ -291,41 +292,80 @@ libxfs_log_header(
 	head->h_magicno = cpu_to_be32(XLOG_HEADER_MAGIC_NUM);
 	head->h_cycle = cpu_to_be32(CYCLE_LSN(lsn));
 	head->h_version = cpu_to_be32(version);
-	if (len != 1)
-		head->h_len = cpu_to_be32(sunit - BBSIZE);
-	else
-		head->h_len = cpu_to_be32(20);
 	head->h_crc = cpu_to_le32(0);
 	head->h_prev_block = cpu_to_be32(-1);
 	head->h_num_logops = cpu_to_be32(1);
 	head->h_fmt = cpu_to_be32(fmt);
-	head->h_size = cpu_to_be32(XLOG_HEADER_CYCLE_SIZE);
+	head->h_size = cpu_to_be32(MAX(sunit, XLOG_BIG_RECORD_BSIZE));
 
 	head->h_lsn = cpu_to_be64(lsn);
 	head->h_tail_lsn = cpu_to_be64(tail_lsn);
 
 	memcpy(&head->h_fs_uuid, fs_uuid, sizeof(uuid_t));
 
+	/*
+	 * The kernel expects to see either a log record header magic value or
+	 * the LSN cycle at the top of every log block. The first word of each
+	 * non-header block is copied to the record headers and replaced with
+	 * the cycle value (see xlog_[un]pack_data() and xlog_get_cycle() for
+	 * details).
+	 *
+	 * Even though we only ever write an unmount record (one block), we
+	 * support writing log records up to the max log buffer size of 256k to
+	 * improve log format performance. This means a record can require up
+	 * to 8 headers (1 rec. header + 7 ext. headers) for the packed cycle
+	 * data (each header supports 32k of data).
+	 */
+	cycle_lsn = CYCLE_LSN_DISK(head->h_lsn);
+	if (version == 2 && sunit > XLOG_HEADER_CYCLE_SIZE) {
+		hdrs = sunit / XLOG_HEADER_CYCLE_SIZE;
+		if (sunit % XLOG_HEADER_CYCLE_SIZE)
+			hdrs++;
+	}
+
+	/*
+	 * A fixed number of extended headers is expected based on h_size. If
+	 * required, format those now so the unmount record is located
+	 * correctly.
+	 *
+	 * Since we only write an unmount record, we only need one h_cycle_data
+	 * entry for the unmount record block. The subsequent record data
+	 * blocks are zeroed, which means we can stamp them directly with the
+	 * cycle and zero the rest of the cycle data in the extended headers.
+	 */
+	if (hdrs > 1) {
+		for (i = 1; i < hdrs; i++) {
+			p = nextfunc(p, BBSIZE, private);
+			memset(p, 0, BBSIZE);
+			/* xlog_rec_ext_header.xh_cycle */
+			*(__be32 *)p = cycle_lsn;
+		}
+	}
+
+	/*
+	 * The total length is the max of the stripe unit or 2 basic block
+	 * minimum (1 hdr blk + 1 data blk). The record length is the total
+	 * minus however many header blocks are required.
+	 */
+	head->h_len = cpu_to_be32(MAX(BBTOB(2), sunit) - hdrs * BBSIZE);
+
+	/*
+	 * Write out the unmount record, pack the first word into the record
+	 * header and stamp the block with the cycle.
+	 */
 	p = nextfunc(p, BBSIZE, private);
 	unmount_record(p);
 
-	/*
-	 * The kernel expects to see either a log record header magic or the LSN
-	 * cycle at the top of every log block (for example, see
-	 * xlog_[un]pack_data() and xlog_get_cycle()). Pack the unmount record
-	 * block appropriately here.
-	 */
-	cycle_lsn = CYCLE_LSN_DISK(head->h_lsn);
 	head->h_cycle_data[0] = *(__be32 *)p;
 	*(__be32 *)p = cycle_lsn;
 
 	/*
-	 * Now zero any remaining blocks in the record and stamp with the cycle.
-	 * Note that we don't need to swap into h_cycle_data because it has
-	 * already been initialized to zero.
+	 * Finally, zero all remaining blocks in the record and stamp each with
+	 * the cycle. We don't need to pack any of these blocks because the
+	 * cycle data in the headers has already been zeroed.
 	 */
-	len = MAX(len, 2);
-	for (i = 2; i < len; i++) {
+	len = MAX(len, hdrs + 1);
+	for (i = hdrs + 1; i < len; i++) {
 		p = nextfunc(p, BBSIZE, private);
 		memset(p, 0, BBSIZE);
 		*(__be32 *)p = cycle_lsn;
