@@ -420,6 +420,13 @@ Call fallocate with FALLOC_FL_ZERO_RANGE flag as described in the
 .BR fallocate (2)
 manual page to allocate and zero blocks within the range.
 .TP
+.BI zero " offset length"
+Call xfsctl with
+.B XFS_IOC_ZERO_RANGE
+as described in the
+.BR xfsctl (3)
+manual page to allocate and zero blocks within the range.
+.TP
 .BI truncate " offset"
 Truncates the current file at the given offset using
 .BR ftruncate (2).
@@ -680,6 +687,9 @@ Dumps a list of pages or ranges of pages that are currently in core,
 for the current memory mapping.
 
 .SH OTHER COMMANDS
+.TP
+.BR "help [ " command " ]"
+Display a brief description of one or all commands.
 .TP
 .B print
 Display a list of all open files and memory mapped regions.
