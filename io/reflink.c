@@ -71,7 +71,7 @@ dedupe_ioctl(
 	info->fd = file->fd;
 	info->logical_offset = doffset;
 
-	while (args->length > 0) {
+	while (args->length > 0 || !*ops) {
 		error = ioctl(fd, XFS_IOC_FILE_EXTENT_SAME, args);
 		if (error) {
 			perror("XFS_IOC_FILE_EXTENT_SAME");
@@ -85,14 +85,16 @@ dedupe_ioctl(
 			printf(_("Extents did not match.\n"));
 			goto done;
 		}
-		if (info->bytes_deduped == 0 ||
-		    info->bytes_deduped > args->length)
+		if (args->length != 0 &&
+		    (info->bytes_deduped == 0 ||
+		     info->bytes_deduped > args->length))
 			break;
 
 		(*ops)++;
 		args->logical_offset += info->bytes_deduped;
 		info->logical_offset += info->bytes_deduped;
-		args->length -= info->bytes_deduped;
+		if (args->length >= info->bytes_deduped)
+			args->length -= info->bytes_deduped;
 		deduped += info->bytes_deduped;
 	}
 done:
@@ -145,7 +147,7 @@ dedupe_f(
 	}
 	optind++;
 	count = cvtnum(fsblocksize, fssectsize, argv[optind]);
-	if (count < 1) {
+	if (count < 0) {
 		printf(_("non-positive length argument -- %s\n"), argv[optind]);
 		return 0;
 	}
@@ -202,7 +204,11 @@ reflink_ioctl(
 	struct xfs_clone_args	args;
 	int			error;
 
-	if (len) {
+	if (soffset == 0 && doffset == 0 && len == 0) {
+		error = ioctl(file->fd, XFS_IOC_CLONE, fd);
+		if (error)
+			perror("XFS_IOC_CLONE");
+	} else {
 		args.src_fd = fd;
 		args.src_offset = soffset;
 		args.src_length = len;
@@ -210,10 +216,6 @@ reflink_ioctl(
 		error = ioctl(file->fd, XFS_IOC_CLONE_RANGE, &args);
 		if (error)
 			perror("XFS_IOC_CLONE_RANGE");
-	} else {
-		error = ioctl(file->fd, XFS_IOC_CLONE, fd);
-		if (error)
-			perror("XFS_IOC_CLONE");
 	}
 	if (!error)
 		(*ops)++;
@@ -268,7 +270,7 @@ reflink_f(
 	}
 	optind++;
 	count = cvtnum(fsblocksize, fssectsize, argv[optind]);
-	if (count < 1) {
+	if (count < 0) {
 		printf(_("non-positive length argument -- %s\n"), argv[optind]);
 		return 0;
 	}
