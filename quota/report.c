@@ -322,7 +322,11 @@ report_mount(
 	if (!(flags & NO_HEADER_FLAG))
 		report_header(fp, form, type, mount, flags);
 
-	fprintf(fp, "%-10s", name);
+	if ((name == NULL) || (flags & NO_LOOKUP_FLAG))
+		fprintf(fp, "#%-10u", id);
+	else
+		fprintf(fp, "%-10s", name);
+
 	if (form & XFS_BLOCK_QUOTA) {
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_blk_hardlimit && d.d_bcount > d.d_blk_hardlimit)
@@ -400,24 +404,18 @@ report_user_mount(
 	uint		flags)
 {
 	struct passwd	*u;
-	char		n[NMAX];
 	uint		id;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			snprintf(n, sizeof(n)-1, "#%u", id);
-			if (report_mount(fp, id, n,
+			if (report_mount(fp, id, NULL,
 					form, XFS_USER_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setpwent();
 		while ((u = getpwent()) != NULL) {
-			if (flags & NO_LOOKUP_FLAG)
-				snprintf(n, sizeof(n)-1, "#%u", u->pw_uid);
-			else
-				strncpy(n, u->pw_name, sizeof(n)-1);
-			if (report_mount(fp, u->pw_uid, n,
+			if (report_mount(fp, u->pw_uid, u->pw_name,
 					form, XFS_USER_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
@@ -438,24 +436,18 @@ report_group_mount(
 	uint		flags)
 {
 	struct group	*g;
-	char		n[NMAX];
 	uint		id;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			snprintf(n, sizeof(n)-1, "#%u", id);
-			if (report_mount(fp, id, n,
+			if (report_mount(fp, id, NULL,
 					form, XFS_GROUP_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setgrent();
 		while ((g = getgrent()) != NULL) {
-			if (flags & NO_LOOKUP_FLAG)
-				snprintf(n, sizeof(n)-1, "#%u", g->gr_gid);
-		else
-			strncpy(n, g->gr_name, sizeof(n)-1);
-			if (report_mount(fp, g->gr_gid, n,
+			if (report_mount(fp, g->gr_gid, g->gr_name,
 					form, XFS_GROUP_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
@@ -475,25 +467,18 @@ report_project_mount(
 	uint		flags)
 {
 	fs_project_t	*p;
-	char		n[NMAX];
 	uint		id;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			snprintf(n, sizeof(n)-1, "#%u", id);
-			if (report_mount(fp, id, n,
+			if (report_mount(fp, id, NULL,
 					form, XFS_PROJ_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setprent();
 		while ((p = getprent()) != NULL) {
-			if (flags & NO_LOOKUP_FLAG)
-				snprintf(n, sizeof(n)-1, "#%u",
-					 (unsigned int)p->pr_prid);
-			else
-				strncpy(n, p->pr_name, sizeof(n)-1);
-			if (report_mount(fp, p->pr_prid, n,
+			if (report_mount(fp, p->pr_prid, p->pr_name,
 					form, XFS_PROJ_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
