@@ -153,4 +153,3 @@ extern void	libxfs_umount (xfs_mount_t *);
 extern void	libxfs_rtmount_destroy (xfs_mount_t *);
 
 #endif	/* __XFS_MOUNT_H__ */
-

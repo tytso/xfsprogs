@@ -84,7 +84,7 @@ update_sb_version(xfs_mount_t *mp)
 		}
 	}
 
-	if (!fs_aligned_inodes && xfs_sb_version_hasalign(sb))  
+	if (!fs_aligned_inodes && xfs_sb_version_hasalign(sb))
 		sb->sb_versionnum &= ~XFS_SB_VERSION_ALIGNBIT;
 }
 

@@ -238,11 +238,11 @@ fetchline(void)
 static char *el_get_prompt(EditLine *e) { return get_prompt(); }
 char *
 fetchline(void)
-{     
+{
 	static EditLine	*el;
 	static History	*hist;
 	HistEvent	hevent;
-	char		*line;    
+	char		*line;
 	int		count;
 
 	if (!el) {

@@ -1054,8 +1054,8 @@ main(int argc, char **argv)
 				 * range bigger than required
 				 */
 
-				sizeb = XFS_AGB_TO_DADDR(mp, agno, 
-					be32_to_cpu(rec_ptr->ar_startblock)) - 
+				sizeb = XFS_AGB_TO_DADDR(mp, agno,
+					be32_to_cpu(rec_ptr->ar_startblock)) -
 						begin;
 				size = roundup(sizeb <<BBSHIFT, wbuf_miniosize);
 				if (size > 0)  {

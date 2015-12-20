@@ -413,7 +413,7 @@ parents_by_handle(
 	parent_t	*buf,
 	size_t		bufsiz,
 	unsigned int	*count)
-	
+
 {
 	errno = EOPNOTSUPP;
 	return -1;

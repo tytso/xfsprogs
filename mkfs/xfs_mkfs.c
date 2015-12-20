@@ -430,7 +430,7 @@ static void blkid_get_topology(
 	 * terms of 512 bytes blocks (only to convert it to bytes later..)
 	 */
 	*sunit = *sunit >> 9;
-	*swidth = *swidth >> 9;	
+	*swidth = *swidth >> 9;
 
 	if (blkid_topology_get_alignment_offset(tp) != 0) {
 		fprintf(stderr,
@@ -2880,7 +2880,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		 * so, reset the record count to 0 to avoid exposure of an invalid
 		 * record start block.
 		 */
-		arec->ar_blockcount = cpu_to_be32(agsize - 
+		arec->ar_blockcount = cpu_to_be32(agsize -
 					be32_to_cpu(arec->ar_startblock));
 		if (!arec->ar_blockcount)
 			block->bb_numrecs = 0;
@@ -2925,7 +2925,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		 * so, reset the record count to 0 to avoid exposure of an invalid
 		 * record start block.
 		 */
-		arec->ar_blockcount = cpu_to_be32(agsize - 
+		arec->ar_blockcount = cpu_to_be32(agsize -
 					be32_to_cpu(arec->ar_startblock));
 		if (!arec->ar_blockcount)
 			block->bb_numrecs = 0;

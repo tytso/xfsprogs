@@ -1124,7 +1124,7 @@ build_agi(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 	agi->agi_newino = cpu_to_be32(agi_stat->first_agino);
 	agi->agi_dirino = cpu_to_be32(NULLAGINO);
 
-	for (i = 0; i < XFS_AGI_UNLINKED_BUCKETS; i++)  
+	for (i = 0; i < XFS_AGI_UNLINKED_BUCKETS; i++)
 		agi->agi_unlinked[i] = cpu_to_be32(NULLAGINO);
 
 	if (xfs_sb_version_hascrc(&mp->m_sb))

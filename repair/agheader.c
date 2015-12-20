@@ -69,7 +69,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 				be32_to_cpu(agf->agf_length), i,
 				mp->m_sb.sb_agblocks);
 			if (!no_modify)
-				agf->agf_length = 
+				agf->agf_length =
 					cpu_to_be32(mp->m_sb.sb_agblocks);
 		} else  {
 			agblocks = mp->m_sb.sb_dblocks -
@@ -168,7 +168,7 @@ verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 				be32_to_cpu(agi->agi_length), agno,
 					mp->m_sb.sb_agblocks);
 			if (!no_modify)
-				agi->agi_length = 
+				agi->agi_length =
 					cpu_to_be32(mp->m_sb.sb_agblocks);
 		} else  {
 			agblocks = mp->m_sb.sb_dblocks -

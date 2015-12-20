@@ -2194,7 +2194,7 @@ process_btinode(
 	}
 	if (be16_to_cpu(dib->bb_level) == 0) {
 		xfs_bmbt_rec_t	*rp = XFS_BMDR_REC_ADDR(dib, 1);
-		process_bmbt_reclist(rp, be16_to_cpu(dib->bb_numrecs), type, 
+		process_bmbt_reclist(rp, be16_to_cpu(dib->bb_numrecs), type,
 							id, totd, blkmapp);
 		*nex += be16_to_cpu(dib->bb_numrecs);
 		return;
@@ -2202,10 +2202,10 @@ process_btinode(
 		pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(
 				XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 		for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
-			scan_lbtree(be64_to_cpu(pp[i]), 
-					be16_to_cpu(dib->bb_level), 
-					scanfunc_bmap, type, id, totd, toti, 
-					nex, blkmapp, 1, 
+			scan_lbtree(be64_to_cpu(pp[i]),
+					be16_to_cpu(dib->bb_level),
+					scanfunc_bmap, type, id, totd, toti,
+					nex, blkmapp, 1,
 					whichfork == XFS_DATA_FORK ?
 						TYP_BMAPBTD : TYP_BMAPBTA);
 	}
@@ -2341,7 +2341,7 @@ process_data_dir_v2(
 				bf_err += (freeseen & (1 << i)) != 0;
 				freeseen |= 1 << i;
 			} else
-				bf_err += be16_to_cpu(dup->length) > 
+				bf_err += be16_to_cpu(dup->length) >
 						be16_to_cpu(bf[2].length);
 			ptr += be16_to_cpu(dup->length);
 			lastfree = 1;
@@ -2426,19 +2426,19 @@ process_data_dir_v2(
 			if ((char *)&lep[i] >= endptr) {
 				if (!sflag || v)
 					dbprintf(_("dir %lld block %d bad count "
-						 "%u\n"), id->ino, dabno, 
+						 "%u\n"), id->ino, dabno,
 						be32_to_cpu(btp->count));
 				error++;
 				break;
 			}
 			if (be32_to_cpu(lep[i].address) == XFS_DIR2_NULL_DATAPTR)
 				stale++;
-			else if (dir_hash_see(be32_to_cpu(lep[i].hashval), 
+			else if (dir_hash_see(be32_to_cpu(lep[i].hashval),
 						be32_to_cpu(lep[i].address))) {
 				if (!sflag || v)
 					dbprintf(_("dir %lld block %d extra leaf "
-						 "entry %x %x\n"), 
-						id->ino, dabno, 
+						 "entry %x %x\n"),
+						id->ino, dabno,
 						be32_to_cpu(lep[i].hashval),
 						be32_to_cpu(lep[i].address));
 				error++;
@@ -2457,8 +2457,8 @@ process_data_dir_v2(
 	    count != be32_to_cpu(btp->count) - be32_to_cpu(btp->stale)) {
 		if (!sflag || v)
 			dbprintf(_("dir %lld block %d bad block tail count %d "
-				 "(stale %d)\n"), 
-				id->ino, dabno, be32_to_cpu(btp->count), 
+				 "(stale %d)\n"),
+				id->ino, dabno, be32_to_cpu(btp->count),
 				be32_to_cpu(btp->stale));
 		error++;
 	}
@@ -2599,7 +2599,7 @@ process_exinode(
 
 	rp = (xfs_bmbt_rec_t *)XFS_DFORK_PTR(dip, whichfork);
 	*nex = XFS_DFORK_NEXTENTS(dip, whichfork);
-	if (*nex < 0 || *nex > XFS_DFORK_SIZE(dip, mp, whichfork) / 
+	if (*nex < 0 || *nex > XFS_DFORK_SIZE(dip, mp, whichfork) /
 						sizeof(xfs_bmbt_rec_t)) {
 		if (!sflag || id->ilist)
 			dbprintf(_("bad number of extents %d for inode %lld\n"),
@@ -3063,7 +3063,7 @@ process_leaf_node_dir_v3_free(
 
 	free = iocur_top->data;
 	maxent = M_DIROPS(mp)->free_max_bests(mp->m_dir_geo);
-	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo, 
+	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo,
 					dabno - mp->m_dir_geo->freeblk) * maxent) {
 		if (!sflag || v)
 			dbprintf(_("bad free block firstdb %d for dir ino %lld "
@@ -3072,14 +3072,14 @@ process_leaf_node_dir_v3_free(
 		error++;
 		return;
 	}
-	if (be32_to_cpu(free->hdr.nvalid) > maxent || 
-				be32_to_cpu(free->hdr.nused) > maxent || 
-				be32_to_cpu(free->hdr.nused) > 
+	if (be32_to_cpu(free->hdr.nvalid) > maxent ||
+				be32_to_cpu(free->hdr.nused) > maxent ||
+				be32_to_cpu(free->hdr.nused) >
 					be32_to_cpu(free->hdr.nvalid)) {
 		if (!sflag || v)
 			dbprintf(_("bad free block nvalid/nused %d/%d for dir "
 				 "ino %lld block %d\n"),
-				be32_to_cpu(free->hdr.nvalid), 
+				be32_to_cpu(free->hdr.nvalid),
 				be32_to_cpu(free->hdr.nused), id->ino, dabno);
 		error++;
 		return;
@@ -3093,21 +3093,21 @@ process_leaf_node_dir_v3_free(
 			if (!sflag || v)
 				dbprintf(_("bad free block ent %d is %d should "
 					 "be %d for dir ino %lld block %d\n"),
-					i, be16_to_cpu(free->bests[i]), ent, 
+					i, be16_to_cpu(free->bests[i]), ent,
 					id->ino, dabno);
 			error++;
 		}
 		if (be16_to_cpu(free->bests[i]) != NULLDATAOFF)
 			used++;
 		if (ent != NULLDATAOFF)
-			freetab->ents[be32_to_cpu(free->hdr.firstdb) + i] = 
+			freetab->ents[be32_to_cpu(free->hdr.firstdb) + i] =
 								NULLDATAOFF;
 	}
 	if (used != be32_to_cpu(free->hdr.nused)) {
 		if (!sflag || v)
 			dbprintf(_("bad free block nused %d should be %d for dir "
 				 "ino %lld block %d\n"),
-				be32_to_cpu(free->hdr.nused), used, id->ino, 
+				be32_to_cpu(free->hdr.nused), used, id->ino,
 				dabno);
 		error++;
 	}
@@ -3141,7 +3141,7 @@ process_leaf_node_dir_v2_free(
 		return;
 	}
 	maxent = M_DIROPS(mp)->free_max_bests(mp->m_dir_geo);
-	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo, 
+	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo,
 					dabno - mp->m_dir_geo->freeblk) * maxent) {
 		if (!sflag || v)
 			dbprintf(_("bad free block firstdb %d for dir ino %lld "
@@ -3150,16 +3150,16 @@ process_leaf_node_dir_v2_free(
 		error++;
 		return;
 	}
-	if (be32_to_cpu(free->hdr.nvalid) > maxent || 
+	if (be32_to_cpu(free->hdr.nvalid) > maxent ||
 				be32_to_cpu(free->hdr.nvalid) < 0 ||
-				be32_to_cpu(free->hdr.nused) > maxent || 
+				be32_to_cpu(free->hdr.nused) > maxent ||
 				be32_to_cpu(free->hdr.nused) < 0 ||
-				be32_to_cpu(free->hdr.nused) > 
+				be32_to_cpu(free->hdr.nused) >
 					be32_to_cpu(free->hdr.nvalid)) {
 		if (!sflag || v)
 			dbprintf(_("bad free block nvalid/nused %d/%d for dir "
 				 "ino %lld block %d\n"),
-				be32_to_cpu(free->hdr.nvalid), 
+				be32_to_cpu(free->hdr.nvalid),
 				be32_to_cpu(free->hdr.nused), id->ino, dabno);
 		error++;
 		return;
@@ -3173,21 +3173,21 @@ process_leaf_node_dir_v2_free(
 			if (!sflag || v)
 				dbprintf(_("bad free block ent %d is %d should "
 					 "be %d for dir ino %lld block %d\n"),
-					i, be16_to_cpu(free->bests[i]), ent, 
+					i, be16_to_cpu(free->bests[i]), ent,
 					id->ino, dabno);
 			error++;
 		}
 		if (be16_to_cpu(free->bests[i]) != NULLDATAOFF)
 			used++;
 		if (ent != NULLDATAOFF)
-			freetab->ents[be32_to_cpu(free->hdr.firstdb) + i] = 
+			freetab->ents[be32_to_cpu(free->hdr.firstdb) + i] =
 								NULLDATAOFF;
 	}
 	if (used != be32_to_cpu(free->hdr.nused)) {
 		if (!sflag || v)
 			dbprintf(_("bad free block nused %d should be %d for dir "
 				 "ino %lld block %d\n"),
-				be32_to_cpu(free->hdr.nused), used, id->ino, 
+				be32_to_cpu(free->hdr.nused), used, id->ino,
 				dabno);
 		error++;
 	}
@@ -3236,13 +3236,13 @@ process_leaf_node_dir_v2_int(
 	switch (be16_to_cpu(leaf->hdr.info.magic)) {
 	case XFS_DIR2_LEAF1_MAGIC:
 	case XFS_DIR3_LEAF1_MAGIC:
-		if (be32_to_cpu(leaf->hdr.info.forw) || 
+		if (be32_to_cpu(leaf->hdr.info.forw) ||
 					be32_to_cpu(leaf->hdr.info.back)) {
 			if (!sflag || v)
 				dbprintf(_("bad leaf block forw/back pointers "
 					 "%d/%d for dir ino %lld block %d\n"),
 					be32_to_cpu(leaf->hdr.info.forw),
-					be32_to_cpu(leaf->hdr.info.back), 
+					be32_to_cpu(leaf->hdr.info.back),
 					id->ino, dabno);
 			error++;
 		}
@@ -3257,7 +3257,7 @@ process_leaf_node_dir_v2_int(
 		ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
 		lbp = xfs_dir2_leaf_bests_p(ltp);
 		for (i = 0; i < be32_to_cpu(ltp->bestcount); i++) {
-			if (freetab->nents <= i || freetab->ents[i] != 
+			if (freetab->nents <= i || freetab->ents[i] !=
 						be16_to_cpu(lbp[i])) {
 				if (!sflag || v)
 					dbprintf(_("bestfree %d for dir ino %lld "
@@ -3287,7 +3287,7 @@ process_leaf_node_dir_v2_int(
 			if (!sflag || v)
 				dbprintf(_("bad node block level %d for dir ino "
 					 "%lld block %d\n"),
-					nodehdr.level, id->ino, 
+					nodehdr.level, id->ino,
 					dabno);
 			error++;
 		}
@@ -3296,7 +3296,7 @@ process_leaf_node_dir_v2_int(
 		if (!sflag || v)
 			dbprintf(_("bad directory data magic # %#x for dir ino "
 				 "%lld block %d\n"),
-				be16_to_cpu(leaf->hdr.info.magic), id->ino, 
+				be16_to_cpu(leaf->hdr.info.magic), id->ino,
 				dabno);
 		error++;
 		return;
@@ -3305,11 +3305,11 @@ process_leaf_node_dir_v2_int(
 	for (i = stale = 0; i < xfs_dir3_leaf_ents_count(leaf); i++) {
 		if (be32_to_cpu(lep[i].address) == XFS_DIR2_NULL_DATAPTR)
 			stale++;
-		else if (dir_hash_see(be32_to_cpu(lep[i].hashval), 
+		else if (dir_hash_see(be32_to_cpu(lep[i].hashval),
 						be32_to_cpu(lep[i].address))) {
 			if (!sflag || v)
 				dbprintf(_("dir %lld block %d extra leaf entry "
-					 "%x %x\n"), id->ino, dabno, 
+					 "%x %x\n"), id->ino, dabno,
 					be32_to_cpu(lep[i].hashval),
 					be32_to_cpu(lep[i].address));
 			error++;
@@ -3630,7 +3630,7 @@ process_sf_dir_v2(
 			M_DIROPS(mp)->sf_entsize(sf, sfe->namelen);
 		sfe = M_DIROPS(mp)->sf_nextentry(sf, sfe);
 	}
-	if (i < 0 && (intptr_t)sfe - (intptr_t)sf != 
+	if (i < 0 && (intptr_t)sfe - (intptr_t)sf !=
 					be64_to_cpu(dip->di_size)) {
 		if (!sflag)
 			dbprintf(_("dir %llu size is %lld, should be %u\n"),
@@ -4162,7 +4162,7 @@ scanfunc_bmap(
 	}
 	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[0]);
 	for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++)
-		scan_lbtree(be64_to_cpu(pp[i]), level, scanfunc_bmap, type, id, 
+		scan_lbtree(be64_to_cpu(pp[i]), level, scanfunc_bmap, type, id,
 					totd, toti, nex, blkmapp, 0, btype);
 }
 

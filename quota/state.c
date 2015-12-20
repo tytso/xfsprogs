@@ -339,14 +339,14 @@ remove_extents(
 	}
 	dir = mount->fs_name;
 	if (type & XFS_USER_QUOTA) {
-		if (remove_qtype_extents(dir, XFS_USER_QUOTA) < 0) 
+		if (remove_qtype_extents(dir, XFS_USER_QUOTA) < 0)
 			return;
 	}
 	if (type & XFS_GROUP_QUOTA) {
-		if (remove_qtype_extents(dir, XFS_GROUP_QUOTA) < 0) 
+		if (remove_qtype_extents(dir, XFS_GROUP_QUOTA) < 0)
 			return;
 	} else if (type & XFS_PROJ_QUOTA) {
-		if (remove_qtype_extents(dir, XFS_PROJ_QUOTA) < 0) 
+		if (remove_qtype_extents(dir, XFS_PROJ_QUOTA) < 0)
 			return;
 	}
 	if (flags & VERBOSE_FLAG)

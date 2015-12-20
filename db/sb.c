@@ -414,7 +414,7 @@ uuid_f(
 			/* Not set; nothing to do.  Success! */
 			if (!xfs_sb_version_hasmetauuid(&tsb))
 				return 0;
-		
+
 			memcpy(&uu, mp->m_sb.sb_meta_uuid, sizeof(uuid_t));
 		} else {
 			if (platform_uuid_parse(argv[1], &uu)) {

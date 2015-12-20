@@ -945,7 +945,7 @@ prefetch_ag_range_work(
 {
 	struct pf_work_args *wargs = args;
 
-	prefetch_ag_range(work, wargs->start_ag, wargs->end_ag, 
+	prefetch_ag_range(work, wargs->start_ag, wargs->end_ag,
 			  wargs->dirs_only, wargs->func);
 	free(args);
 }

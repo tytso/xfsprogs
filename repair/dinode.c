@@ -288,9 +288,9 @@ verify_ag_bno(xfs_sb_t *sbp,
 		xfs_agnumber_t agno,
 		xfs_agblock_t agbno)
 {
-	if (agno < (sbp->sb_agcount - 1)) 
+	if (agno < (sbp->sb_agcount - 1))
 		return (agbno >= sbp->sb_agblocks);
-	if (agno == (sbp->sb_agcount - 1)) 
+	if (agno == (sbp->sb_agcount - 1))
 		return (agbno >= (sbp->sb_dblocks -
 				((xfs_rfsblock_t)(sbp->sb_agcount - 1) *
 				 sbp->sb_agblocks)));
@@ -1159,7 +1159,7 @@ process_symlink_extlist(xfs_mount_t *mp, xfs_ino_t lino, xfs_dinode_t *dino)
 	int			max_blocks;
 
 	if (be64_to_cpu(dino->di_size) <= XFS_DFORK_DSIZE(dino, mp)) {
-		if (dino->di_format == XFS_DINODE_FMT_LOCAL)  
+		if (dino->di_format == XFS_DINODE_FMT_LOCAL)
 			return 0;
 		do_warn(
 _("mismatch between format (%d) and size (%" PRId64 ") in symlink ino %" PRIu64 "\n"),
@@ -1359,7 +1359,7 @@ process_symlink(
 		 * local symlink, just copy the symlink out of the
 		 * inode into the data area
 		 */
-		memmove(symlink, XFS_DFORK_DPTR(dino), 
+		memmove(symlink, XFS_DFORK_DPTR(dino),
 						be64_to_cpu(dino->di_size));
 	} else {
 		int error;
@@ -1934,7 +1934,7 @@ process_inode_data_fork(
 		 */
 		switch (dino->di_format) {
 		case XFS_DINODE_FMT_LOCAL:
-			err = process_lclinode(mp, agno, ino, dino, 
+			err = process_lclinode(mp, agno, ino, dino,
 						XFS_DATA_FORK);
 			break;
 		case XFS_DINODE_FMT_EXTENTS:
@@ -2068,7 +2068,7 @@ process_inode_attr_fork(
 	if (check_dups)  {
 		switch (dino->di_aformat) {
 		case XFS_DINODE_FMT_LOCAL:
-			err = process_lclinode(mp, agno, ino, dino, 
+			err = process_lclinode(mp, agno, ino, dino,
 						XFS_ATTR_FORK);
 			break;
 		case XFS_DINODE_FMT_EXTENTS:

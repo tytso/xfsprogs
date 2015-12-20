@@ -1,6 +1,6 @@
 # 
 # Check if we have a working fadvise system call
-# 
+#
 AC_DEFUN([AC_HAVE_FADVISE],
   [ AC_MSG_CHECKING([for fadvise ])
     AC_TRY_COMPILE([
@@ -15,9 +15,9 @@ AC_DEFUN([AC_HAVE_FADVISE],
     AC_SUBST(have_fadvise)
   ])
 
-# 
+#
 # Check if we have a working madvise system call
-# 
+#
 AC_DEFUN([AC_HAVE_MADVISE],
   [ AC_MSG_CHECKING([for madvise ])
     AC_TRY_COMPILE([
@@ -32,9 +32,9 @@ AC_DEFUN([AC_HAVE_MADVISE],
     AC_SUBST(have_madvise)
   ])
 
-# 
+#
 # Check if we have a working mincore system call
-# 
+#
 AC_DEFUN([AC_HAVE_MINCORE],
   [ AC_MSG_CHECKING([for mincore ])
     AC_TRY_COMPILE([
@@ -49,9 +49,9 @@ AC_DEFUN([AC_HAVE_MINCORE],
     AC_SUBST(have_mincore)
   ])
 
-# 
+#
 # Check if we have a working sendfile system call
-# 
+#
 AC_DEFUN([AC_HAVE_SENDFILE],
   [ AC_MSG_CHECKING([for sendfile ])
     AC_TRY_COMPILE([

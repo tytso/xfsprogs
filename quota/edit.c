@@ -122,7 +122,7 @@ set_limits(
 	__uint64_t	*bsoft,
 	__uint64_t	*bhard,
 	__uint64_t	*isoft,
-	__uint64_t	*ihard, 
+	__uint64_t	*ihard,
 	__uint64_t	*rtbsoft,
 	__uint64_t	*rtbhard)
 {
@@ -155,7 +155,7 @@ set_user_limits(
 	__uint64_t	*bsoft,
 	__uint64_t	*bhard,
 	__uint64_t	*isoft,
-	__uint64_t	*ihard, 
+	__uint64_t	*ihard,
 	__uint64_t	*rtbsoft,
 	__uint64_t	*rtbhard)
 {
@@ -178,7 +178,7 @@ set_group_limits(
 	__uint64_t	*bsoft,
 	__uint64_t	*bhard,
 	__uint64_t	*isoft,
-	__uint64_t	*ihard, 
+	__uint64_t	*ihard,
 	__uint64_t	*rtbsoft,
 	__uint64_t	*rtbhard)
 {
@@ -201,7 +201,7 @@ set_project_limits(
 	__uint64_t	*bsoft,
 	__uint64_t	*bhard,
 	__uint64_t	*isoft,
-	__uint64_t	*ihard, 
+	__uint64_t	*ihard,
 	__uint64_t	*rtbsoft,
 	__uint64_t	*rtbhard)
 {

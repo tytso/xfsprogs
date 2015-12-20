@@ -1039,7 +1039,7 @@ mk_orphanage(xfs_mount_t *mp)
 	 */
 	error = -libxfs_dir_createname(tp, pip, &xname, ip->i_ino, &first,
 					&flist, nres);
-	if (error) 
+	if (error)
 		do_error(
 		_("can't make %s, createname error %d\n"),
 			ORPHANAGE, error);

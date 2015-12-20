@@ -386,7 +386,7 @@ _("bad %s forward block pointer, expected 0, saw %u\n"),
 	}
 	/*
 	 * keep track of greatest block # -- that gets
-	 * us the length of the directory/attribute 
+	 * us the length of the directory/attribute
 	 */
 	if (cursor->level[this_level].bno > cursor->greatest_bno)
 		cursor->greatest_bno = cursor->level[this_level].bno;

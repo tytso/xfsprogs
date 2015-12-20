@@ -104,7 +104,7 @@ xlog_recover_print_buffer(
 		i++;
 		if (blkno == 0) { /* super block */
 			printf(_("	SUPER Block Buffer:\n"));
-			if (!print_buffer) 
+			if (!print_buffer)
 				continue;
 		       printf(_("              icount:%llu ifree:%llu  "),
 			       (unsigned long long)
@@ -123,7 +123,7 @@ xlog_recover_print_buffer(
 			int bucket, buckets;
 			agi = (xfs_agi_t *)p;
 			printf(_("	AGI Buffer: (XAGI)\n"));
-			if (!print_buffer) 
+			if (!print_buffer)
 				continue;
 			printf(_("		ver:%d  "),
 				be32_to_cpu(agi->agi_versionnum));
@@ -157,7 +157,7 @@ xlog_recover_print_buffer(
 		} else if (be32_to_cpu(*(__be32 *)p) == XFS_AGF_MAGIC) {
 			agf = (xfs_agf_t *)p;
 			printf(_("	AGF Buffer: (XAGF)\n"));
-			if (!print_buffer) 
+			if (!print_buffer)
 				continue;
 			printf(_("		ver:%d  seq#:%d  len:%d  \n"),
 				be32_to_cpu(agf->agf_versionnum),
@@ -179,7 +179,7 @@ xlog_recover_print_buffer(
 		} else if (*(uint *)p == XFS_DQUOT_MAGIC) {
 			ddq = (xfs_disk_dquot_t *)p;
 			printf(_("	DQUOT Buffer:\n"));
-			if (!print_buffer) 
+			if (!print_buffer)
 				continue;
 			printf(_("		UIDs 0x%lx-0x%lx\n"),
 			       (unsigned long)be32_to_cpu(ddq->d_id),

@@ -298,7 +298,7 @@ fiemap_f(
 							  &foff_w, &boff_w,
 							  &tot_w, &flg_w);
 				}
-					
+
 				print_verbose(extent, blocksize, foff_w,
 					      boff_w, tot_w, flg_w,
 					      max_extents, &cur_extent,

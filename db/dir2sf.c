@@ -273,4 +273,3 @@ const field_t	dir3_sf_entry_flds[] = {
 	  FLD_OFFSET, TYP_NONE },
 	{ NULL }
 };
-

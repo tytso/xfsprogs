@@ -243,7 +243,7 @@ process_shortform_attr(
 				do_warn(
 	_("there are no attributes in the fork for inode %" PRIu64 "\n"),
 					ino);
-				asf->hdr.totsize = 
+				asf->hdr.totsize =
 					cpu_to_be16(sizeof(xfs_attr_sf_hdr_t));
 				*repair = 1;
 				return(1);
@@ -325,7 +325,7 @@ process_shortform_attr(
 		if (currententry->flags & XFS_ATTR_ROOT)
 		       junkit |= valuecheck(mp,
 					(char *)&currententry->nameval[0],
-					NULL, currententry->namelen, 
+					NULL, currententry->namelen,
 					currententry->valuelen);
 
 		remainingspace = remainingspace -
@@ -470,7 +470,7 @@ process_leaf_attr_local(
 	xfs_attr_leaf_name_local_t *local;
 
 	local = xfs_attr3_leaf_name_local(leaf, i);
-	if (local->namelen == 0 || namecheck((char *)&local->nameval[0], 
+	if (local->namelen == 0 || namecheck((char *)&local->nameval[0],
 							local->namelen)) {
 		do_warn(
 	_("attribute entry %d in attr block %u, inode %" PRIu64 " has bad name (namelen = %d)\n"),
@@ -497,7 +497,7 @@ process_leaf_attr_local(
 
 	/* Only check values for root security attributes */
 	if (entry->flags & XFS_ATTR_ROOT) {
-		if (valuecheck(mp, (char *)&local->nameval[0], NULL, 
+		if (valuecheck(mp, (char *)&local->nameval[0], NULL,
 				local->namelen, be16_to_cpu(local->valuelen))) {
 			do_warn(
 	_("bad security value for attribute entry %d in attr block %u, inode %" PRIu64 "\n"),
@@ -505,7 +505,7 @@ process_leaf_attr_local(
 			return -1;
 		}
 	}
-	return xfs_attr_leaf_entsize_local(local->namelen, 
+	return xfs_attr_leaf_entsize_local(local->namelen,
 						be16_to_cpu(local->valuelen));
 }
 
@@ -525,10 +525,10 @@ process_leaf_attr_remote(
 
 	remotep = xfs_attr3_leaf_name_remote(leaf, i);
 
-	if (remotep->namelen == 0 || namecheck((char *)&remotep->name[0], 
-						remotep->namelen) || 
-			be32_to_cpu(entry->hashval) != 
-				libxfs_da_hashname((unsigned char *)&remotep->name[0], 
+	if (remotep->namelen == 0 || namecheck((char *)&remotep->name[0],
+						remotep->namelen) ||
+			be32_to_cpu(entry->hashval) !=
+				libxfs_da_hashname((unsigned char *)&remotep->name[0],
 						remotep->namelen) ||
 			be32_to_cpu(entry->hashval) < last_hashval ||
 			be32_to_cpu(remotep->valueblk) == 0) {
@@ -539,7 +539,7 @@ process_leaf_attr_remote(
 
 	if (!(entry->flags & XFS_ATTR_ROOT))
 		goto out;
- 
+
 	value = malloc(be32_to_cpu(remotep->valuelen));
 	if (value == NULL) {
 		do_warn(
@@ -673,14 +673,14 @@ process_leaf_attr_block(
 		 * since the block will get compacted anyhow by the kernel.
 		 */
 
-		if ((leafhdr.holes == 0 && 
+		if ((leafhdr.holes == 0 &&
 				firstb != leafhdr.firstused) ||
 		    		leafhdr.firstused > firstb)  {
 			if (!no_modify)  {
 				do_warn(
 	_("- resetting first used heap value from %d to %d in "
 	  "block %u of attribute fork of inode %" PRIu64 "\n"),
-					leafhdr.firstused, 
+					leafhdr.firstused,
 					firstb, da_bno, ino);
 				leafhdr.firstused = firstb;
 				*repair = 1;
@@ -688,7 +688,7 @@ process_leaf_attr_block(
 				do_warn(
 	_("- would reset first used value from %d to %d in "
 	  "block %u of attribute fork of inode %" PRIu64 "\n"),
-					leafhdr.firstused, 
+					leafhdr.firstused,
 					firstb, da_bno, ino);
 			}
 		}
@@ -698,7 +698,7 @@ process_leaf_attr_block(
 				do_warn(
 	_("- resetting usedbytes cnt from %d to %d in "
 	  "block %u of attribute fork of inode %" PRIu64 "\n"),
-					leafhdr.usedbytes, 
+					leafhdr.usedbytes,
 					usedbs, da_bno, ino);
 				leafhdr.usedbytes = usedbs;
 				*repair = 1;
@@ -706,7 +706,7 @@ process_leaf_attr_block(
 				do_warn(
 	_("- would reset usedbytes cnt from %d to %d in "
 	  "block %u of attribute fork of %" PRIu64 "\n"),
-					leafhdr.usedbytes, 
+					leafhdr.usedbytes,
 					usedbs, da_bno, ino);
 			}
 		}
@@ -988,7 +988,7 @@ process_longform_attr(
 	bno = blkmap_get(blkmap, 0);
 
 	if ( bno == NULLFSBLOCK ) {
-		if (dip->di_aformat == XFS_DINODE_FMT_EXTENTS && 
+		if (dip->di_aformat == XFS_DINODE_FMT_EXTENTS &&
 				be16_to_cpu(dip->di_anextents) == 0)
 			return(0); /* the kernel can handle this state */
 		do_warn(

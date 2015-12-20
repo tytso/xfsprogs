@@ -34,4 +34,3 @@ AC_DEFUN([AC_PACKAGE_NEED_LIO_LISTIO],
     fi
     AC_SUBST(librt)
   ])
-

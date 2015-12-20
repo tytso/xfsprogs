@@ -515,7 +515,7 @@ out_error:
 		progname, strerror(error));
 }
 
-void 
+void
 fs_table_insert_project_path(
 	char		*dir,
 	prid_t		prid)
@@ -536,4 +536,3 @@ fs_table_insert_project_path(
 		exit(1);
 	}
 }
-

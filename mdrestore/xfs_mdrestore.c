@@ -156,7 +156,7 @@ perform_restore(
 		if (mb_count > max_indicies)
 			fatal("bad block count: %u\n", mb_count);
 
-		if (fread(block_buffer, mb_count << tmb.mb_blocklog, 
+		if (fread(block_buffer, mb_count << tmb.mb_blocklog,
 								1, src_f) != 1)
 			fatal("error reading from file: %s\n", strerror(errno));
 

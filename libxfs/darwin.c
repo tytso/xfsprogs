@@ -142,4 +142,3 @@ platform_physmem(void)
 	}
 	return physmem >> 10;
 }
-

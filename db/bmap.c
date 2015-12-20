@@ -92,7 +92,7 @@ bmap(
 		fsize = XFS_DFORK_SIZE(dip, mp, whichfork);
 		pp = XFS_BMDR_PTR_ADDR(rblock, 1, xfs_bmdr_maxrecs(fsize, 0));
 		kp = XFS_BMDR_KEY_ADDR(rblock, 1);
-		bno = select_child(curoffset, kp, pp, 
+		bno = select_child(curoffset, kp, pp,
 					be16_to_cpu(rblock->bb_numrecs));
 		for (;;) {
 			set_cur(&typtab[typ], XFS_FSB_TO_DADDR(mp, bno),

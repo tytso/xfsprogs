@@ -78,4 +78,3 @@ const struct field	symlink_crc_flds[] = {
 		symlink_count, FLD_COUNT, TYP_NONE },
 	{ NULL }
 };
-

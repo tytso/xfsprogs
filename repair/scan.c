@@ -1803,4 +1803,3 @@ scan_ags(
 			mp->m_sb.sb_fdblocks, fdblocks);
 	}
 }
-

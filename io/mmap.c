@@ -166,7 +166,7 @@ mmap_f(
 		if (mapping)
 			return maplist_f();
 		fprintf(stderr, file ?
-			_("no mapped regions, try 'help mmap'\n") : 
+			_("no mapped regions, try 'help mmap'\n") :
 			_("no files are open, try 'help open'\n"));
 		return 0;
 	} else if (argc == 2) {

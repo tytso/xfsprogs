@@ -258,7 +258,7 @@ process_btinode(
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
 		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
-		scan_lbtree(be64_to_cpu(pp[i]), be16_to_cpu(dib->bb_level), 
+		scan_lbtree(be64_to_cpu(pp[i]), be16_to_cpu(dib->bb_level),
 			scanfunc_bmap, extmapp,
 			whichfork == XFS_DATA_FORK ? TYP_BMAPBTD : TYP_BMAPBTA);
 }
@@ -377,7 +377,7 @@ scan_ag(
 		pop_cur();
 		return;
 	}
-	scan_sbtree(agf, be32_to_cpu(agi->agi_root), 
+	scan_sbtree(agf, be32_to_cpu(agi->agi_root),
 			be32_to_cpu(agi->agi_level), scanfunc_ino, TYP_INOBT);
 	pop_cur();
 	pop_cur();
@@ -457,7 +457,7 @@ scanfunc_bmap(
 	}
 	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[0]);
 	for (i = 0; i < nrecs; i++)
-		scan_lbtree(be64_to_cpu(pp[i]), level, scanfunc_bmap, extmapp, 
+		scan_lbtree(be64_to_cpu(pp[i]), level, scanfunc_bmap, extmapp,
 									btype);
 }
 
@@ -495,7 +495,7 @@ scanfunc_ino(
 				if (XFS_INOBT_IS_FREE_DISK(&rp[i], j))
 					continue;
 				process_inode(agf, agino + j, (xfs_dinode_t *)
-					((char *)iocur_top->data + 
+					((char *)iocur_top->data +
 					((off + j) << mp->m_sb.sb_inodelog)));
 			}
 			pop_cur();
@@ -504,6 +504,6 @@ scanfunc_ino(
 	}
 	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
 	for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++)
-		scan_sbtree(agf, be32_to_cpu(pp[i]), level, scanfunc_ino, 
+		scan_sbtree(agf, be32_to_cpu(pp[i]), level, scanfunc_ino,
 								TYP_INOBT);
 }

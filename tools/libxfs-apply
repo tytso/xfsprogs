@@ -17,7 +17,7 @@ usage()
 
 cleanup()
 {
-	rm -f $PATCH 
+	rm -f $PATCH
 }
 
 fail()

@@ -141,7 +141,7 @@ check_parents(parent_t *parentbuf, size_t *parentbuf_size,
 			break;
 		}
 	} while (error == ERANGE);
-	
+
 
 	if (count == 0) {
 		/* no links for inode - something wrong here */
