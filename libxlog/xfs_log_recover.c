@@ -244,7 +244,7 @@ xlog_find_verify_cycle(
 	xfs_daddr_t	i, j;
 	uint		cycle;
 	xfs_buf_t	*bp;
-	xfs_daddr_t	bufblks;
+	int		bufblks;
 	char		*buf = NULL;
 	int		error = 0;
 
