@@ -2022,7 +2022,7 @@ _("warning: sparse inodes not supported without CRC support, disabled.\n"));
 		 * and the underlying volume is striped, then set rtextblocks
 		 * to the stripe width.
 		 */
-		int		rswidth;
+		__uint64_t	rswidth;
 		__uint64_t	rtextbytes;
 
 		if (!norsflag && !xi.risfile && !(!rtsize && xi.disfile))
