@@ -850,7 +850,8 @@ get_agino_buf(xfs_mount_t	 *mp,
 	if ((irec = find_inode_rec(mp, agno, agino)) == NULL)
 		return(NULL);
 
-	size = XFS_FSB_TO_BB(mp, MAX(1, XFS_INODES_PER_CHUNK/inodes_per_block));
+	size = MAX(1, XFS_FSB_TO_BB(mp,
+			mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog));
 	bp = libxfs_readbuf(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno,
 		XFS_AGINO_TO_AGBNO(mp, irec->ino_startnum)), size, 0,
 		&xfs_inode_buf_ops);
