@@ -45,7 +45,7 @@ dump_help(void)
 static void
 report_help(void)
 {
-	report_cmd.args = _("[-bir] [-gpu] [-ahntLNU] [-f file]");
+	report_cmd.args = _("[-bir] [-gpu] [-ahntlLNU] [-f file]");
 	report_cmd.oneline = _("report filesystem quota information");
 	printf(_(
 "\n"
@@ -63,6 +63,7 @@ report_help(void)
 " -t -- terse output format, hides rows which are all zero\n"
 " -L -- lower ID bound to report on\n"
 " -U -- upper ID bound to report on\n"
+" -l -- look up names for IDs in lower-upper range\n"
 " -g -- report group usage and quota information\n"
 " -p -- report project usage and quota information\n"
 " -u -- report user usage and quota information\n"
@@ -322,10 +323,26 @@ report_mount(
 	if (!(flags & NO_HEADER_FLAG))
 		report_header(fp, form, type, mount, flags);
 
-	if ((name == NULL) || (flags & NO_LOOKUP_FLAG))
+	if (flags & NO_LOOKUP_FLAG) {
 		fprintf(fp, "#%-10u", id);
-	else
+	} else {
+		if (name == NULL) {
+			if (type == XFS_USER_QUOTA) {
+				struct passwd	*u = getpwuid(id);
+				if (u)
+					name = u->pw_name;
+			} else if (type == XFS_GROUP_QUOTA) {
+				struct group	*g = getgrgid(id);
+				if (g)
+					name = g->gr_name;
+			} else if (type == XFS_PROJ_QUOTA) {
+				fs_project_t	*p = getprprid(id);
+				if (p)
+					name = p->pr_name;
+			}
+		}
 		fprintf(fp, "%-10s", name);
+	}
 
 	if (form & XFS_BLOCK_QUOTA) {
 		qflags = (flags & HUMAN_FLAG);
@@ -545,9 +562,10 @@ report_f(
 	FILE		*fp = NULL;
 	char		*fname = NULL;
 	uint		lower = 0, upper = 0;
+	bool		lookup = false;
 	int		c, flags = 0, type = 0, form = 0;
 
-	while ((c = getopt(argc, argv, "abf:ghiL:NnprtuU:")) != EOF) {
+	while ((c = getopt(argc, argv, "abdf:ghilL:NnprtuU:")) != EOF) {
 		switch (c) {
 		case 'f':
 			fname = optarg;
@@ -587,9 +605,14 @@ report_f(
 			break;
 		case 'L':
 			lower = (uint)atoi(optarg);
+			flags |= NO_LOOKUP_FLAG;
 			break;
 		case 'U':
 			upper = (uint)atoi(optarg);
+			flags |= NO_LOOKUP_FLAG;
+			break;
+		case 'l':
+			lookup = true;
 			break;
 		default:
 			return command_usage(&report_cmd);
@@ -601,6 +624,9 @@ report_f(
 
 	if (!type)
 		type = XFS_USER_QUOTA | XFS_GROUP_QUOTA | XFS_PROJ_QUOTA;
+
+	if (lookup)
+		flags &= ~NO_LOOKUP_FLAG;
 
 	if ((fp = fopen_write_secure(fname)) == NULL)
 		return 0;

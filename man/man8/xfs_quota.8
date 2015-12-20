@@ -335,7 +335,7 @@ file.
 ] [
 .B \-bir
 ] [
-.B \-ahntLNU
+.B \-ahntlLNU
 ] [
 .B \-f
 .I file
@@ -363,7 +363,11 @@ option outputs the numeric ID instead of the name. The
 .B \-L
 and
 .B \-U
-options specify lower and upper ID bounds to report on. The
+options specify lower and upper ID bounds to report on.  If upper/lower
+bounds are specified, then by default only the IDs will be displayed
+in output; with the
+.B \-l
+option, a lookup will be performed to translate these IDs to names. The
 .B \-N
 option reports information without the header line. The
 .B \-t
