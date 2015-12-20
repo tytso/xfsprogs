@@ -3073,9 +3073,7 @@ process_leaf_node_dir_v3_free(
 		return;
 	}
 	if (be32_to_cpu(free->hdr.nvalid) > maxent || 
-				be32_to_cpu(free->hdr.nvalid) < 0 ||
 				be32_to_cpu(free->hdr.nused) > maxent || 
-				be32_to_cpu(free->hdr.nused) < 0 ||
 				be32_to_cpu(free->hdr.nused) > 
 					be32_to_cpu(free->hdr.nvalid)) {
 		if (!sflag || v)
