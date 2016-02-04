@@ -224,10 +224,17 @@ _("WARNING:  you have disallowed attr2 attributes but this filesystem\n"
 	}
 
 	if (!(sb->sb_versionnum & XFS_SB_VERSION_NLINKBIT)) {
-		do_warn(
-_("WARNING: you have a V1 inode filesystem. It %s be converted to a\n"
+		if (!no_modify) {
+			do_warn(
+_("WARNING: you have a V1 inode filesystem. It will be converted to a\n"
   "\tversion 2 inode filesystem. If you do not want this, run an older\n"
-  "\tversion of xfs_repair.\n"), no_modify ? "would" : "will");
+  "\tversion of xfs_repair.\n"));
+		} else  {
+			do_warn(
+_("WARNING: you have a V1 inode filesystem. It would be converted to a\n"
+  "\tversion 2 inode filesystem. If you do not want this, run an older\n"
+  "\tversion of xfs_repair.\n"));
+		}
 	}
 
 	if (xfs_sb_version_hasquota(sb))  {
