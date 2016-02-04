@@ -126,7 +126,10 @@ or in bytes with
 .BR size= .
 The default value is 4096 bytes (4 KiB), the minimum is 512, and the
 maximum is 65536 (64 KiB).
-XFS on Linux currently only supports pagesize or smaller blocks.
+Although
+.B mkfs.xfs
+will accept any of these values and create a valid filesystem,
+XFS on Linux can only mount filesystems with pagesize or smaller blocks.
 .TP
 .BI \-m " global_metadata_options"
 These options specify metadata format options that either apply to the entire
