@@ -77,6 +77,7 @@ static void
 dump_file(
 	FILE		*fp,
 	uint		id,
+	uint		*oid,
 	uint		type,
 	char		*dev)
 {
@@ -87,6 +88,10 @@ dump_file(
 			perror("XFS_GETQUOTA");
 		return;
 	}
+
+	if (oid)
+		*oid = d.d_id;
+
 	if (!d.d_blk_softlimit && !d.d_blk_hardlimit &&
 	    !d.d_ino_softlimit && !d.d_ino_hardlimit &&
 	    !d.d_rtb_softlimit && !d.d_rtb_hardlimit)
@@ -94,7 +99,8 @@ dump_file(
 	fprintf(fp, "fs = %s\n", dev);
 	/* this branch is for backward compatibility reasons */
 	if (d.d_rtb_softlimit || d.d_rtb_hardlimit)
-		fprintf(fp, "%-10d %7llu %7llu %7llu %7llu %7llu %7llu\n", id,
+		fprintf(fp, "%-10d %7llu %7llu %7llu %7llu %7llu %7llu\n",
+			d.d_id,
 			(unsigned long long)d.d_blk_softlimit,
 			(unsigned long long)d.d_blk_hardlimit,
 			(unsigned long long)d.d_ino_softlimit,
@@ -102,7 +108,8 @@ dump_file(
 			(unsigned long long)d.d_rtb_softlimit,
 			(unsigned long long)d.d_rtb_hardlimit);
 	else
-		fprintf(fp, "%-10d %7llu %7llu %7llu %7llu\n", id,
+		fprintf(fp, "%-10d %7llu %7llu %7llu %7llu\n",
+			d.d_id,
 			(unsigned long long)d.d_blk_softlimit,
 			(unsigned long long)d.d_blk_hardlimit,
 			(unsigned long long)d.d_ino_softlimit,
@@ -129,7 +136,7 @@ dump_limits_any_type(
 
 	if (upper) {
 		for (id = lower; id <= upper; id++)
-			dump_file(fp, id, type, mount->fs_name);
+			dump_file(fp, id, NULL, type, mount->fs_name);
 		return;
 	}
 
@@ -138,7 +145,8 @@ dump_limits_any_type(
 			struct group *g;
 			setgrent();
 			while ((g = getgrent()) != NULL)
-				dump_file(fp, g->gr_gid, type, mount->fs_name);
+				dump_file(fp, g->gr_gid, NULL, type,
+					  mount->fs_name);
 			endgrent();
 			break;
 		}
@@ -146,7 +154,8 @@ dump_limits_any_type(
 			struct fs_project *p;
 			setprent();
 			while ((p = getprent()) != NULL)
-				dump_file(fp, p->pr_prid, type, mount->fs_name);
+				dump_file(fp, p->pr_prid, NULL, type,
+					  mount->fs_name);
 			endprent();
 			break;
 		}
@@ -154,7 +163,8 @@ dump_limits_any_type(
 			struct passwd *u;
 			setpwent();
 			while ((u = getpwent()) != NULL)
-				dump_file(fp, u->pw_uid, type, mount->fs_name);
+				dump_file(fp, u->pw_uid, NULL, type,
+					  mount->fs_name);
 			endpwent();
 			break;
 		}
@@ -291,6 +301,7 @@ report_mount(
 	FILE		*fp,
 	__uint32_t	id,
 	char		*name,
+	__uint32_t	*oid,
 	uint		form,
 	uint		type,
 	fs_path_t	*mount,
@@ -308,6 +319,9 @@ report_mount(
 		return 0;
 	}
 
+	if (oid)
+		*oid = d.d_id;
+
 	if (flags & TERSE_FLAG) {
 		count = 0;
 		if ((form & XFS_BLOCK_QUOTA) && d.d_bcount)
@@ -324,19 +338,19 @@ report_mount(
 		report_header(fp, form, type, mount, flags);
 
 	if (flags & NO_LOOKUP_FLAG) {
-		fprintf(fp, "#%-10u", id);
+		fprintf(fp, "#%-10u", d.d_id);
 	} else {
 		if (name == NULL) {
 			if (type == XFS_USER_QUOTA) {
-				struct passwd	*u = getpwuid(id);
+				struct passwd	*u = getpwuid(d.d_id);
 				if (u)
 					name = u->pw_name;
 			} else if (type == XFS_GROUP_QUOTA) {
-				struct group	*g = getgrgid(id);
+				struct group	*g = getgrgid(d.d_id);
 				if (g)
 					name = g->gr_name;
 			} else if (type == XFS_PROJ_QUOTA) {
-				fs_project_t	*p = getprprid(id);
+				fs_project_t	*p = getprprid(d.d_id);
 				if (p)
 					name = p->pr_name;
 			}
@@ -425,14 +439,14 @@ report_user_mount(
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL,
+			if (report_mount(fp, id, NULL, NULL,
 					form, XFS_USER_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setpwent();
 		while ((u = getpwent()) != NULL) {
-			if (report_mount(fp, u->pw_uid, u->pw_name,
+			if (report_mount(fp, u->pw_uid, u->pw_name, NULL,
 					form, XFS_USER_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
@@ -457,14 +471,14 @@ report_group_mount(
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL,
+			if (report_mount(fp, id, NULL, NULL,
 					form, XFS_GROUP_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setgrent();
 		while ((g = getgrent()) != NULL) {
-			if (report_mount(fp, g->gr_gid, g->gr_name,
+			if (report_mount(fp, g->gr_gid, g->gr_name, NULL,
 					form, XFS_GROUP_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
@@ -488,14 +502,14 @@ report_project_mount(
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL,
+			if (report_mount(fp, id, NULL, NULL,
 					form, XFS_PROJ_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
 	} else {
 		setprent();
 		while ((p = getprent()) != NULL) {
-			if (report_mount(fp, p->pr_prid, p->pr_name,
+			if (report_mount(fp, p->pr_prid, p->pr_name, NULL,
 					form, XFS_PROJ_QUOTA, mount, flags))
 				flags |= NO_HEADER_FLAG;
 		}
