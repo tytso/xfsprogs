@@ -75,6 +75,16 @@ static int	format_logs(struct xfs_mount *);
 #define LAST	0x10		/* final message we print */
 
 void
+signal_maskfunc(int addset, int newset)
+{
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, addset);
+	sigprocmask(newset, &set, NULL);
+}
+
+void
 do_message(int flags, int code, const char *fmt, ...)
 {
 	va_list	ap;
@@ -477,9 +487,9 @@ write_wbuf(void)
 		if (target[i].state != INACTIVE)
 			pthread_mutex_unlock(&targ[i].wait);	/* wake up */
 
-	sigrelse(SIGCHLD);
+	signal_maskfunc(SIGCHLD, SIG_UNBLOCK);
 	pthread_mutex_lock(&mainwait);
-	sighold(SIGCHLD);
+	signal_maskfunc(SIGCHLD, SIG_BLOCK);
 }
 
 void
@@ -893,7 +903,7 @@ main(int argc, char **argv)
 	/* set up sigchild signal handler */
 
 	signal(SIGCHLD, handler);
-	sighold(SIGCHLD);
+	signal_maskfunc(SIGCHLD, SIG_BLOCK);
 
 	/* make children */
 
