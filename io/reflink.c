@@ -78,11 +78,13 @@ dedupe_ioctl(
 			goto done;
 		}
 		if (info->status < 0) {
-			printf("dedupe: %s\n", _(strerror(-info->status)));
+			fprintf(stderr, "dedupe: %s\n",
+					_(strerror(-info->status)));
 			goto done;
 		}
 		if (info->status == XFS_EXTENT_DATA_DIFFERS) {
-			printf(_("Extents did not match.\n"));
+			fprintf(stderr, "dedupe: %s\n",
+					_("Extents did not match."));
 			goto done;
 		}
 		if (args->length != 0 &&
