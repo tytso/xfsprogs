@@ -913,12 +913,12 @@ __read_buf(int fd, void *buf, int len, off64_t offset, int flags)
 
 	sts = pread64(fd, buf, len, offset);
 	if (sts < 0) {
-		int error = -errno;
+		int error = errno;
 		fprintf(stderr, _("%s: read failed: %s\n"),
 			progname, strerror(error));
 		if (flags & LIBXFS_EXIT_ON_FAILURE)
 			exit(1);
-		return error;
+		return -error;
 	} else if (sts != len) {
 		fprintf(stderr, _("%s: error - read only %d of %d bytes\n"),
 			progname, sts, len);
@@ -1081,12 +1081,12 @@ __write_buf(int fd, void *buf, int len, off64_t offset, int flags)
 
 	sts = pwrite64(fd, buf, len, offset);
 	if (sts < 0) {
-		int error = -errno;
+		int error = errno;
 		fprintf(stderr, _("%s: pwrite64 failed: %s\n"),
 			progname, strerror(error));
 		if (flags & LIBXFS_B_EXIT)
 			exit(1);
-		return error;
+		return -error;
 	} else if (sts != len) {
 		fprintf(stderr, _("%s: error - pwrite64 only %d of %d bytes\n"),
 			progname, sts, len);
