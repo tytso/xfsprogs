@@ -27,6 +27,7 @@
 #include "xfs_bmap.h"
 #include "xfs_trace.h"
 #include "xfs_attr_sf.h"
+#include "xfs_da_format.h"
 
 kmem_zone_t *xfs_ifork_zone;
 
