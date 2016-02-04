@@ -43,6 +43,8 @@ enum {
 	XFS_GETQSTAT,	/* get quota subsystem status */
 	XFS_QUOTARM,	/* free disk space used by dquots */
 	XFS_QSYNC,	/* flush delayed allocate space */
+	XFS_GETQSTATV,	/* newer version of quota stats */
+	XFS_GETNEXTQUOTA, /* get disk limits and usage */
 };
 
 /*
