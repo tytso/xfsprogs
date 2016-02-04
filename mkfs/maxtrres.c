@@ -36,7 +36,8 @@ max_trans_res(
 	int		inodelog,
 	int		dirblocklog,
 	int		logversion,
-	int		log_sunit)
+	int		log_sunit,
+	int		finobt)
 {
 	xfs_sb_t	*sbp;
 	xfs_mount_t	mount;
@@ -68,6 +69,8 @@ max_trans_res(
 			(dirversion == 2 ? XFS_SB_VERSION_DIRV2BIT : 0) |
 			(logversion > 1 ? XFS_SB_VERSION_LOGV2BIT : 0) |
 			XFS_DFL_SB_VERSION_BITS;
+	if (finobt)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FINOBT;
 
 	libxfs_mount(&mount, sbp, 0,0,0,0);
 	maxfsb = xfs_log_calc_minimum_size(&mount);

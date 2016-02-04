@@ -84,6 +84,6 @@ extern void res_failed (int err);
 /* maxtrres.c */
 extern int max_trans_res (int crcs_enabled, int dirversion,
 		int sectorlog, int blocklog, int inodelog, int dirblocklog,
-		int logversion, int log_sunit);
+		int logversion, int log_sunit, int finobt);
 
 #endif	/* __XFS_MKFS_H__ */

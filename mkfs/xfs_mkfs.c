@@ -2406,7 +2406,7 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 
 	min_logblocks = max_trans_res(crcs_enabled, dirversion,
 				   sectorlog, blocklog, inodelog, dirblocklog,
-				   logversion, lsunit);
+				   logversion, lsunit, finobt);
 	ASSERT(min_logblocks);
 	min_logblocks = MAX(XFS_MIN_LOG_BLOCKS, min_logblocks);
 	if (!logsize && dblocks >= (1024*1024*1024) >> blocklog)
