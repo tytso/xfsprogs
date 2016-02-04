@@ -31,6 +31,7 @@
 #include <sys/wait.h>
 #include <sys/statvfs.h>
 #include <sys/xattr.h>
+#include <paths.h>
 
 #ifndef XFS_XFLAG_NODEFRAG
 #define XFS_XFLAG_NODEFRAG 0x00002000 /* src dependancy, remove later */
