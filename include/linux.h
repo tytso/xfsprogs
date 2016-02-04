@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <endian.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <asm/types.h>
 #include <mntent.h>
 
