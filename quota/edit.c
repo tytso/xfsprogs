@@ -701,8 +701,8 @@ edit_init(void)
 	timer_cmd.cfunc = timer_f;
 	timer_cmd.argmin = 2;
 	timer_cmd.argmax = -1;
-	timer_cmd.args = _("[-bir] [-gpu] value -d|id|name");
-	timer_cmd.oneline = _("get/set quota enforcement timeouts");
+	timer_cmd.args = _("[-bir] [-gpu] value");
+	timer_cmd.oneline = _("set quota enforcement timeouts");
 	timer_cmd.help = timer_help;
 
 	warn_cmd.name = "warn";
