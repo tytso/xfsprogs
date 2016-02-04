@@ -56,6 +56,9 @@ AC_ARG_ENABLE(lib64,
 	enable_lib64=yes)
 AC_SUBST(enable_lib64)
 
+librt="-lrt"
+AC_SUBST(librt)
+
 #
 # If the user specified a libdir ending in lib64 do not append another
 # 64 to the library names.
@@ -100,9 +103,6 @@ AC_SUBST(LOCALIZED_FILES)
 AC_PACKAGE_GLOBALS(xfsprogs)
 AC_PACKAGE_UTILITIES(xfsprogs)
 AC_MULTILIB($enable_lib64)
-
-AC_PACKAGE_NEED_AIO_H
-AC_PACKAGE_NEED_LIO_LISTIO
 
 AC_PACKAGE_NEED_UUID_H
 AC_PACKAGE_NEED_UUIDCOMPARE
