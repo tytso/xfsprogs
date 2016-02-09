@@ -46,7 +46,7 @@ void	thread_init(void);
 
 void	phase1(struct xfs_mount *);
 void	phase2(struct xfs_mount *, int);
-void	phase3(struct xfs_mount *);
+void	phase3(struct xfs_mount *, int);
 void	phase4(struct xfs_mount *);
 void	phase5(struct xfs_mount *);
 void	phase6(struct xfs_mount *);

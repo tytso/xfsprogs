@@ -871,7 +871,7 @@ main(int argc, char **argv)
 	if (do_prefetch)
 		init_prefetch(mp);
 
-	phase3(mp);
+	phase3(mp, phase2_threads);
 	timestamp(PHASE_END, 3, NULL);
 
 	phase4(mp);

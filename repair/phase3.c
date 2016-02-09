@@ -28,6 +28,7 @@
 #include "dinode.h"
 #include "progress.h"
 #include "bmap.h"
+#include "threads.h"
 
 static void
 process_agi_unlinked(
@@ -87,10 +88,33 @@ process_ags(
 	do_inode_prefetch(mp, ag_stride, process_ag_func, false, false);
 }
 
-void
-phase3(xfs_mount_t *mp)
+static void
+do_uncertain_aginodes(
+	work_queue_t	*wq,
+	xfs_agnumber_t	agno,
+	void		*arg)
 {
-	int 			i, j;
+	int		*count = arg;
+
+	*count = process_uncertain_aginodes(wq->mp, agno);
+
+#ifdef XR_INODE_TRACE
+	fprintf(stderr,
+		"\t\t phase 3 - ag %d process_uncertain_inodes returns %d\n",
+		*count, j);
+#endif
+
+	PROG_RPT_INC(prog_rpt_done[agno], 1);
+}
+
+void
+phase3(
+	struct xfs_mount *mp,
+	int		scan_threads)
+{
+	int			i, j;
+	int			*counts;
+	work_queue_t		wq;
 
 	do_log(_("Phase 3 - for each AG...\n"));
 	if (!no_modify)
@@ -129,20 +153,35 @@ phase3(xfs_mount_t *mp)
 	 */
 	do_log(_("        - process newly discovered inodes...\n"));
 	set_progress_msg(PROG_FMT_NEW_INODES, (__uint64_t) glob_agcount);
+
+	counts = calloc(sizeof(*counts), mp->m_sb.sb_agcount);
+	if (!counts) {
+		do_abort(_("no memory for uncertain inode counts\n"));
+		return;
+	}
+
 	do  {
 		/*
 		 * have to loop until no ag has any uncertain
 		 * inodes
 		 */
 		j = 0;
-		for (i = 0; i < mp->m_sb.sb_agcount; i++)  {
-			j += process_uncertain_aginodes(mp, i);
-#ifdef XR_INODE_TRACE
-			fprintf(stderr,
-				"\t\t phase 3 - process_uncertain_inodes returns %d\n", j);
-#endif
-			PROG_RPT_INC(prog_rpt_done[i], 1);
-		}
+		memset(counts, 0, mp->m_sb.sb_agcount * sizeof(*counts));
+
+		create_work_queue(&wq, mp, scan_threads);
+
+		for (i = 0; i < mp->m_sb.sb_agcount; i++)
+			queue_work(&wq, do_uncertain_aginodes, i, &counts[i]);
+
+		destroy_work_queue(&wq);
+
+		/* tally up the counts */
+		for (i = 0; i < mp->m_sb.sb_agcount; i++)
+			j += counts[i];
+
 	} while (j != 0);
+
+	free(counts);
+
 	print_final_rpt();
 }
