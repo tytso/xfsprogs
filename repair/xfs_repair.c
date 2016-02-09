@@ -893,7 +893,7 @@ main(int argc, char **argv)
 		phase6(mp);
 		timestamp(PHASE_END, 6, NULL);
 
-		phase7(mp);
+		phase7(mp, phase2_threads);
 		timestamp(PHASE_END, 7, NULL);
 	} else  {
 		do_warn(

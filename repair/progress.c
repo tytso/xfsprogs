@@ -75,9 +75,9 @@ progress_rpt_t progress_rpt_reports[] = {
 {FMT2, N_("moving disconnected inodes to lost+found"),		/* 12 */
 	&rpt_fmts[FMT2], &rpt_types[TYPE_INODE]},
 {FMT1, N_("verify and correct link counts"),			/* 13 */
-	&rpt_fmts[FMT1], &rpt_types[TYPE_INODE]},
+	&rpt_fmts[FMT1], &rpt_types[TYPE_AG]},
 {FMT1, N_("verify link counts"),				/* 14 */
-	&rpt_fmts[FMT1], &rpt_types[TYPE_INODE]}
+	&rpt_fmts[FMT1], &rpt_types[TYPE_AG]}
 };
 
 pthread_t	report_thread;

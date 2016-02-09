@@ -50,7 +50,7 @@ void	phase3(struct xfs_mount *);
 void	phase4(struct xfs_mount *);
 void	phase5(struct xfs_mount *);
 void	phase6(struct xfs_mount *);
-void	phase7(struct xfs_mount *);
+void	phase7(struct xfs_mount *, int);
 
 int	verify_set_agheader(struct xfs_mount *, struct xfs_buf *,
 		struct xfs_sb *, struct xfs_agf *, struct xfs_agi *,

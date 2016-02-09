@@ -26,6 +26,7 @@
 #include "dinode.h"
 #include "versions.h"
 #include "progress.h"
+#include "threads.h"
 
 /* dinoc is a pointer to the IN-CORE dinode core */
 static void
@@ -108,45 +109,65 @@ update_inode_nlinks(
 	IRELE(ip);
 }
 
-void
-phase7(xfs_mount_t *mp)
+/*
+ * for each ag, look at each inode 1 at a time. If the number of
+ * links is bad, reset it, log the inode core, commit the transaction
+ */
+static void
+do_link_updates(
+	struct work_queue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
 {
 	ino_tree_node_t		*irec;
-	int			i;
 	int			j;
 	__uint32_t		nrefs;
+
+	for (irec = findfirst_inode_rec(agno); irec;
+	     irec = next_ino_rec(irec)) {
+		for (j = 0; j < XFS_INODES_PER_CHUNK; j++)  {
+			ASSERT(is_inode_confirmed(irec, j));
+
+			if (is_inode_free(irec, j))
+				continue;
+
+			ASSERT(no_modify || is_inode_reached(irec, j));
+
+			nrefs = num_inode_references(irec, j);
+			ASSERT(no_modify || nrefs > 0);
+
+			if (get_inode_disk_nlinks(irec, j) != nrefs)
+				update_inode_nlinks(wq->mp,
+					XFS_AGINO_TO_INO(wq->mp, agno,
+						irec->ino_startnum + j),
+					nrefs);
+		}
+	}
+
+	PROG_RPT_INC(prog_rpt_done[agno], 1);
+}
+
+void
+phase7(
+	struct xfs_mount	*mp,
+	int			scan_threads)
+{
+	struct work_queue	wq;
+	int			agno;
 
 	if (!no_modify)
 		do_log(_("Phase 7 - verify and correct link counts...\n"));
 	else
 		do_log(_("Phase 7 - verify link counts...\n"));
 
-	/*
-	 * for each ag, look at each inode 1 at a time. If the number of
-	 * links is bad, reset it, log the inode core, commit the transaction
-	 */
-	for (i = 0; i < glob_agcount; i++)  {
-		irec = findfirst_inode_rec(i);
+	set_progress_msg(PROGRESS_FMT_CORR_LINK, (__uint64_t) glob_agcount);
 
-		while (irec != NULL)  {
-			for (j = 0; j < XFS_INODES_PER_CHUNK; j++)  {
-				ASSERT(is_inode_confirmed(irec, j));
+	create_work_queue(&wq, mp, scan_threads);
 
-				if (is_inode_free(irec, j))
-					continue;
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
+		queue_work(&wq, do_link_updates, agno, NULL);
 
-				ASSERT(no_modify || is_inode_reached(irec, j));
+	destroy_work_queue(&wq);
 
-				nrefs = num_inode_references(irec, j);
-				ASSERT(no_modify || nrefs > 0);
-
-				if (get_inode_disk_nlinks(irec, j) != nrefs)
-					update_inode_nlinks(mp,
-						XFS_AGINO_TO_INO(mp, i,
-							irec->ino_startnum + j),
-						nrefs);
-			}
-			irec = next_ino_rec(irec);
-		}
-	}
+	print_final_rpt();
 }
