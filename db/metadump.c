@@ -258,8 +258,8 @@ zero_btree_node(
 	xfs_inobt_key_t		*ikp;
 	xfs_alloc_ptr_t		*app;
 	xfs_alloc_key_t		*akp;
-	void			*zp1, *zp2;
-	int			zlen1, zlen2;
+	char			*zp1, *zp2;
+	char			*key_end;
 
 	nrecs = be16_to_cpu(block->bb_numrecs);
 
@@ -268,43 +268,36 @@ zero_btree_node(
 	case TYP_BMAPBTD:
 		bkp = XFS_BMBT_KEY_ADDR(mp, block, 1);
 		bpp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
-		zp1 = &bkp[nrecs];
-		zlen1 = (char *)&bpp[0] - (char *)&bkp[nrecs];
-		zp2 = &bpp[nrecs];
-		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
-							(char *)&bpp[nrecs];
+		zp1 = (char *)&bkp[nrecs];
+		zp2 = (char *)&bpp[nrecs];
+		key_end = (char *)bpp;
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
 		ikp = XFS_INOBT_KEY_ADDR(mp, block, 1);
 		ipp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
-		zp1 = &ikp[nrecs];
-		zlen1 = (char *)&ipp[0] - (char *)&ikp[nrecs];
-		zp2 = &ipp[nrecs];
-		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
-							(char *)&ipp[nrecs];
+		zp1 = (char *)&ikp[nrecs];
+		zp2 = (char *)&ipp[nrecs];
+		key_end = (char *)ipp;
 		break;
 	case TYP_BNOBT:
 	case TYP_CNTBT:
 		akp = XFS_ALLOC_KEY_ADDR(mp, block, 1);
 		app = XFS_ALLOC_PTR_ADDR(mp, block, 1, mp->m_alloc_mxr[1]);
-		zp1 = &akp[nrecs];
-		zlen1 = (char *)&app[0] - (char *)&akp[nrecs];
-		zp2 = &app[nrecs];
-		zlen2 = (char *)block + mp->m_sb.sb_blocksize -
-							(char *)&app[nrecs];
+		zp1 = (char *)&akp[nrecs];
+		zp2 = (char *)&app[nrecs];
+		key_end = (char *)app;
 		break;
 	default:
-		zp1 = NULL;
-		break;
+		return;
 	}
 
-	if (zp1 && zp2) {
-		/* Zero from end of keys to beginning of pointers */
-		memset(zp1, 0, zlen1);
-		/* Zero from end of pointers to end of block */
-		memset(zp2, 0, zlen2);
-	}
+
+	/* Zero from end of keys to beginning of pointers */
+	memset(zp1, 0, key_end - zp1);
+
+	/* Zero from end of pointers to end of block */
+	memset(zp2, 0, (char *)block + mp->m_sb.sb_blocksize - zp2);
 }
 
 static void
@@ -316,8 +309,7 @@ zero_btree_leaf(
 	struct xfs_bmbt_rec	*brp;
 	struct xfs_inobt_rec	*irp;
 	struct xfs_alloc_rec	*arp;
-	void			*zp;
-	int			zlen;
+	char			*zp;
 
 	nrecs = be16_to_cpu(block->bb_numrecs);
 
@@ -325,29 +317,24 @@ zero_btree_leaf(
 	case TYP_BMAPBTA:
 	case TYP_BMAPBTD:
 		brp = XFS_BMBT_REC_ADDR(mp, block, 1);
-		zp = &brp[nrecs];
-		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&brp[nrecs];
+		zp = (char *)&brp[nrecs];
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
 		irp = XFS_INOBT_REC_ADDR(mp, block, 1);
-		zp = &irp[nrecs];
-		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&irp[nrecs];
+		zp = (char *)&irp[nrecs];
 		break;
 	case TYP_BNOBT:
 	case TYP_CNTBT:
 		arp = XFS_ALLOC_REC_ADDR(mp, block, 1);
-		zp = &arp[nrecs];
-		zlen = (char *)block + mp->m_sb.sb_blocksize - (char *)&arp[nrecs];
+		zp = (char *)&arp[nrecs];
 		break;
 	default:
-		zp = NULL;
-		break;
+		return;
 	}
 
 	/* Zero from end of records to end of block */
-	if (zp && zlen < mp->m_sb.sb_blocksize)
-		memset(zp, 0, zlen);
+	memset(zp, 0, (char *)block + mp->m_sb.sb_blocksize - zp);
 }
 
 static void
