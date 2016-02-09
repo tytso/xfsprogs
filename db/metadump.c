@@ -246,6 +246,11 @@ write_buf(
 	return seenint() ? -EINTR : 0;
 }
 
+/*
+ * We could be processing a corrupt block, so we can't trust any of
+ * the offsets or lengths to be within the buffer range. Hence check
+ * carefully!
+ */
 static void
 zero_btree_node(
 	struct xfs_btree_block	*block,
@@ -262,10 +267,15 @@ zero_btree_node(
 	char			*key_end;
 
 	nrecs = be16_to_cpu(block->bb_numrecs);
+	if (nrecs < 0)
+		return;
 
 	switch (btype) {
 	case TYP_BMAPBTA:
 	case TYP_BMAPBTD:
+		if (nrecs > mp->m_bmap_dmxr[1])
+			return;
+
 		bkp = XFS_BMBT_KEY_ADDR(mp, block, 1);
 		bpp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
 		zp1 = (char *)&bkp[nrecs];
@@ -274,6 +284,9 @@ zero_btree_node(
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
+		if (nrecs > mp->m_inobt_mxr[1])
+			return;
+
 		ikp = XFS_INOBT_KEY_ADDR(mp, block, 1);
 		ipp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
 		zp1 = (char *)&ikp[nrecs];
@@ -282,6 +295,9 @@ zero_btree_node(
 		break;
 	case TYP_BNOBT:
 	case TYP_CNTBT:
+		if (nrecs > mp->m_alloc_mxr[1])
+			return;
+
 		akp = XFS_ALLOC_KEY_ADDR(mp, block, 1);
 		app = XFS_ALLOC_PTR_ADDR(mp, block, 1, mp->m_alloc_mxr[1]);
 		zp1 = (char *)&akp[nrecs];
@@ -300,6 +316,11 @@ zero_btree_node(
 	memset(zp2, 0, (char *)block + mp->m_sb.sb_blocksize - zp2);
 }
 
+/*
+ * We could be processing a corrupt block, so we can't trust any of
+ * the offsets or lengths to be within the buffer range. Hence check
+ * carefully!
+ */
 static void
 zero_btree_leaf(
 	struct xfs_btree_block	*block,
@@ -312,20 +333,31 @@ zero_btree_leaf(
 	char			*zp;
 
 	nrecs = be16_to_cpu(block->bb_numrecs);
+	if (nrecs < 0)
+		return;
 
 	switch (btype) {
 	case TYP_BMAPBTA:
 	case TYP_BMAPBTD:
+		if (nrecs > mp->m_bmap_dmxr[0])
+			return;
+
 		brp = XFS_BMBT_REC_ADDR(mp, block, 1);
 		zp = (char *)&brp[nrecs];
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
+		if (nrecs > mp->m_inobt_mxr[0])
+			return;
+
 		irp = XFS_INOBT_REC_ADDR(mp, block, 1);
 		zp = (char *)&irp[nrecs];
 		break;
 	case TYP_BNOBT:
 	case TYP_CNTBT:
+		if (nrecs > mp->m_alloc_mxr[0])
+			return;
+
 		arp = XFS_ALLOC_REC_ADDR(mp, block, 1);
 		zp = (char *)&arp[nrecs];
 		break;
