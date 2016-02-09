@@ -219,6 +219,12 @@ cache_shake(
 		if (pthread_mutex_trylock(&node->cn_mutex) != 0)
 			continue;
 
+		/* can't release dirty objects */
+		if (cache->flush(node)) {
+			pthread_mutex_unlock(&node->cn_mutex);
+			continue;
+		}
+
 		hash = cache->c_hash + node->cn_hashidx;
 		if (pthread_mutex_trylock(&hash->ch_mutex) != 0) {
 			pthread_mutex_unlock(&node->cn_mutex);
@@ -311,6 +317,13 @@ __cache_node_purge(
 		pthread_mutex_unlock(&node->cn_mutex);
 		return count;
 	}
+
+	/* can't purge dirty objects */
+	if (cache->flush(node)) {
+		pthread_mutex_unlock(&node->cn_mutex);
+		return 1;
+	}
+
 	mru = &cache->c_mrus[node->cn_priority];
 	pthread_mutex_lock(&mru->cm_mutex);
 	list_del_init(&node->cn_mru);
@@ -321,7 +334,7 @@ __cache_node_purge(
 	pthread_mutex_destroy(&node->cn_mutex);
 	list_del_init(&node->cn_hash);
 	cache->relse(node);
-	return count;
+	return 0;
 }
 
 /*

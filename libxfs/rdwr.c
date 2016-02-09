@@ -659,6 +659,8 @@ __libxfs_getbufr(int blen)
 		bp = kmem_zone_zalloc(xfs_buf_zone, 0);
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 	bp->b_ops = NULL;
+	if (bp->b_flags & LIBXFS_B_DIRTY)
+		fprintf(stderr, "found dirty buffer (bulk) on free list!");
 
 	return bp;
 }
@@ -1223,23 +1225,26 @@ libxfs_iomove(xfs_buf_t *bp, uint boff, int len, void *data, int flags)
 }
 
 static void
-libxfs_brelse(struct cache_node *node)
+libxfs_brelse(
+	struct cache_node	*node)
 {
-	xfs_buf_t		*bp = (xfs_buf_t *)node;
+	struct xfs_buf		*bp = (struct xfs_buf *)node;
 
-	if (bp != NULL) {
-		if (bp->b_flags & LIBXFS_B_DIRTY)
-			libxfs_writebufr(bp);
-		pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
-		list_add(&bp->b_node.cn_mru, &xfs_buf_freelist.cm_list);
-		pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
-	}
+	if (!bp)
+		return;
+	if (bp->b_flags & LIBXFS_B_DIRTY)
+		fprintf(stderr,
+			"releasing dirty buffer to free list!");
+
+	pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
+	list_add(&bp->b_node.cn_mru, &xfs_buf_freelist.cm_list);
+	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 }
 
 static unsigned int
 libxfs_bulkrelse(
-	struct cache 		*cache,
-	struct list_head 	*list)
+	struct cache		*cache,
+	struct list_head	*list)
 {
 	xfs_buf_t		*bp;
 	int			count = 0;
@@ -1249,7 +1254,8 @@ libxfs_bulkrelse(
 
 	list_for_each_entry(bp, list, b_node.cn_mru) {
 		if (bp->b_flags & LIBXFS_B_DIRTY)
-			libxfs_writebufr(bp);
+			fprintf(stderr,
+				"releasing dirty buffer (bulk) to free list!");
 		count++;
 	}
 
@@ -1260,18 +1266,22 @@ libxfs_bulkrelse(
 	return count;
 }
 
-static void
-libxfs_bflush(struct cache_node *node)
+static int
+libxfs_bflush(
+	struct cache_node	*node)
 {
-	xfs_buf_t		*bp = (xfs_buf_t *)node;
+	struct xfs_buf		*bp = (struct xfs_buf *)node;
 
-	if ((bp != NULL) && (bp->b_flags & LIBXFS_B_DIRTY))
-		libxfs_writebufr(bp);
+	if (bp->b_flags & LIBXFS_B_DIRTY)
+		return libxfs_writebufr(bp);
+	return 0;
 }
 
 void
 libxfs_putbufr(xfs_buf_t *bp)
 {
+	if (bp->b_flags & LIBXFS_B_DIRTY)
+		libxfs_writebufr(bp);
 	libxfs_brelse((struct cache_node *)bp);
 }
 

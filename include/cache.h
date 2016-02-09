@@ -64,7 +64,7 @@ typedef void *cache_key_t;
 
 typedef void (*cache_walk_t)(struct cache_node *);
 typedef struct cache_node * (*cache_node_alloc_t)(cache_key_t);
-typedef void (*cache_node_flush_t)(struct cache_node *);
+typedef int (*cache_node_flush_t)(struct cache_node *);
 typedef void (*cache_node_relse_t)(struct cache_node *);
 typedef unsigned int (*cache_node_hash_t)(cache_key_t, unsigned int,
 					  unsigned int);
