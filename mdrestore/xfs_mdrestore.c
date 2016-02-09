@@ -133,7 +133,7 @@ perform_restore(
 
 	for (;;) {
 		if (show_progress && (bytes_read & ((1 << 20) - 1)) == 0)
-			print_progress("%lld MB read\n", bytes_read >> 20);
+			print_progress("%lld MB read", bytes_read >> 20);
 
 		for (cur_index = 0; cur_index < mb_count; cur_index++) {
 			if (pwrite64(dst_fd, &block_buffer[cur_index <<
@@ -160,7 +160,7 @@ perform_restore(
 								1, src_f) != 1)
 			fatal("error reading from file: %s\n", strerror(errno));
 
-		bytes_read += block_size;
+		bytes_read += block_size + (mb_count << tmb.mb_blocklog);
 	}
 
 	if (progress_since_warning)
