@@ -1103,7 +1103,6 @@ int
 libxfs_writebufr(xfs_buf_t *bp)
 {
 	int	fd = libxfs_device_to_fd(bp->b_target->dev);
-	int	error = 0;
 
 	/*
 	 * we never write buffers that are marked stale. This indicates they
@@ -1134,7 +1133,7 @@ libxfs_writebufr(xfs_buf_t *bp)
 	}
 
 	if (!(bp->b_flags & LIBXFS_B_DISCONTIG)) {
-		error = __write_buf(fd, bp->b_addr, bp->b_bcount,
+		bp->b_error = __write_buf(fd, bp->b_addr, bp->b_bcount,
 				    LIBXFS_BBTOOFF64(bp->b_bn), bp->b_flags);
 	} else {
 		int	i;
@@ -1144,11 +1143,10 @@ libxfs_writebufr(xfs_buf_t *bp)
 			off64_t	offset = LIBXFS_BBTOOFF64(bp->b_map[i].bm_bn);
 			int len = BBTOB(bp->b_map[i].bm_len);
 
-			error = __write_buf(fd, buf, len, offset, bp->b_flags);
-			if (error) {
-				bp->b_error = error;
+			bp->b_error = __write_buf(fd, buf, len, offset,
+						  bp->b_flags);
+			if (bp->b_error)
 				break;
-			}
 			buf += len;
 		}
 	}
@@ -1157,14 +1155,14 @@ libxfs_writebufr(xfs_buf_t *bp)
 	printf("%lx: %s: wrote %u bytes, blkno=%llu(%llu), %p, error %d\n",
 			pthread_self(), __FUNCTION__, bp->b_bcount,
 			(long long)LIBXFS_BBTOOFF64(bp->b_bn),
-			(long long)bp->b_bn, bp, error);
+			(long long)bp->b_bn, bp, bp->b_error);
 #endif
-	if (!error) {
+	if (!bp->b_error) {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_EXIT |
 				 LIBXFS_B_UNCHECKED);
 	}
-	return error;
+	return bp->b_error;
 }
 
 int
@@ -1266,15 +1264,22 @@ libxfs_bulkrelse(
 	return count;
 }
 
+/*
+ * When a buffer is marked dirty, the error is cleared. Hence if we are trying
+ * to flush a buffer prior to cache reclaim that has an error on it it means
+ * we've already tried to flush it and it failed. Prevent repeated corruption
+ * errors from being reported by skipping such buffers - when the corruption is
+ * fixed the buffer will be marked dirty again and we can write it again.
+ */
 static int
 libxfs_bflush(
 	struct cache_node	*node)
 {
 	struct xfs_buf		*bp = (struct xfs_buf *)node;
 
-	if (bp->b_flags & LIBXFS_B_DIRTY)
+	if (!bp->b_error && bp->b_flags & LIBXFS_B_DIRTY)
 		return libxfs_writebufr(bp);
-	return 0;
+	return bp->b_error;
 }
 
 void
