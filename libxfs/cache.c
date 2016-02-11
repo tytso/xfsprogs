@@ -195,6 +195,7 @@ cache_add_to_dirty_mru(
 	struct cache_mru	*mru = &cache->c_mrus[CACHE_DIRTY_PRIORITY];
 
 	pthread_mutex_lock(&mru->cm_mutex);
+	node->cn_old_priority = node->cn_priority;
 	node->cn_priority = CACHE_DIRTY_PRIORITY;
 	list_add(&node->cn_mru, &mru->cm_list);
 	mru->cm_count++;
@@ -324,6 +325,7 @@ cache_node_allocate(
 	list_head_init(&node->cn_mru);
 	node->cn_count = 1;
 	node->cn_priority = 0;
+	node->cn_old_priority = -1;
 	return node;
 }
 
@@ -433,6 +435,12 @@ cache_node_get(
 				mru->cm_count--;
 				list_del_init(&node->cn_mru);
 				pthread_mutex_unlock(&mru->cm_mutex);
+				if (node->cn_old_priority != -1) {
+					ASSERT(node->cn_priority ==
+							CACHE_DIRTY_PRIORITY);
+					node->cn_priority = node->cn_old_priority;
+					node->cn_old_priority = -1;
+				}
 			}
 			node->cn_count++;
 
@@ -533,6 +541,7 @@ cache_node_set_priority(
 	pthread_mutex_lock(&node->cn_mutex);
 	ASSERT(node->cn_count > 0);
 	node->cn_priority = priority;
+	node->cn_old_priority = -1;
 	pthread_mutex_unlock(&node->cn_mutex);
 }
 

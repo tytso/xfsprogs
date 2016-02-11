@@ -104,6 +104,7 @@ struct cache_node {
 	unsigned int		cn_count;	/* reference count */
 	unsigned int		cn_hashidx;	/* hash chain index */
 	int			cn_priority;	/* priority, -1 = free list */
+	int			cn_old_priority;/* saved pre-dirty prio */
 	pthread_mutex_t		cn_mutex;	/* node mutex */
 };
 
