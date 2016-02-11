@@ -43,14 +43,20 @@ enum {
  * Cache priorities range from BASE to MAX.
  *
  * For prefetch support, the top half of the range starts at
- * CACHE_PREFETCH_PRIORITY and everytime the buffer is fetched
- * and is at or above this priority level, it is reduced to
- * below this level (refer to libxfs_getbuf).
+ * CACHE_PREFETCH_PRIORITY and everytime the buffer is fetched and is at or
+ * above this priority level, it is reduced to below this level (refer to
+ * libxfs_getbuf).
+ *
+ * If we have dirty nodes, we can't recycle them until they've been cleaned. To
+ * keep these out of the reclaimable lists (as there can be lots of them) give
+ * them their own priority that the shaker doesn't attempt to walk.
  */
 
 #define CACHE_BASE_PRIORITY	0
 #define CACHE_PREFETCH_PRIORITY	8
 #define CACHE_MAX_PRIORITY	15
+#define CACHE_DIRTY_PRIORITY	(CACHE_MAX_PRIORITY + 1)
+#define CACHE_NR_PRIORITIES	CACHE_DIRTY_PRIORITY
 
 /*
  * Simple, generic implementation of a cache (arbitrary data).
@@ -115,7 +121,7 @@ struct cache {
 	unsigned int		c_hashsize;	/* hash bucket count */
 	unsigned int		c_hashshift;	/* hash key shift */
 	struct cache_hash	*c_hash;	/* hash table buckets */
-	struct cache_mru	c_mrus[CACHE_MAX_PRIORITY + 1];
+	struct cache_mru	c_mrus[CACHE_DIRTY_PRIORITY + 1];
 	unsigned long long	c_misses;	/* cache misses */
 	unsigned long long	c_hits;		/* cache hits */
 	unsigned int 		c_max;		/* max nodes ever used */

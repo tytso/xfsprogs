@@ -81,7 +81,7 @@ cache_init(
 		pthread_mutex_init(&cache->c_hash[i].ch_mutex, NULL);
 	}
 
-	for (i = 0; i <= CACHE_MAX_PRIORITY; i++) {
+	for (i = 0; i <= CACHE_DIRTY_PRIORITY; i++) {
 		list_head_init(&cache->c_mrus[i].cm_list);
 		cache->c_mrus[i].cm_count = 0;
 		pthread_mutex_init(&cache->c_mrus[i].cm_mutex, NULL);
@@ -154,7 +154,7 @@ cache_destroy(
 		list_head_destroy(&cache->c_hash[i].ch_list);
 		pthread_mutex_destroy(&cache->c_hash[i].ch_mutex);
 	}
-	for (i = 0; i <= CACHE_MAX_PRIORITY; i++) {
+	for (i = 0; i <= CACHE_DIRTY_PRIORITY; i++) {
 		list_head_destroy(&cache->c_mrus[i].cm_list);
 		pthread_mutex_destroy(&cache->c_mrus[i].cm_mutex);
 	}
@@ -183,15 +183,43 @@ cache_generic_bulkrelse(
 }
 
 /*
- * We've hit the limit on cache size, so we need to start reclaiming
- * nodes we've used. The MRU specified by the priority is shaken.
- * Returns new priority at end of the call (in case we call again).
+ * Park unflushable nodes on their own special MRU so that cache_shake() doesn't
+ * end up repeatedly scanning them in the futile attempt to clean them before
+ * reclaim.
+ */
+static void
+cache_add_to_dirty_mru(
+	struct cache		*cache,
+	struct cache_node	*node)
+{
+	struct cache_mru	*mru = &cache->c_mrus[CACHE_DIRTY_PRIORITY];
+
+	pthread_mutex_lock(&mru->cm_mutex);
+	node->cn_priority = CACHE_DIRTY_PRIORITY;
+	list_add(&node->cn_mru, &mru->cm_list);
+	mru->cm_count++;
+	pthread_mutex_unlock(&mru->cm_mutex);
+}
+
+/*
+ * We've hit the limit on cache size, so we need to start reclaiming nodes we've
+ * used. The MRU specified by the priority is shaken.  Returns new priority at
+ * end of the call (in case we call again). We are not allowed to reclaim dirty
+ * objects, so we have to flush them first. If flushing fails, we move them to
+ * the "dirty, unreclaimable" list.
+ *
+ * Hence we skip priorities > CACHE_MAX_PRIORITY unless "purge" is set as we
+ * park unflushable (and hence unreclaimable) buffers at these priorities.
+ * Trying to shake unreclaimable buffer lists when there is memory pressure is a
+ * waste of time and CPU and greatly slows down cache node recycling operations.
+ * Hence we only try to free them if we are being asked to purge the cache of
+ * all entries.
  */
 static unsigned int
 cache_shake(
 	struct cache *		cache,
 	unsigned int		priority,
-	int			all)
+	bool			purge)
 {
 	struct cache_mru	*mru;
 	struct cache_hash *	hash;
@@ -202,8 +230,8 @@ cache_shake(
 	struct cache_node *	node;
 	unsigned int		count;
 
-	ASSERT(priority <= CACHE_MAX_PRIORITY);
-	if (priority > CACHE_MAX_PRIORITY)
+	ASSERT(priority <= CACHE_DIRTY_PRIORITY);
+	if (priority > CACHE_MAX_PRIORITY && !purge)
 		priority = 0;
 
 	mru = &cache->c_mrus[priority];
@@ -219,9 +247,13 @@ cache_shake(
 		if (pthread_mutex_trylock(&node->cn_mutex) != 0)
 			continue;
 
-		/* can't release dirty objects */
-		if (cache->flush(node)) {
+		/* memory pressure is not allowed to release dirty objects */
+		if (cache->flush(node) && !purge) {
+			list_del(&node->cn_mru);
+			mru->cm_count--;
+			node->cn_priority = -1;
 			pthread_mutex_unlock(&node->cn_mutex);
+			cache_add_to_dirty_mru(cache, node);
 			continue;
 		}
 
@@ -242,7 +274,7 @@ cache_shake(
 		pthread_mutex_unlock(&node->cn_mutex);
 
 		count++;
-		if (!all && count == CACHE_SHAKE_COUNT)
+		if (!purge && count == CACHE_SHAKE_COUNT)
 			break;
 	}
 	pthread_mutex_unlock(&mru->cm_mutex);
@@ -423,7 +455,7 @@ next_object:
 		node = cache_node_allocate(cache, key);
 		if (node)
 			break;
-		priority = cache_shake(cache, priority, 0);
+		priority = cache_shake(cache, priority, false);
 		/*
 		 * We start at 0; if we free CACHE_SHAKE_COUNT we get
 		 * back the same priority, if not we get back priority+1.
@@ -578,8 +610,8 @@ cache_purge(
 {
 	int			i;
 
-	for (i = 0; i <= CACHE_MAX_PRIORITY; i++)
-		cache_shake(cache, i, 1);
+	for (i = 0; i <= CACHE_DIRTY_PRIORITY; i++)
+		cache_shake(cache, i, true);
 
 #ifdef CACHE_DEBUG
 	if (cache->c_count != 0) {
@@ -626,13 +658,13 @@ cache_flush(
 #define	HASH_REPORT	(3 * HASH_CACHE_RATIO)
 void
 cache_report(
-	FILE 			*fp,
-	const char 		*name,
-	struct cache 		*cache)
+	FILE		*fp,
+	const char	*name,
+	struct cache	*cache)
 {
-	int 			i;
-	unsigned long 		count, index, total;
-	unsigned long 		hash_bucket_lengths[HASH_REPORT + 2];
+	int		i;
+	unsigned long	count, index, total;
+	unsigned long	hash_bucket_lengths[HASH_REPORT + 2];
 
 	if ((cache->c_hits + cache->c_misses) == 0)
 		return;
@@ -661,6 +693,11 @@ cache_report(
 		fprintf(fp, "MRU %d entries = %6u (%3u%%)\n",
 			i, cache->c_mrus[i].cm_count,
 			cache->c_mrus[i].cm_count * 100 / cache->c_count);
+
+	i = CACHE_DIRTY_PRIORITY;
+	fprintf(fp, "Dirty MRU %d entries = %6u (%3u%%)\n",
+		i, cache->c_mrus[i].cm_count,
+		cache->c_mrus[i].cm_count * 100 / cache->c_count);
 
 	/* report hash bucket lengths */
 	bzero(hash_bucket_lengths, sizeof(hash_bucket_lengths));
