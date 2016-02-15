@@ -115,9 +115,9 @@ stat_f(
 	}
 	if (file->flags & IO_FOREIGN)
 		return 0;
-	if ((xfsctl(file->name, file->fd, XFS_IOC_FSGETXATTR, &fsx)) < 0 ||
+	if ((xfsctl(file->name, file->fd, FS_IOC_FSGETXATTR, &fsx)) < 0 ||
 	    (xfsctl(file->name, file->fd, XFS_IOC_FSGETXATTRA, &fsxa)) < 0) {
-		perror("XFS_IOC_FSGETXATTR");
+		perror("FS_IOC_FSGETXATTR");
 	} else {
 		printf(_("fsxattr.xflags = 0x%x "), fsx.fsx_xflags);
 		printxattr(fsx.fsx_xflags, verbose, 0, file->name, 1, 1);
@@ -193,15 +193,15 @@ openfile(
 	if (!(flags & IO_READONLY) && (flags & IO_REALTIME)) {
 		struct fsxattr	attr;
 
-		if (xfsctl(path, fd, XFS_IOC_FSGETXATTR, &attr) < 0) {
-			perror("XFS_IOC_FSGETXATTR");
+		if (xfsctl(path, fd, FS_IOC_FSGETXATTR, &attr) < 0) {
+			perror("FS_IOC_FSGETXATTR");
 			close(fd);
 			return -1;
 		}
-		if (!(attr.fsx_xflags & XFS_XFLAG_REALTIME)) {
-			attr.fsx_xflags |= XFS_XFLAG_REALTIME;
-			if (xfsctl(path, fd, XFS_IOC_FSSETXATTR, &attr) < 0) {
-				perror("XFS_IOC_FSSETXATTR");
+		if (!(attr.fsx_xflags & FS_XFLAG_REALTIME)) {
+			attr.fsx_xflags |= FS_XFLAG_REALTIME;
+			if (xfsctl(path, fd, FS_IOC_FSSETXATTR, &attr) < 0) {
+				perror("FS_IOC_FSSETXATTR");
 				close(fd);
 				return -1;
 			}
@@ -559,8 +559,8 @@ get_extsize(const char *path, int fd)
 {
 	struct fsxattr	fsx;
 
-	if ((xfsctl(path, fd, XFS_IOC_FSGETXATTR, &fsx)) < 0) {
-		printf("%s: XFS_IOC_FSGETXATTR %s: %s\n",
+	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
+		printf("%s: FS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
 		return 0;
 	}
@@ -578,24 +578,24 @@ set_extsize(const char *path, int fd, long extsz)
 		perror("fstat64");
 		return 0;
 	}
-	if ((xfsctl(path, fd, XFS_IOC_FSGETXATTR, &fsx)) < 0) {
-		printf("%s: XFS_IOC_FSGETXATTR %s: %s\n",
+	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
+		printf("%s: FS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
 		return 0;
 	}
 
 	if (S_ISREG(stat.st_mode)) {
-		fsx.fsx_xflags |= XFS_XFLAG_EXTSIZE;
+		fsx.fsx_xflags |= FS_XFLAG_EXTSIZE;
 	} else if (S_ISDIR(stat.st_mode)) {
-		fsx.fsx_xflags |= XFS_XFLAG_EXTSZINHERIT;
+		fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
 	} else {
 		printf(_("invalid target file type - file %s\n"), path);
 		return 0;
 	}
 	fsx.fsx_extsize = extsz;
 
-	if ((xfsctl(path, fd, XFS_IOC_FSSETXATTR, &fsx)) < 0) {
-		printf("%s: XFS_IOC_FSSETXATTR %s: %s\n",
+	if ((xfsctl(path, fd, FS_IOC_FSSETXATTR, &fsx)) < 0) {
+		printf("%s: FS_IOC_FSSETXATTR %s: %s\n",
 			progname, path, strerror(errno));
 		return 0;
 	}

@@ -125,7 +125,7 @@ bmap_f(
 			exitcode = 1;
 			return 0;
 		}
-		c = xfsctl(file->name, file->fd, XFS_IOC_FSGETXATTR, &fsx);
+		c = xfsctl(file->name, file->fd, FS_IOC_FSGETXATTR, &fsx);
 		if (c < 0) {
 			fprintf(stderr,
 				_("%s: cannot read attrs on \"%s\": %s\n"),
@@ -134,7 +134,7 @@ bmap_f(
 			return 0;
 		}
 
-		if (fsx.fsx_xflags == XFS_XFLAG_REALTIME) {
+		if (fsx.fsx_xflags == FS_XFLAG_REALTIME) {
 			/*
 			 * ag info not applicable to rt, continue
 			 * without ag output.
@@ -157,7 +157,7 @@ bmap_f(
  *	by nflag, or the initial guess number of extents (32).
  *
  *	If there are more extents than we guessed, use xfsctl
- *	(XFS_IOC_FSGETXATTR[A]) to get the extent count, realloc some more
+ *	(FS_IOC_FSGETXATTR[A]) to get the extent count, realloc some more
  *	space based on this count, and try again.
  *
  *	If the initial FGETBMAPX attempt returns EINVAL, this may mean
@@ -165,13 +165,13 @@ bmap_f(
  *	EINVAL, check the length with fstat() and return "no extents"
  *	if the length == 0.
  *
- *	Why not do the xfsctl(XFS_IOC_FSGETXATTR[A]) first?  Two reasons:
+ *	Why not do the xfsctl(FS_IOC_FSGETXATTR[A]) first?  Two reasons:
  *	(1)	The extent count may be wrong for a file with delayed
  *		allocation blocks.  The XFS_IOC_GETBMAPX forces the real
  *		allocation and fixes up the extent count.
  *	(2)	For XFS_IOC_GETBMAP[X] on a DMAPI file that has been moved
  *		offline by a DMAPI application (e.g., DMF) the
- *		XFS_IOC_FSGETXATTR only reflects the extents actually online.
+ *		FS_IOC_FSGETXATTR only reflects the extents actually online.
  *		Doing XFS_IOC_GETBMAPX call first forces that data blocks online
  *		and then everything proceeds normally (see PV #545725).
  *
@@ -207,13 +207,13 @@ bmap_f(
 			break;
 		if (map->bmv_entries < map->bmv_count-1)
 			break;
-		/* Get number of extents from xfsctl XFS_IOC_FSGETXATTR[A]
+		/* Get number of extents from xfsctl FS_IOC_FSGETXATTR[A]
 		 * syscall.
 		 */
 		i = xfsctl(file->name, file->fd, aflag ?
-				XFS_IOC_FSGETXATTRA : XFS_IOC_FSGETXATTR, &fsx);
+				XFS_IOC_FSGETXATTRA : FS_IOC_FSGETXATTR, &fsx);
 		if (i < 0) {
-			fprintf(stderr, "%s: xfsctl(XFS_IOC_FSGETXATTR%s) "
+			fprintf(stderr, "%s: xfsctl(FS_IOC_FSGETXATTR%s) "
 				"[\"%s\"]: %s\n", progname, aflag ? "A" : "",
 				file->name, strerror(errno));
 			free(map);

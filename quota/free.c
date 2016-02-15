@@ -143,13 +143,13 @@ projects_free_space_data(
 		return 0;
 	}
 
-	if ((xfsctl(path->fs_dir, fd, XFS_IOC_FSGETXATTR, &fsx)) < 0) {
+	if ((xfsctl(path->fs_dir, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		exitcode = 1;
-		perror("XFS_IOC_FSGETXATTR");
+		perror("FS_IOC_FSGETXATTR");
 		close(fd);
 		return 0;
 	}
-	if (!(fsx.fsx_xflags & XFS_XFLAG_PROJINHERIT)) {
+	if (!(fsx.fsx_xflags & FS_XFLAG_PROJINHERIT)) {
 		exitcode = 1;
 		fprintf(stderr, _("%s: project quota flag not set on %s\n"),
 			progname, path->fs_dir);

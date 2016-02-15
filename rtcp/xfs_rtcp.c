@@ -186,13 +186,13 @@ rtcp( char *source, char *target, int fextsize)
 		/*
 		 * mark the file as a realtime file
 		 */
-		fsxattr.fsx_xflags = XFS_XFLAG_REALTIME;
+		fsxattr.fsx_xflags = FS_XFLAG_REALTIME;
 		if (fextsize != -1 )
 			fsxattr.fsx_extsize = fextsize;
 		else
 			fsxattr.fsx_extsize = 0;
 
-		if ( xfsctl(tbuf, tofd, XFS_IOC_FSSETXATTR, &fsxattr) ) {
+		if ( xfsctl(tbuf, tofd, FS_IOC_FSSETXATTR, &fsxattr) ) {
 			fprintf(stderr,
 				_("%s: set attributes on %s failed: %s\n"),
 				progname, tbuf, strerror(errno));
@@ -210,7 +210,7 @@ rtcp( char *source, char *target, int fextsize)
 			return( -1 );
 		}
 
-		if ( xfsctl(tbuf, tofd, XFS_IOC_FSGETXATTR, &fsxattr) ) {
+		if ( xfsctl(tbuf, tofd, FS_IOC_FSGETXATTR, &fsxattr) ) {
 			fprintf(stderr,
 				_("%s: get attributes of %s failed: %s\n"),
 				progname, tbuf, strerror(errno));
@@ -221,7 +221,7 @@ rtcp( char *source, char *target, int fextsize)
 		/*
 		 * check if the existing file is already a realtime file
 		 */
-		if ( !(fsxattr.fsx_xflags & XFS_XFLAG_REALTIME) ) {
+		if ( !(fsxattr.fsx_xflags & FS_XFLAG_REALTIME) ) {
 			fprintf(stderr, _("%s: %s is not a realtime file.\n"),
 				progname, tbuf);
 			close( tofd );
@@ -255,10 +255,10 @@ rtcp( char *source, char *target, int fextsize)
 
 	fsxattr.fsx_xflags = 0;
 	fsxattr.fsx_extsize = 0;
-	if ( xfsctl(source, fromfd, XFS_IOC_FSGETXATTR, &fsxattr) ) {
+	if ( xfsctl(source, fromfd, FS_IOC_FSGETXATTR, &fsxattr) ) {
 		reopen = 1;
 	} else {
-		if (! (fsxattr.fsx_xflags & XFS_XFLAG_REALTIME) ){
+		if (! (fsxattr.fsx_xflags & FS_XFLAG_REALTIME) ){
 			fprintf(stderr, _("%s: %s is not a realtime file.\n"),
 				progname, source);
 			reopen = 1;

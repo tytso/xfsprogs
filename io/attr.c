@@ -33,20 +33,20 @@ static struct xflags {
 	char	*shortname;
 	char	*longname;
 } xflags[] = {
-	{ XFS_XFLAG_REALTIME,		"r", "realtime"		},
-	{ XFS_XFLAG_PREALLOC,		"p", "prealloc"		},
-	{ XFS_XFLAG_IMMUTABLE,		"i", "immutable"	},
-	{ XFS_XFLAG_APPEND,		"a", "append-only"	},
-	{ XFS_XFLAG_SYNC,		"s", "sync"		},
-	{ XFS_XFLAG_NOATIME,		"A", "no-atime"		},
-	{ XFS_XFLAG_NODUMP,		"d", "no-dump"		},
-	{ XFS_XFLAG_RTINHERIT,		"t", "rt-inherit"	},
-	{ XFS_XFLAG_PROJINHERIT,	"P", "proj-inherit"	},
-	{ XFS_XFLAG_NOSYMLINKS,		"n", "nosymlinks"	},
-	{ XFS_XFLAG_EXTSIZE,		"e", "extsize"		},
-	{ XFS_XFLAG_EXTSZINHERIT,	"E", "extsz-inherit"	},
-	{ XFS_XFLAG_NODEFRAG,		"f", "no-defrag"	},
-	{ XFS_XFLAG_FILESTREAM,		"S", "filestream"	},
+	{ FS_XFLAG_REALTIME,		"r", "realtime"		},
+	{ FS_XFLAG_PREALLOC,		"p", "prealloc"		},
+	{ FS_XFLAG_IMMUTABLE,		"i", "immutable"	},
+	{ FS_XFLAG_APPEND,		"a", "append-only"	},
+	{ FS_XFLAG_SYNC,		"s", "sync"		},
+	{ FS_XFLAG_NOATIME,		"A", "no-atime"		},
+	{ FS_XFLAG_NODUMP,		"d", "no-dump"		},
+	{ FS_XFLAG_RTINHERIT,		"t", "rt-inherit"	},
+	{ FS_XFLAG_PROJINHERIT,		"P", "proj-inherit"	},
+	{ FS_XFLAG_NOSYMLINKS,		"n", "nosymlinks"	},
+	{ FS_XFLAG_EXTSIZE,		"e", "extsize"		},
+	{ FS_XFLAG_EXTSZINHERIT,	"E", "extsz-inherit"	},
+	{ FS_XFLAG_NODEFRAG,		"f", "no-defrag"	},
+	{ FS_XFLAG_FILESTREAM,		"S", "filestream"	},
 	{ 0, NULL, NULL }
 };
 #define CHATTR_XFLAG_LIST	"r"/*p*/"iasAdtPneEfS"
@@ -169,7 +169,7 @@ lsattr_callback(
 	if ((fd = open(path, O_RDONLY)) == -1)
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
-	else if ((xfsctl(path, fd, XFS_IOC_FSGETXATTR, &fsx)) < 0)
+	else if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0)
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, path, strerror(errno));
 	else
@@ -216,7 +216,7 @@ lsattr_f(
 	if (recurse_all || recurse_dir) {
 		nftw(name, lsattr_callback,
 			100, FTW_PHYS | FTW_MOUNT | FTW_DEPTH);
-	} else if ((xfsctl(name, file->fd, XFS_IOC_FSGETXATTR, &fsx)) < 0) {
+	} else if ((xfsctl(name, file->fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, name, strerror(errno));
 	} else {
@@ -245,13 +245,13 @@ chattr_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
-	} else if (xfsctl(path, fd, XFS_IOC_FSGETXATTR, &attr) < 0) {
+	} else if (xfsctl(path, fd, FS_IOC_FSGETXATTR, &attr) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, path, strerror(errno));
 	} else {
 		attr.fsx_xflags |= orflags;
 		attr.fsx_xflags &= ~andflags;
-		if (xfsctl(path, fd, XFS_IOC_FSSETXATTR, &attr) < 0)
+		if (xfsctl(path, fd, FS_IOC_FSSETXATTR, &attr) < 0)
 			fprintf(stderr, _("%s: cannot set flags on %s: %s\n"),
 				progname, path, strerror(errno));
 	}
@@ -316,13 +316,13 @@ chattr_f(
 	if (recurse_all || recurse_dir) {
 		nftw(name, chattr_callback,
 			100, FTW_PHYS | FTW_MOUNT | FTW_DEPTH);
-	} else if (xfsctl(name, file->fd, XFS_IOC_FSGETXATTR, &attr) < 0) {
+	} else if (xfsctl(name, file->fd, FS_IOC_FSGETXATTR, &attr) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, name, strerror(errno));
 	} else {
 		attr.fsx_xflags |= orflags;
 		attr.fsx_xflags &= ~andflags;
-		if (xfsctl(name, file->fd, XFS_IOC_FSSETXATTR, &attr) < 0)
+		if (xfsctl(name, file->fd, FS_IOC_FSSETXATTR, &attr) < 0)
 			fprintf(stderr, _("%s: cannot set flags on %s: %s\n"),
 				progname, name, strerror(errno));
 	}

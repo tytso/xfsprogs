@@ -33,10 +33,6 @@
 #include <sys/xattr.h>
 #include <paths.h>
 
-#ifndef XFS_XFLAG_NODEFRAG
-#define XFS_XFLAG_NODEFRAG 0x00002000 /* src dependancy, remove later */
-#endif
-
 #define _PATH_FSRLAST		"/var/tmp/.fsrlast_xfs"
 #define _PATH_PROC_MOUNTS	"/proc/mounts"
 
@@ -962,22 +958,22 @@ fsrfile_common(
 		return 1;
 	}
 
-	if ((ioctl(fd, XFS_IOC_FSGETXATTR, &fsx)) < 0) {
+	if ((ioctl(fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		fsrprintf(_("failed to get inode attrs: %s\n"), fname);
 		return(-1);
 	}
-	if (fsx.fsx_xflags & (XFS_XFLAG_IMMUTABLE|XFS_XFLAG_APPEND)) {
+	if (fsx.fsx_xflags & (FS_XFLAG_IMMUTABLE|FS_XFLAG_APPEND)) {
 		if (vflag)
 			fsrprintf(_("%s: immutable/append, ignoring\n"), fname);
 		return(0);
 	}
-	if (fsx.fsx_xflags & XFS_XFLAG_NODEFRAG) {
+	if (fsx.fsx_xflags & FS_XFLAG_NODEFRAG) {
 		if (vflag)
 			fsrprintf(_("%s: marked as don't defrag, ignoring\n"),
 			    fname);
 		return(0);
 	}
-	if (fsx.fsx_xflags & XFS_XFLAG_REALTIME) {
+	if (fsx.fsx_xflags & FS_XFLAG_REALTIME) {
 		if (xfs_getrt(fd, &vfss) < 0) {
 			fsrprintf(_("cannot get realtime geometry for: %s\n"),
 				fname);
@@ -1038,7 +1034,7 @@ fsr_setup_attr_fork(
 	int		no_change_cnt = 0;
 	int		ret;
 
-	if (!(bstatp->bs_xflags & XFS_XFLAG_HASATTR))
+	if (!(bstatp->bs_xflags & FS_XFLAG_HASATTR))
 		return 0;
 
 	/*
@@ -1264,7 +1260,7 @@ packfile(char *fname, char *tname, int fd,
 
 	/* Setup extended inode flags, project identifier, etc */
 	if (fsxp->fsx_xflags || fsxp->fsx_projid) {
-		if (ioctl(tfd, XFS_IOC_FSSETXATTR, fsxp) < 0) {
+		if (ioctl(tfd, FS_IOC_FSSETXATTR, fsxp) < 0) {
 			fsrprintf(_("could not set inode attrs on tmp: %s\n"),
 				tname);
 			goto out;

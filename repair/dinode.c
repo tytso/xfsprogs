@@ -2423,7 +2423,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 						XFS_DIFLAG_NOSYMLINKS);
 			}
 		}
-		if (flags & (XFS_DIFLAG_REALTIME | XFS_XFLAG_EXTSIZE)) {
+		if (flags & (XFS_DIFLAG_REALTIME | FS_XFLAG_EXTSIZE)) {
 			/* must be a file */
 			if (di_mode && !S_ISREG(di_mode)) {
 				if (!uncertain) {
@@ -2432,7 +2432,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 						lino);
 				}
 				flags &= ~(XFS_DIFLAG_REALTIME |
-						XFS_XFLAG_EXTSIZE);
+						FS_XFLAG_EXTSIZE);
 			}
 		}
 		if (!verify_mode && flags != be16_to_cpu(dino->di_flags)) {
