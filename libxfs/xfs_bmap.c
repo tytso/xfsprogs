@@ -5938,6 +5938,7 @@ xfs_bmap_split_extent(
 	return xfs_trans_commit(tp);
 
 out:
+	xfs_bmap_cancel(&free_list);
 	xfs_trans_cancel(tp);
 	return error;
 }
