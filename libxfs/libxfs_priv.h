@@ -140,9 +140,9 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define XFS_ERRLEVEL_LOW		1
 #define XFS_FORCED_SHUTDOWN(mp)		0
 #define XFS_ILOCK_EXCL			0
-#define XFS_STATS_INC(count)		do { } while (0)
-#define XFS_STATS_DEC(count, x)		do { } while (0)
-#define XFS_STATS_ADD(count, x)		do { } while (0)
+#define XFS_STATS_INC(mp, count)	do { } while (0)
+#define XFS_STATS_DEC(mp, count, x)	do { } while (0)
+#define XFS_STATS_ADD(mp, count, x)	do { } while (0)
 #define XFS_TRANS_MOD_DQUOT_BYINO(mp,tp,ip,field,delta)	do { } while (0)
 #define XFS_TRANS_RESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
 #define XFS_TRANS_UNRESERVE_QUOTA_NBLKS(mp,tp,ip,nblks,ninos,fl)	0
