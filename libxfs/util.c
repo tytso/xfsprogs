@@ -345,7 +345,7 @@ void
 libxfs_iprint(
 	xfs_inode_t		*ip)
 {
-	xfs_icdinode_t		*dip;
+	struct xfs_icdinode	*dip;
 	xfs_bmbt_rec_host_t	*ep;
 	xfs_extnum_t		i;
 	xfs_extnum_t		nextents;

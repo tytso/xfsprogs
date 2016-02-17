@@ -31,7 +31,7 @@
 /* dinoc is a pointer to the IN-CORE dinode core */
 static void
 set_nlinks(
-	xfs_icdinode_t		*dinoc,
+	struct xfs_icdinode	*dinoc,
 	xfs_ino_t		ino,
 	__uint32_t		nrefs,
 	int			*dirty)

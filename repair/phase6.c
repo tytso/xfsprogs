@@ -507,8 +507,8 @@ mk_rbmino(xfs_mount_t *mp)
 			error);
 	}
 
-	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
-	memset(&ip->i_d, 0, xfs_icdinode_size(vers));
+	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
+	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = S_IFREG;
@@ -767,7 +767,7 @@ mk_rsumino(xfs_mount_t *mp)
 	}
 
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
-	memset(&ip->i_d, 0, xfs_icdinode_size(vers));
+	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = S_IFREG;
@@ -882,7 +882,7 @@ mk_root_dir(xfs_mount_t *mp)
 	 * take care of the core -- initialization from xfs_ialloc()
 	 */
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
-	memset(&ip->i_d, 0, xfs_icdinode_size(vers));
+	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = (__uint16_t) mode|S_IFDIR;

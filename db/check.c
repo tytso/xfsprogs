@@ -2619,7 +2619,7 @@ process_inode(
 {
 	blkmap_t		*blkmap;
 	xfs_fsblock_t		bno = 0;
-	xfs_icdinode_t		idic;
+	struct xfs_icdinode	idic;
 	inodata_t		*id = NULL;
 	xfs_ino_t		ino;
 	xfs_extnum_t		nextents = 0;
