@@ -1718,7 +1718,7 @@ xfs_bmap_add_extent_delay_real(
 	struct xfs_mount	*mp;
 	int			whichfork = XFS_DATA_FORK;
 
-	mp  = bma->tp ? bma->tp->t_mountp : NULL;
+	mp = bma->ip->i_mount;
 	ifp = XFS_IFORK_PTR(bma->ip, whichfork);
 
 	ASSERT(bma->idx >= 0);
@@ -2932,7 +2932,7 @@ xfs_bmap_add_extent_hole_real(
 	int			state;	/* state bits, accessed thru macros */
 	struct xfs_mount	*mp;
 
-	mp = bma->tp ? bma->tp->t_mountp : NULL;
+	mp = bma->ip->i_mount;
 	ifp = XFS_IFORK_PTR(bma->ip, whichfork);
 
 	ASSERT(bma->idx >= 0);
