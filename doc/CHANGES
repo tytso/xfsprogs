@@ -1,3 +1,22 @@
+xfsprogs-4.5.0-rc1 (17 Feb 2015)
+	- libxfs: update to match kernel 4.5-rc1 code base
+	- xfs_io: add DAX inode flag support
+	- repair: scalability improvements on large corrupt filesystems
+	- repair: directory rebuild fixes
+	- mdrestore: progress accounting now works
+	- metadump: fix btree block unused region zeroing
+	- quota: timer command fixes (Eric Sandeen)
+	- mkfs: man page cleanups (Eric Sandeen)
+	- xfs_io: reflink, dedupe and other fixes (Darrick Wong)
+	- quota: Q_XGETNEXTQUOTA support (Eric Sandeen)
+	- build cleanups for alternate C librarys (Joshua Kinard, Felix Janda)
+	- db: check fixes for sparse inodes (Darrick Wong)
+	- various: Fixes for Coverity reports (Vivek Trivedi)
+	- xfs_io: Document zero and help commands (Eric Sandeen)
+	- mkfs: DIO can use logical sector size limits (Eric Sandeen)
+	- repair: don't reset log cycle numbers when zeroing (Brian Foster)
+	- db: add ability to format log to a specific cycle (Brian Foster)
+
 xfsprogs-4.3.0 (23 Nov 2015)
 	- xfs_fsr: cleanups to recent changes (Eric Sandeen)
 	- xfs_fsr: improved temp file attr fork handling (Eric Sandeen)
