@@ -493,27 +493,25 @@ libxfs_mod_incore_sb(
 
 int
 libxfs_bmap_finish(
-	xfs_trans_t	**tp,
-	xfs_bmap_free_t *flist,
-	int		*committed)
+	struct xfs_trans	**tp,
+	struct xfs_bmap_free	*flist,
+	struct xfs_inode	*ip)
 {
 	xfs_bmap_free_item_t	*free;	/* free extent list item */
 	xfs_bmap_free_item_t	*next;	/* next item on free list */
 	int			error;
 
-	if (flist->xbf_count == 0) {
-		*committed = 0;
+	if (flist->xbf_count == 0)
 		return 0;
-	}
 
 	for (free = flist->xbf_first; free != NULL; free = next) {
 		next = free->xbfi_next;
-		if ((error = xfs_free_extent(*tp, free->xbfi_startblock,
-				free->xbfi_blockcount)))
+		error = xfs_free_extent(*tp, free->xbfi_startblock,
+					free->xbfi_blockcount);
+		if (error)
 			return error;
 		xfs_bmap_del_free(flist, NULL, free);
 	}
-	*committed = 0;
 	return 0;
 }
 
@@ -543,7 +541,6 @@ libxfs_alloc_file_space(
 	xfs_fileoff_t	startoffset_fsb;
 	xfs_trans_t	*tp;
 	int		xfs_bmapi_flags;
-	int		committed;
 	int		error;
 
 	if (len <= 0)
@@ -588,7 +585,7 @@ libxfs_alloc_file_space(
 			goto error0;
 
 		/* complete the transaction */
-		error = xfs_bmap_finish(&tp, &free_list, &committed);
+		error = xfs_bmap_finish(&tp, &free_list, ip);
 		if (error)
 			goto error0;
 

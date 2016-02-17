@@ -483,7 +483,6 @@ mk_rbmino(xfs_mount_t *mp)
 	xfs_fsblock_t	first;
 	int		i;
 	int		nmap;
-	int		committed;
 	int		error;
 	xfs_bmap_free_t	flist;
 	xfs_fileoff_t	bno;
@@ -578,7 +577,7 @@ mk_rbmino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, ip);
 	if (error) {
 		do_error(
 		_("allocation of the realtime bitmap failed, error = %d\n"),
@@ -742,7 +741,6 @@ mk_rsumino(xfs_mount_t *mp)
 	xfs_fsblock_t	first;
 	int		i;
 	int		nmap;
-	int		committed;
 	int		error;
 	int		nsumblocks;
 	xfs_bmap_free_t	flist;
@@ -843,7 +841,7 @@ mk_rsumino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, ip);
 	if (error) {
 		do_error(
 	_("allocation of the realtime summary ino failed, error = %d\n"),
@@ -947,7 +945,6 @@ mk_orphanage(xfs_mount_t *mp)
 	ino_tree_node_t	*irec;
 	int		ino_offset = 0;
 	int		i;
-	int		committed;
 	int		error;
 	xfs_bmap_free_t	flist;
 	const int	mode = 0755;
@@ -1059,7 +1056,7 @@ mk_orphanage(xfs_mount_t *mp)
 	libxfs_dir_init(tp, ip, pip);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, ip);
 	if (error) {
 		do_error(_("%s directory creation failed -- bmapf error %d\n"),
 			ORPHANAGE, error);
@@ -1090,7 +1087,6 @@ mv_orphanage(
 	xfs_fsblock_t		first;
 	xfs_bmap_free_t		flist;
 	int			err;
-	int			committed;
 	unsigned char		fname[MAXPATHLEN + 1];
 	int			nres;
 	int			incr;
@@ -1168,7 +1164,7 @@ mv_orphanage(
 			ino_p->i_d.di_nlink++;
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
-			err = -libxfs_bmap_finish(&tp, &flist, &committed);
+			err = -libxfs_bmap_finish(&tp, &flist, ino_p);
 			if (err)
 				do_error(
 	_("bmap finish failed (err - %d), filesystem may be out of space\n"),
@@ -1215,7 +1211,7 @@ mv_orphanage(
 						err);
 			}
 
-			err = -libxfs_bmap_finish(&tp, &flist, &committed);
+			err = -libxfs_bmap_finish(&tp, &flist, ino_p);
 			if (err)
 				do_error(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1254,7 +1250,7 @@ mv_orphanage(
 		ino_p->i_d.di_nlink = 1;
 		libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
-		err = -libxfs_bmap_finish(&tp, &flist, &committed);
+		err = -libxfs_bmap_finish(&tp, &flist, ino_p);
 		if (err)
 			do_error(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1306,7 +1302,6 @@ longform_dir2_rebuild(
 	xfs_bmap_free_t		flist;
 	xfs_inode_t		pip;
 	dir_hash_ent_t		*p;
-	int			committed;
 	int			done;
 
 	/*
@@ -1356,7 +1351,7 @@ longform_dir2_rebuild(
 		goto out_bmap_cancel;
 	}
 
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, ip);
 
 	libxfs_trans_commit(tp);
 
@@ -1391,7 +1386,7 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 			goto out_bmap_cancel;
 		}
 
-		error = -libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, ip);
 		if (error) {
 			do_warn(
 	_("bmap finish failed (%d), filesystem may be out of space\n"),
@@ -1423,7 +1418,6 @@ dir2_kill_block(
 	struct xfs_buf	*bp)
 {
 	xfs_da_args_t	args;
-	int		committed;
 	int		error;
 	xfs_fsblock_t	firstblock;
 	xfs_bmap_free_t	flist;
@@ -1453,7 +1447,7 @@ dir2_kill_block(
 	if (error)
 		do_error(_("shrink_inode failed inode %" PRIu64 " block %u\n"),
 			ip->i_ino, da_bno);
-	libxfs_bmap_finish(&tp, &flist, &committed);
+	libxfs_bmap_finish(&tp, &flist, ip);
 	libxfs_trans_commit(tp);
 }
 
@@ -1479,7 +1473,6 @@ longform_dir2_entry_check_data(
 	xfs_dir2_leaf_entry_t	*blp;
 	struct xfs_buf		*bp;
 	xfs_dir2_block_tail_t	*btp;
-	int			committed;
 	struct xfs_dir2_data_hdr *d;
 	xfs_dir2_db_t		db;
 	xfs_dir2_data_entry_t	*dep;
@@ -1930,7 +1923,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 		libxfs_dir2_data_freescan(mp->m_dir_geo, M_DIROPS(mp), d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
-	libxfs_bmap_finish(&tp, &flist, &committed);
+	libxfs_bmap_finish(&tp, &flist, ip);
 	libxfs_trans_commit(tp);
 
 	/* record the largest free space in the freetab for later checking */
@@ -2851,7 +2844,7 @@ process_dir_inode(
 	xfs_inode_t		*ip;
 	xfs_trans_t		*tp;
 	dir_hash_tab_t		*hashtab;
-	int			need_dot, committed;
+	int			need_dot;
 	int			dirty, num_illegal, error, nres;
 
 	ino = XFS_AGINO_TO_INO(mp, agno, irec->ino_startnum + ino_offset);
@@ -2996,7 +2989,7 @@ process_dir_inode(
 
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-		error = -libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, ip);
 		ASSERT(error == 0);
 		libxfs_trans_commit(tp);
 
@@ -3057,7 +3050,7 @@ process_dir_inode(
 
 			libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-			error = -libxfs_bmap_finish(&tp, &flist, &committed);
+			error = -libxfs_bmap_finish(&tp, &flist, ip);
 			ASSERT(error == 0);
 			libxfs_trans_commit(tp);
 		}

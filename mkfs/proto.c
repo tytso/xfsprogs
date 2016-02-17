@@ -358,7 +358,6 @@ parseproto(
 #define	IF_FIFO		6
 
 	char		*buf;
-	int		committed;
 	int		error;
 	xfs_fsblock_t	first;
 	int		flags;
@@ -481,7 +480,7 @@ parseproto(
 		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &flist);
 		libxfs_trans_log_inode(tp, ip, flags);
 
-		error = -libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, ip);
 		if (error)
 			fail(_("Pre-allocated file creation failed"), error);
 		libxfs_trans_commit(tp);
@@ -563,7 +562,7 @@ parseproto(
 		}
 		newdirectory(mp, tp, ip, pip);
 		libxfs_trans_log_inode(tp, ip, flags);
-		error = -libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, ip);
 		if (error)
 			fail(_("Directory creation failed"), error);
 		libxfs_trans_commit(tp);
@@ -589,7 +588,7 @@ parseproto(
 		fail(_("Unknown format"), EINVAL);
 	}
 	libxfs_trans_log_inode(tp, ip, flags);
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, ip);
 	if (error) {
 		fail(_("Error encountered creating file from prototype file"),
 			error);
@@ -615,7 +614,6 @@ rtinit(
 	xfs_mount_t	*mp)
 {
 	xfs_fileoff_t	bno;
-	int		committed;
 	xfs_fileoff_t	ebno;
 	xfs_bmbt_irec_t	*ep;
 	int		error;
@@ -700,7 +698,7 @@ rtinit(
 		}
 	}
 
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, rbmip);
 	if (error) {
 		fail(_("Completion of the realtime bitmap failed"), error);
 	}
@@ -735,7 +733,7 @@ rtinit(
 			bno += ep->br_blockcount;
 		}
 	}
-	error = -libxfs_bmap_finish(&tp, &flist, &committed);
+	error = -libxfs_bmap_finish(&tp, &flist, rsumip);
 	if (error) {
 		fail(_("Completion of the realtime summary failed"), error);
 	}
@@ -759,7 +757,7 @@ rtinit(
 			fail(_("Error initializing the realtime space"),
 				error);
 		}
-		error = -libxfs_bmap_finish(&tp, &flist, &committed);
+		error = -libxfs_bmap_finish(&tp, &flist, rbmip);
 		if (error) {
 			fail(_("Error completing the realtime space"), error);
 		}
