@@ -224,7 +224,6 @@ libxfs_ialloc(
 	ip->i_d.di_uid = cr->cr_uid;
 	ip->i_d.di_gid = cr->cr_gid;
 	xfs_set_projid(&ip->i_d, pip ? 0 : fsx->fsx_projid);
-	memset(&(ip->i_d.di_pad[0]), 0, sizeof(ip->i_d.di_pad));
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
 	/*
@@ -261,11 +260,8 @@ libxfs_ialloc(
 	if (ip->i_d.di_version == 3) {
 		ASSERT(ip->i_d.di_ino == ino);
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
-		ip->i_d.di_crc = 0;
 		ip->i_d.di_changecount = 1;
-		ip->i_d.di_lsn = 0;
 		ip->i_d.di_flags2 = 0;
-		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
 		ip->i_d.di_crtime.t_sec = (__int32_t)VFS_I(ip)->i_mtime.tv_sec;
 		ip->i_d.di_crtime.t_nsec = (__int32_t)VFS_I(ip)->i_mtime.tv_nsec;
 	}
@@ -376,7 +372,6 @@ libxfs_iprint(
 
 	dip = &ip->i_d;
 	printf("\nOn disk portion\n");
-	printf("    di_magic %x\n", dip->di_magic);
 	printf("    di_mode %o\n", dip->di_mode);
 	printf("    di_version %x\n", (uint)dip->di_version);
 	switch (ip->i_d.di_format) {
@@ -449,15 +444,11 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	 * because if the inode is dirty at all the core must
 	 * be.
 	 */
-	xfs_inode_to_disk(ip, dip);
+	xfs_inode_to_disk(ip, dip, iip->ili_item.li_lsn);
 
 	xfs_iflush_fork(ip, dip, iip, XFS_DATA_FORK);
 	if (XFS_IFORK_Q(ip))
 		xfs_iflush_fork(ip, dip, iip, XFS_ATTR_FORK);
-
-	/* update the lsn in the on disk inode if required */
-	if (ip->i_d.di_version == 3)
-		dip->di_lsn = cpu_to_be64(iip->ili_item.li_lsn);
 
 	/* generate the checksum. */
 	xfs_dinode_calc_crc(mp, dip);

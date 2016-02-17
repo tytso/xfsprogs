@@ -2672,10 +2672,10 @@ process_inode(
 		blkmap = NULL;
 	}
 	v = (!sflag || (id && id->ilist) || CHECK_BLIST(bno));
-	if (xino.i_d.di_magic != XFS_DINODE_MAGIC) {
+	if (dip->di_magic != cpu_to_be16(XFS_DINODE_MAGIC)) {
 		if (isfree || v)
 			dbprintf(_("bad magic number %#x for inode %lld\n"),
-				xino.i_d.di_magic, ino);
+				be16_to_cpu(dip->di_magic), ino);
 		error++;
 		return;
 	}

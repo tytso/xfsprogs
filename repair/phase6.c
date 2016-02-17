@@ -510,7 +510,6 @@ mk_rbmino(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = S_IFREG;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
@@ -520,13 +519,8 @@ mk_rbmino(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_crc = 0;
 		ip->i_d.di_changecount = 1;
-		ip->i_d.di_lsn = 0;
 		ip->i_d.di_flags2 = 0;
-		ip->i_d.di_ino = mp->m_sb.sb_rbmino;
-		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
-		platform_uuid_copy(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid);
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
@@ -769,7 +763,6 @@ mk_rsumino(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = S_IFREG;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
@@ -779,13 +772,8 @@ mk_rsumino(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_crc = 0;
 		ip->i_d.di_changecount = 1;
-		ip->i_d.di_lsn = 0;
 		ip->i_d.di_flags2 = 0;
-		ip->i_d.di_ino = mp->m_sb.sb_rsumino;
-		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
-		platform_uuid_copy(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid);
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
@@ -884,7 +872,6 @@ mk_root_dir(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_magic = XFS_DINODE_MAGIC;
 	ip->i_d.di_mode = (__uint16_t) mode|S_IFDIR;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
@@ -894,13 +881,8 @@ mk_root_dir(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_crc = 0;
 		ip->i_d.di_changecount = 1;
-		ip->i_d.di_lsn = 0;
 		ip->i_d.di_flags2 = 0;
-		ip->i_d.di_ino = mp->m_sb.sb_rootino;
-		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
-		platform_uuid_copy(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid);
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
