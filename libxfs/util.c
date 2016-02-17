@@ -161,14 +161,10 @@ libxfs_trans_ichgtime(
 	gettimeofday(&stv, (struct timezone *)0);
 	tv.tv_sec = stv.tv_sec;
 	tv.tv_nsec = stv.tv_usec * 1000;
-	if (flags & XFS_ICHGTIME_MOD) {
-		ip->i_d.di_mtime.t_sec = (__int32_t)tv.tv_sec;
-		ip->i_d.di_mtime.t_nsec = (__int32_t)tv.tv_nsec;
-	}
-	if (flags & XFS_ICHGTIME_CHG) {
-		ip->i_d.di_ctime.t_sec = (__int32_t)tv.tv_sec;
-		ip->i_d.di_ctime.t_nsec = (__int32_t)tv.tv_nsec;
-	}
+	if (flags & XFS_ICHGTIME_MOD)
+		VFS_I(ip)->i_mtime = tv;
+	if (flags & XFS_ICHGTIME_CHG)
+		VFS_I(ip)->i_ctime = tv;
 	if (flags & XFS_ICHGTIME_CREATE) {
 		ip->i_d.di_crtime.t_sec = (__int32_t)tv.tv_sec;
 		ip->i_d.di_crtime.t_nsec = (__int32_t)tv.tv_nsec;
@@ -270,7 +266,8 @@ libxfs_ialloc(
 		ip->i_d.di_lsn = 0;
 		ip->i_d.di_flags2 = 0;
 		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
-		ip->i_d.di_crtime = ip->i_d.di_mtime;
+		ip->i_d.di_crtime.t_sec = (__int32_t)VFS_I(ip)->i_mtime.tv_sec;
+		ip->i_d.di_crtime.t_nsec = (__int32_t)VFS_I(ip)->i_mtime.tv_nsec;
 	}
 
 	flags = XFS_ILOG_CORE;
@@ -452,7 +449,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	 * because if the inode is dirty at all the core must
 	 * be.
 	 */
-	xfs_dinode_to_disk(dip, &ip->i_d);
+	xfs_inode_to_disk(ip, dip);
 
 	xfs_iflush_fork(ip, dip, iip, XFS_DATA_FORK);
 	if (XFS_IFORK_Q(ip))

@@ -29,8 +29,16 @@ struct xfs_inode_log_item;
 struct xfs_dir_ops;
 
 /*
- * Inode interface
+ * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
+ * similar to the kernel which now is used tohold certain parts of the on-disk
+ * metadata.
  */
+struct inode {
+	struct timespec	i_atime;
+	struct timespec	i_mtime;
+	struct timespec	i_ctime;
+};
+
 typedef struct xfs_inode {
 	struct cache_node	i_node;
 	struct xfs_mount	*i_mount;	/* fs mount struct ptr */
@@ -45,7 +53,13 @@ typedef struct xfs_inode {
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */
 	xfs_fsize_t		i_size;		/* in-memory size */
 	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
+	struct inode		i_vnode;
 } xfs_inode_t;
+
+static inline struct inode *VFS_I(struct xfs_inode *ip)
+{
+	return &ip->i_vnode;
+}
 
 /*
  * For regular files we only update the on-disk filesize when actually

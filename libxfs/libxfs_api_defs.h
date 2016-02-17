@@ -92,8 +92,8 @@
 #define xfs_dir2_data_use_free		libxfs_dir2_data_use_free
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
 
-#define xfs_dinode_from_disk		libxfs_dinode_from_disk
-#define xfs_dinode_to_disk		libxfs_dinode_to_disk
+#define xfs_inode_from_disk		libxfs_inode_from_disk
+#define xfs_inode_to_disk		libxfs_inode_to_disk
 #define xfs_dinode_calc_crc		libxfs_dinode_calc_crc
 #define xfs_idata_realloc		libxfs_idata_realloc
 #define xfs_idestroy_fork		libxfs_idestroy_fork
