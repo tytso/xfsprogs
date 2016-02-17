@@ -520,6 +520,9 @@ void xfs_verifier_error(struct xfs_buf *bp);
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
 
+int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
+                        xfs_off_t count_fsb);
+
 bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */

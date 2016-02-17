@@ -67,7 +67,8 @@
 
 #define IO_BCOMPARE_CHECK
 
-void
+/* XXX: (dgc) Propagate errors, only exit if fail-on-error flag set */
+int
 libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 {
 	xfs_off_t	start_offset, end_offset, offset;
@@ -109,6 +110,7 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 		offset += bytes;
 	}
 	free(z);
+	return 0;
 }
 
 static void unmount_record(void *p)
