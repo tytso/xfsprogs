@@ -255,10 +255,9 @@ xlog_recover_print_inode_core(
 	printf(_("	CORE inode:\n"));
 	if (!print_inode)
 		return;
-	printf(_("		magic:%c%c  mode:0x%x  ver:%d  format:%d  "
-	     "onlink:%d\n"),
+	printf(_("		magic:%c%c  mode:0x%x  ver:%d  format:%d\n"),
 	       (di->di_magic>>8) & 0xff, di->di_magic & 0xff,
-	       di->di_mode, di->di_version, di->di_format, di->di_onlink);
+	       di->di_mode, di->di_version, di->di_format);
 	printf(_("		uid:%d  gid:%d  nlink:%d projid:0x%04x%04x\n"),
 	       di->di_uid, di->di_gid, di->di_nlink,
 	       di->di_projid_hi, di->di_projid_lo);

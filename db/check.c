@@ -2623,7 +2623,6 @@ process_inode(
 	inodata_t		*id = NULL;
 	xfs_ino_t		ino;
 	xfs_extnum_t		nextents = 0;
-	int			nlink;
 	int			security;
 	xfs_rfsblock_t		totblocks;
 	xfs_rfsblock_t		totdblocks = 0;
@@ -2694,14 +2693,10 @@ process_inode(
 					xino.i_d.di_nblocks, ino);
 			error++;
 		}
-		if (xino.i_d.di_version == 1)
-			nlink = xino.i_d.di_onlink;
-		else
-			nlink = xino.i_d.di_nlink;
-		if (nlink != 0) {
+		if (dip->di_nlink != 0) {
 			if (v)
 				dbprintf(_("bad nlink %d for free inode %lld\n"),
-					nlink, ino);
+					be32_to_cpu(dip->di_nlink), ino);
 			error++;
 		}
 		if (xino.i_d.di_mode != 0) {
@@ -2801,12 +2796,9 @@ process_inode(
 		type = DBM_UNKNOWN;
 		break;
 	}
-	if (xino.i_d.di_version == 1)
-		setlink_inode(id, xino.i_d.di_onlink, type == DBM_DIR, security);
-	else {
-		sbversion |= XFS_SB_VERSION_NLINKBIT;
-		setlink_inode(id, xino.i_d.di_nlink, type == DBM_DIR, security);
-	}
+
+	setlink_inode(id, xino.i_d.di_nlink, type == DBM_DIR, security);
+
 	switch (xino.i_d.di_format) {
 	case XFS_DINODE_FMT_LOCAL:
 		process_lclinode(id, dip, type, &totdblocks, &totiblocks,
