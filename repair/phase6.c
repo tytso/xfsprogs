@@ -519,7 +519,7 @@ mk_rbmino(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_changecount = 1;
+		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
@@ -772,7 +772,7 @@ mk_rsumino(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_changecount = 1;
+		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
@@ -881,7 +881,7 @@ mk_root_dir(xfs_mount_t *mp)
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
-		ip->i_d.di_changecount = 1;
+		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}

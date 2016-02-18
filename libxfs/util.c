@@ -255,7 +255,7 @@ libxfs_ialloc(
 	if (ip->i_d.di_version == 3) {
 		ASSERT(ip->i_d.di_ino == ino);
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
-		ip->i_d.di_changecount = 1;
+		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
 		ip->i_d.di_crtime.t_sec = (__int32_t)VFS_I(ip)->i_mtime.tv_sec;
 		ip->i_d.di_crtime.t_nsec = (__int32_t)VFS_I(ip)->i_mtime.tv_nsec;
@@ -431,7 +431,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 
 	/* bump the change count on v3 inodes */
 	if (ip->i_d.di_version == 3)
-		ip->i_d.di_changecount++;
+		VFS_I(ip)->i_version++;
 
 	/*
 	 * Copy the dirty parts of the inode into the on-disk
