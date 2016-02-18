@@ -1351,7 +1351,7 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 	/*
 	 * set up the inode ops structure that the libxfs code relies on
 	 */
-	if (S_ISDIR(ip->i_d.di_mode))
+	if (XFS_ISDIR(ip))
 		ip->d_ops = mp->m_dir_inode_ops;
 	else
 		ip->d_ops = mp->m_nondir_inode_ops;
@@ -1363,7 +1363,7 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 static void
 libxfs_idestroy(xfs_inode_t *ip)
 {
-	switch (ip->i_d.di_mode & S_IFMT) {
+	switch (VFS_I(ip)->i_mode & S_IFMT) {
 		case S_IFREG:
 		case S_IFDIR:
 		case S_IFLNK:

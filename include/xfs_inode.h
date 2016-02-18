@@ -34,6 +34,7 @@ struct xfs_dir_ops;
  * metadata.
  */
 struct inode {
+	mode_t		i_mode;
 	uint32_t	i_nlink;
 	uint32_t	i_generation;
 	uint64_t	i_version;
@@ -65,13 +66,26 @@ static inline struct inode *VFS_I(struct xfs_inode *ip)
 }
 
 /*
+ * wrappers around the mode checks to simplify code
+ */
+static inline bool XFS_ISREG(struct xfs_inode *ip)
+{
+	return S_ISREG(VFS_I(ip)->i_mode);
+}
+
+static inline bool XFS_ISDIR(struct xfs_inode *ip)
+{
+	return S_ISDIR(VFS_I(ip)->i_mode);
+}
+
+/*
  * For regular files we only update the on-disk filesize when actually
  * writing data back to disk.  Until then only the copy in the VFS inode
  * is uptodate.
  */
 static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 {
-	if (S_ISREG(ip->i_d.di_mode))
+	if (XFS_ISREG(ip))
 		return ip->i_size;
 	return ip->i_d.di_size;
 }

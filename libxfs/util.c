@@ -217,7 +217,7 @@ libxfs_ialloc(
 		return error;
 	ASSERT(ip != NULL);
 
-	ip->i_d.di_mode = (__uint16_t)mode;
+	VFS_I(ip)->i_mode = mode;
 	set_nlink(VFS_I(ip), nlink);
 	ip->i_d.di_uid = cr->cr_uid;
 	ip->i_d.di_gid = cr->cr_gid;
@@ -238,10 +238,10 @@ libxfs_ialloc(
 		 */
 	}
 
-	if (pip && (pip->i_d.di_mode & S_ISGID)) {
+	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
 		ip->i_d.di_gid = pip->i_d.di_gid;
-		if ((pip->i_d.di_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
-			ip->i_d.di_mode |= S_ISGID;
+		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
+			VFS_I(ip)->i_mode |= S_ISGID;
 	}
 
 	ip->i_d.di_size = 0;
@@ -316,7 +316,7 @@ libxfs_ialloc(
 	/*
 	 * set up the inode ops structure that the libxfs code relies on
 	 */
-	if (S_ISDIR(ip->i_d.di_mode))
+	if (XFS_ISDIR(ip))
 		ip->d_ops = ip->i_mount->m_dir_inode_ops;
 	else
 		ip->d_ops = ip->i_mount->m_nondir_inode_ops;
@@ -367,7 +367,7 @@ libxfs_iprint(
 
 	dip = &ip->i_d;
 	printf("\nOn disk portion\n");
-	printf("    di_mode %o\n", dip->di_mode);
+	printf("    di_mode %o\n", VFS_I(ip)->i_mode);
 	printf("    di_version %x\n", (uint)dip->di_version);
 	switch (ip->i_d.di_format) {
 	case XFS_DINODE_FMT_LOCAL:
@@ -417,11 +417,10 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	dip = xfs_buf_offset(bp, ip->i_imap.im_boffset);
 
 	ASSERT(ip->i_d.di_magic == XFS_DINODE_MAGIC);
-	if ((ip->i_d.di_mode & S_IFMT) == S_IFREG) {
+	if (XFS_ISREG(ip)) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE) );
-	}
-	else if ((ip->i_d.di_mode & S_IFMT) == S_IFDIR) {
+	} else if (XFS_ISDIR(ip) == S_IFDIR) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE)   ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_LOCAL) );

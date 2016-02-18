@@ -2636,6 +2636,7 @@ process_inode(
 	xfs_qcnt_t		rc = 0;
 	xfs_dqid_t		dqprid;
 	int			v = 0;
+	mode_t			mode;
 	static char		okfmts[] = {
 		0,				/* type 0 unused */
 		1 << XFS_DINODE_FMT_DEV,	/* FIFO */
@@ -2699,10 +2700,10 @@ process_inode(
 					be32_to_cpu(dip->di_nlink), ino);
 			error++;
 		}
-		if (xino.i_d.di_mode != 0) {
+		if (dip->di_mode != 0) {
 			if (v)
 				dbprintf(_("bad mode %#o for free inode %lld\n"),
-					xino.i_d.di_mode, ino);
+					be16_to_cpu(dip->di_mode), ino);
 			error++;
 		}
 		return;
@@ -2717,11 +2718,12 @@ process_inode(
 	/*
 	 * di_mode is a 16-bit uint so no need to check the < 0 case
 	 */
-	if ((((xino.i_d.di_mode & S_IFMT) >> 12) > 15) ||
-	    (!(okfmts[(xino.i_d.di_mode & S_IFMT) >> 12] & (1 << xino.i_d.di_format)))) {
+	mode = be16_to_cpu(dip->di_mode);
+	if ((((mode & S_IFMT) >> 12) > 15) ||
+	    (!(okfmts[(mode & S_IFMT) >> 12] & (1 << xino.i_d.di_format)))) {
 		if (v)
 			dbprintf(_("bad format %d for inode %lld type %#o\n"),
-				xino.i_d.di_format, id->ino, xino.i_d.di_mode & S_IFMT);
+				xino.i_d.di_format, id->ino, mode & S_IFMT);
 		error++;
 		return;
 	}
@@ -2744,7 +2746,7 @@ process_inode(
 		dbprintf(_("inode %lld mode %#o fmt %s "
 			 "afmt %s "
 			 "nex %d anex %d nblk %lld sz %lld%s%s%s%s%s%s%s\n"),
-			id->ino, xino.i_d.di_mode, fmtnames[(int)xino.i_d.di_format],
+			id->ino, mode, fmtnames[(int)xino.i_d.di_format],
 			fmtnames[(int)xino.i_d.di_aformat],
 			xino.i_d.di_nextents,
 			xino.i_d.di_anextents,
@@ -2757,7 +2759,7 @@ process_inode(
 			xino.i_d.di_flags & XFS_DIFLAG_NOATIME  ? " noa" : "",
 			xino.i_d.di_flags & XFS_DIFLAG_NODUMP   ? " nod" : "");
 	security = 0;
-	switch (xino.i_d.di_mode & S_IFMT) {
+	switch (mode & S_IFMT) {
 	case S_IFDIR:
 		type = DBM_DIR;
 		if (xino.i_d.di_format == XFS_DINODE_FMT_LOCAL)
@@ -2785,7 +2787,7 @@ process_inode(
 		}
 		else
 			type = DBM_DATA;
-		if (xino.i_d.di_mode & (S_ISUID | S_ISGID))
+		if (mode & (S_ISUID | S_ISGID))
 			security = 1;
 		break;
 	case S_IFLNK:

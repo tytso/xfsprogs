@@ -198,7 +198,7 @@ rsvfile(
 
 	libxfs_trans_ijoin(tp, ip, 0);
 
-	ip->i_d.di_mode &= ~S_ISUID;
+	VFS_I(ip)->i_mode &= ~S_ISUID;
 
 	/*
 	 * Note that we don't have to worry about mandatory
@@ -207,8 +207,8 @@ rsvfile(
 	 * on, but if it was on then mandatory locking wouldn't
 	 * have been enabled.
 	 */
-	if (ip->i_d.di_mode & S_IXGRP)
-		ip->i_d.di_mode &= ~S_ISGID;
+	if (VFS_I(ip)->i_mode & S_IXGRP)
+		VFS_I(ip)->i_mode &= ~S_ISGID;
 
 	libxfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_MOD | XFS_ICHGTIME_CHG);
 

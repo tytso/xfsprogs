@@ -510,7 +510,7 @@ mk_rbmino(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_mode = S_IFREG;
+	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
@@ -763,7 +763,7 @@ mk_rsumino(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_mode = S_IFREG;
+	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
@@ -872,7 +872,7 @@ mk_root_dir(xfs_mount_t *mp)
 	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
-	ip->i_d.di_mode = (__uint16_t) mode|S_IFDIR;
+	VFS_I(ip)->i_mode = mode|S_IFDIR;
 	ip->i_d.di_version = vers;
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
@@ -1097,7 +1097,7 @@ mv_orphanage(
 	if ((err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, 0)))
 		do_error(_("%d - couldn't iget disconnected inode\n"), err);
 
-	xname.type = xfs_mode_to_ftype[(ino_p->i_d.di_mode & S_IFMT)>>S_SHIFT];
+	xname.type = xfs_mode_to_ftype[(VFS_I(ino_p)->i_mode & S_IFMT)>>S_SHIFT];
 
 	if (isa_dir)  {
 		irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, orphanage_ino),
