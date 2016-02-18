@@ -247,9 +247,6 @@ libxfs_ialloc(
 	ip->i_d.di_size = 0;
 	ip->i_d.di_nextents = 0;
 	ASSERT(ip->i_d.di_nblocks == 0);
-	/*
-	 * di_gen will have been taken care of in xfs_iread.
-	 */
 	ip->i_d.di_extsize = pip ? 0 : fsx->fsx_extsize;
 	ip->i_d.di_dmevmask = 0;
 	ip->i_d.di_dmstate = 0;
@@ -391,7 +388,7 @@ libxfs_iprint(
 	printf("   di_gid %d\n", dip->di_gid);
 	printf("   di_nextents %d\n", dip->di_nextents);
 	printf("   di_size %llu\n", (unsigned long long)dip->di_size);
-	printf("   di_gen %x\n", dip->di_gen);
+	printf("   di_gen %x\n", VFS_I(ip)->i_generation);
 	printf("   di_extsize %d\n", dip->di_extsize);
 	printf("   di_flags %x\n", dip->di_flags);
 	printf("   di_nblocks %llu\n", (unsigned long long)dip->di_nblocks);
