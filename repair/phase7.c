@@ -28,31 +28,6 @@
 #include "progress.h"
 #include "threads.h"
 
-/* dinoc is a pointer to the IN-CORE dinode core */
-static void
-set_nlinks(
-	struct xfs_icdinode	*dinoc,
-	xfs_ino_t		ino,
-	__uint32_t		nrefs,
-	int			*dirty)
-{
-	if (dinoc->di_nlink == nrefs)
-		return;
-
-	if (!no_modify) {
-		*dirty = 1;
-		do_warn(_("resetting inode %" PRIu64 " nlinks from %u to %u\n"),
-			ino, dinoc->di_nlink, nrefs);
-
-		ASSERT(dinoc->di_version > 1);
-		dinoc->di_nlink = nrefs;
-	} else  {
-		do_warn(
-_("would have reset inode %" PRIu64 " nlinks from %u to %u\n"),
-			ino, dinoc->di_nlink, nrefs);
-	}
-}
-
 static void
 update_inode_nlinks(
 	xfs_mount_t 		*mp,
@@ -88,10 +63,20 @@ update_inode_nlinks(
 
 	dirty = 0;
 
-	/*
-	 * compare and set links for all inodes
-	 */
-	set_nlinks(&ip->i_d, ino, nlinks, &dirty);
+	/* compare and set links if they differ.  */
+	if (VFS_I(ip)->i_nlink != nlinks) {
+		if (!no_modify) {
+			do_warn(
+	_("resetting inode %" PRIu64 " nlinks from %u to %u\n"),
+				ino, VFS_I(ip)->i_nlink, nlinks);
+			set_nlink(VFS_I(ip), nlinks);
+			dirty = 1;
+		} else {
+			do_warn(
+	_("would have reset inode %" PRIu64 " nlinks from %u to %u\n"),
+				ino, VFS_I(ip)->i_nlink, nlinks);
+		}
+	}
 
 	if (!dirty)  {
 		libxfs_trans_cancel(tp);

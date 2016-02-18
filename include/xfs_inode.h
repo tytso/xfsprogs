@@ -34,6 +34,7 @@ struct xfs_dir_ops;
  * metadata.
  */
 struct inode {
+	uint32_t	i_nlink;
 	struct timespec	i_atime;
 	struct timespec	i_mtime;
 	struct timespec	i_ctime;
@@ -73,6 +74,16 @@ static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 	return ip->i_d.di_size;
 }
 #define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
+
+/* inode link counts */
+static inline void set_nlink(struct inode *inode, uint32_t nlink)
+{
+	inode->i_nlink = nlink;
+}
+static inline void inc_nlink(struct inode *inode)
+{
+	inode->i_nlink++;
+}
 
 /*
  * Project quota id helpers (previously projid was 16bit only and using two

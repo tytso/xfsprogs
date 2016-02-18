@@ -515,7 +515,7 @@ mk_rbmino(xfs_mount_t *mp)
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
 
-	ip->i_d.di_nlink = 1;		/* account for sb ptr */
+	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
@@ -768,7 +768,7 @@ mk_rsumino(xfs_mount_t *mp)
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
 
-	ip->i_d.di_nlink = 1;		/* account for sb ptr */
+	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
@@ -877,7 +877,7 @@ mk_root_dir(xfs_mount_t *mp)
 	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
 
-	ip->i_d.di_nlink = 1;		/* account for . */
+	set_nlink(VFS_I(ip), 1);	/* account for . */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (ip->i_d.di_version == 3) {
@@ -976,7 +976,7 @@ mk_orphanage(xfs_mount_t *mp)
 		do_error(_("%s inode allocation failed %d\n"),
 			ORPHANAGE, error);
 	}
-	ip->i_d.di_nlink++;		/* account for . */
+	inc_nlink(VFS_I(ip));		/* account for . */
 	ino = ip->i_ino;
 
 	irec = find_inode_rec(mp,
@@ -1027,7 +1027,7 @@ mk_orphanage(xfs_mount_t *mp)
 	 * bump up the link count in the root directory to account
 	 * for .. in the new directory
 	 */
-	pip->i_d.di_nlink++;
+	inc_nlink(VFS_I(pip));
 	add_inode_ref(find_inode_rec(mp,
 				XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
 				XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino)), 0);
@@ -1133,7 +1133,7 @@ mv_orphanage(
 			if (irec)
 				add_inode_ref(irec, ino_offset);
 			else
-				orphanage_ip->i_d.di_nlink++;
+				inc_nlink(VFS_I(orphanage_ip));
 			libxfs_trans_log_inode(tp, orphanage_ip, XFS_ILOG_CORE);
 
 			err = -libxfs_dir_createname(tp, ino_p, &xfs_name_dotdot,
@@ -1143,7 +1143,7 @@ mv_orphanage(
 	_("creation of .. entry failed (%d), filesystem may be out of space\n"),
 					err);
 
-			ino_p->i_d.di_nlink++;
+			inc_nlink(VFS_I(ino_p));
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
 			err = -libxfs_bmap_finish(&tp, &flist, ino_p);
@@ -1176,7 +1176,7 @@ mv_orphanage(
 			if (irec)
 				add_inode_ref(irec, ino_offset);
 			else
-				orphanage_ip->i_d.di_nlink++;
+				inc_nlink(VFS_I(orphanage_ip));
 			libxfs_trans_log_inode(tp, orphanage_ip, XFS_ILOG_CORE);
 
 			/*
@@ -1229,7 +1229,7 @@ mv_orphanage(
 				ORPHANAGE, err);
 		ASSERT(err == 0);
 
-		ino_p->i_d.di_nlink = 1;
+		set_nlink(VFS_I(ino_p), 1);
 		libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
 
 		err = -libxfs_bmap_finish(&tp, &flist, ino_p);

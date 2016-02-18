@@ -218,8 +218,7 @@ libxfs_ialloc(
 	ASSERT(ip != NULL);
 
 	ip->i_d.di_mode = (__uint16_t)mode;
-	ip->i_d.di_nlink = nlink;
-	ASSERT(ip->i_d.di_nlink == nlink);
+	set_nlink(VFS_I(ip), nlink);
 	ip->i_d.di_uid = cr->cr_uid;
 	ip->i_d.di_gid = cr->cr_gid;
 	xfs_set_projid(&ip->i_d, pip ? 0 : fsx->fsx_projid);
@@ -387,7 +386,7 @@ libxfs_iprint(
 		printf("    Other inode\n");
 		break;
 	}
-	printf("   di_nlink %x\n", dip->di_nlink);
+	printf("   di_nlink %x\n", VFS_I(ip)->i_nlink);
 	printf("   di_uid %d\n", dip->di_uid);
 	printf("   di_gid %d\n", dip->di_gid);
 	printf("   di_nextents %d\n", dip->di_nextents);

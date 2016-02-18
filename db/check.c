@@ -2797,7 +2797,7 @@ process_inode(
 		break;
 	}
 
-	setlink_inode(id, xino.i_d.di_nlink, type == DBM_DIR, security);
+	setlink_inode(id, VFS_I(&xino)->i_nlink, type == DBM_DIR, security);
 
 	switch (xino.i_d.di_format) {
 	case XFS_DINODE_FMT_LOCAL:
