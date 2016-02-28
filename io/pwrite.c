@@ -128,7 +128,11 @@ write_random(
 
 	*total = 0;
 	while (count > 0) {
-		off = ((offset + (random() % range)) / buffersize) * buffersize;
+		if (range)
+			off = ((offset + (random() % range)) / buffersize) *
+				buffersize;
+		else
+			off = offset;
 		bytes = do_pwrite(file->fd, off, buffersize, buffersize);
 		if (bytes == 0)
 			break;

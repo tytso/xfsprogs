@@ -245,7 +245,11 @@ read_random(
 
 	*total = 0;
 	while (count > 0) {
-		off = ((offset + (random() % range)) / buffersize) * buffersize;
+		if (range)
+			off = ((offset + (random() % range)) / buffersize) *
+				buffersize;
+		else
+			off = offset;
 		bytes = do_pread(fd, off, buffersize, buffersize);
 		if (bytes == 0)
 			break;
