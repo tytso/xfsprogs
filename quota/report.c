@@ -30,7 +30,7 @@ static cmdinfo_t report_cmd;
 static void
 dump_help(void)
 {
-	dump_cmd.args = _("[-gpu] [-f file]");
+	dump_cmd.args = _("[-g|-p|-u] [-f file]");
 	dump_cmd.oneline = _("dump quota information for backup utilities");
 	printf(_(
 "\n"
@@ -199,7 +199,7 @@ dump_f(
 	FILE		*fp;
 	char		*fname = NULL;
 	uint		lower = 0, upper = 0;
-	int		c, type = XFS_USER_QUOTA;
+	int		c, type = 0;
 
 	while ((c = getopt(argc, argv, "f:gpuL:U:")) != EOF) {
 		switch(c) {
@@ -207,13 +207,13 @@ dump_f(
 			fname = optarg;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		case 'L':
 			lower = (uint)atoi(optarg);
@@ -228,6 +228,14 @@ dump_f(
 
 	if (argc != optind)
 		return command_usage(&dump_cmd);
+
+	if (!type) {
+		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&dump_cmd);
+	}
 
 	if ((fp = fopen_write_secure(fname)) == NULL)
 		return 0;
@@ -725,7 +733,7 @@ report_init(void)
 	dump_cmd.cfunc = dump_f;
 	dump_cmd.argmin = 0;
 	dump_cmd.argmax = -1;
-	dump_cmd.args = _("[-gpu] [-f file]");
+	dump_cmd.args = _("[-g|-p|-u] [-f file]");
 	dump_cmd.oneline = _("dump quota information for backup utilities");
 	dump_cmd.help = dump_help;
 

@@ -282,13 +282,13 @@ limit_f(
 			flags |= DEFAULTS_FLAG;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		default:
 			return command_usage(&limit_cmd);
@@ -343,8 +343,13 @@ limit_f(
 
 	name = (flags & DEFAULTS_FLAG) ? "0" : argv[optind++];
 
-	if (!type)
+	if (!type) {
 		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&limit_cmd);
+	}
 
 	switch (type) {
 	case XFS_USER_QUOTA:
@@ -422,13 +427,13 @@ restore_f(
 			fname = optarg;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		default:
 			return command_usage(&restore_cmd);
@@ -438,8 +443,13 @@ restore_f(
 	if (argc < optind)
 		return command_usage(&restore_cmd);
 
-	if (!type)
+	if (!type) {
 		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&restore_cmd);
+	}
 
 	if (fname) {
 		if ((fp = fopen(fname, "r")) == NULL) {
@@ -501,13 +511,13 @@ timer_f(
 			mask |= FS_DQ_RTBTIMER;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		default:
 			return command_usage(&timer_cmd);
@@ -522,8 +532,13 @@ timer_f(
 	if (!mask)
 		mask = FS_DQ_TIMER_MASK;
 
-	if (!type)
+	if (!type) {
 		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&timer_cmd);
+	}
 
 	set_timer(type, mask, fs_path->fs_name, value);
 	return 0;
@@ -630,13 +645,13 @@ warn_f(
 			mask |= FS_DQ_RTBWARNS;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		default:
 			return command_usage(&warn_cmd);
@@ -661,8 +676,13 @@ warn_f(
 	if (!mask)
 		mask = FS_DQ_WARNS_MASK;
 
-	if (!type)
+	if (!type) {
 		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&warn_cmd);
+	}
 
 	switch (type) {
 	case XFS_USER_QUOTA:
@@ -686,7 +706,7 @@ edit_init(void)
 	limit_cmd.argmin = 2;
 	limit_cmd.argmax = -1;
 	limit_cmd.args = \
-	_("[-gpu] bsoft|bhard|isoft|ihard|rtbsoft|rtbhard=N -d|id|name");
+	_("[-g|-p|-u] bsoft|bhard|isoft|ihard|rtbsoft|rtbhard=N -d|id|name");
 	limit_cmd.oneline = _("modify quota limits");
 	limit_cmd.help = limit_help;
 
@@ -694,14 +714,14 @@ edit_init(void)
 	restore_cmd.cfunc = restore_f;
 	restore_cmd.argmin = 0;
 	restore_cmd.argmax = -1;
-	restore_cmd.args = _("[-gpu] [-f file]");
+	restore_cmd.args = _("[-g|-p|-u] [-f file]");
 	restore_cmd.oneline = _("restore quota limits from a backup file");
 
 	timer_cmd.name = "timer";
 	timer_cmd.cfunc = timer_f;
 	timer_cmd.argmin = 2;
 	timer_cmd.argmax = -1;
-	timer_cmd.args = _("[-bir] [-gpu] value");
+	timer_cmd.args = _("[-bir] [-g|-p|-u] value");
 	timer_cmd.oneline = _("set quota enforcement timeouts");
 	timer_cmd.help = timer_help;
 
@@ -709,7 +729,7 @@ edit_init(void)
 	warn_cmd.cfunc = warn_f;
 	warn_cmd.argmin = 2;
 	warn_cmd.argmax = -1;
-	warn_cmd.args = _("[-bir] [-gpu] value -d|id|name");
+	warn_cmd.args = _("[-bir] [-g|-p|-u] value -d|id|name");
 	warn_cmd.oneline = _("get/set enforcement warning counter");
 	warn_cmd.help = warn_help;
 

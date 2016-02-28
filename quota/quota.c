@@ -409,13 +409,13 @@ quota_f(
 			form |= XFS_RTBLOCK_QUOTA;
 			break;
 		case 'g':
-			type = XFS_GROUP_QUOTA;
+			type |= XFS_GROUP_QUOTA;
 			break;
 		case 'p':
-			type = XFS_PROJ_QUOTA;
+			type |= XFS_PROJ_QUOTA;
 			break;
 		case 'u':
-			type = XFS_USER_QUOTA;
+			type |= XFS_USER_QUOTA;
 			break;
 		case 'h':
 			flags |= HUMAN_FLAG;
@@ -437,8 +437,13 @@ quota_f(
 	if (!form)
 		form = XFS_BLOCK_QUOTA;
 
-	if (!type)
+	if (!type) {
 		type = XFS_USER_QUOTA;
+	} else if (type != XFS_GROUP_QUOTA &&
+	           type != XFS_PROJ_QUOTA &&
+	           type != XFS_USER_QUOTA) {
+		return command_usage(&quota_cmd);
+	}
 
 	if ((fp = fopen_write_secure(fname)) == NULL)
 		return 0;
@@ -461,7 +466,7 @@ quota_init(void)
 	quota_cmd.cfunc = quota_f;
 	quota_cmd.argmin = 0;
 	quota_cmd.argmax = -1;
-	quota_cmd.args = _("[-bir] [-gpu] [-hnNv] [-f file] [id|name]...");
+	quota_cmd.args = _("[-bir] [-g|-p|-u] [-hnNv] [-f file] [id|name]...");
 	quota_cmd.oneline = _("show usage and limits");
 	quota_cmd.help = quota_help;
 
