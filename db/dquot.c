@@ -33,9 +33,11 @@
 static int	dquot_f(int argc, char **argv);
 static void	dquot_help(void);
 
-static const cmdinfo_t	dquot_cmd =
-	{ "dquot", NULL, dquot_f, 1, 2, 1, N_("[projid|gid|uid]"),
-	  N_("set current address to project, group or user quota block"), dquot_help };
+static const cmdinfo_t	dquot_cmd = {
+	"dquot", NULL, dquot_f, 1, 2, 1, N_("[-g|-p|-u] id"),
+N_("set current address to a group, project or user quota block for given ID"),
+	dquot_help,
+};
 
 const field_t	dqblk_hfld[] = {
 	{ "", FLDT_DQBLK, OI(0), C1, 0, TYP_NONE },

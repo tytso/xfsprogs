@@ -444,8 +444,8 @@ If no value is given for
 .IR flagbits ,
 print the current debug option bits. These are for the use of the implementor.
 .TP
-.BI "dquot [" projectid_or_userid ]
-Set current address to a project or user quota block.
+.BI "dquot [" \-g | \-p | \-u ] " id"
+Set current address to a group, project or user quota block for the given ID. Defaults to user quota.
 .TP
 .BI "echo [" arg "] ..."
 Echo the arguments to the output.
