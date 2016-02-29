@@ -420,7 +420,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	if (XFS_ISREG(ip)) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE) );
-	} else if (XFS_ISDIR(ip) == S_IFDIR) {
+	} else if (XFS_ISDIR(ip)) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE)   ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_LOCAL) );
