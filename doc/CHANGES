@@ -1,3 +1,9 @@
+xfsprogs-4.5.0 (15 Mar 2015)
+	- xfs_io: prevent divide-by-zero on random IO (Dmitry Monakhov)
+	- xfs_db: dquot command documentation fixes (Eric Sandeen)
+	- xfs_quota: better command line parsing and documentation
+	  (Zorro Lang)
+
 xfsprogs-4.5.0-rc1 (17 Feb 2015)
 	- libxfs: update to match kernel 4.5-rc1 code base
 	- xfs_io: add DAX inode flag support
