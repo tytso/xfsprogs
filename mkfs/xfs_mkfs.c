@@ -21,7 +21,7 @@
 #ifdef ENABLE_BLKID
 #  include <blkid/blkid.h>
 #endif /* ENABLE_BLKID */
-#include "xfs_mkfs.h"
+#include "xfs_multidisk.h"
 
 /*
  * Device topology information.
@@ -664,43 +664,46 @@ calc_default_ag_geometry(
 	}
 
 	/*
-	 * For the remainder we choose an AG size based on the
-	 * number of data blocks available, trying to keep the
-	 * number of AGs relatively small (especially compared
-	 * to the original algorithm).  AG count is calculated
-	 * based on the preferred AG size, not vice-versa - the
-	 * count can be increased by growfs, so prefer to use
-	 * smaller counts at mkfs time.
-	 *
-	 * For a single underlying storage device between 128MB
-	 * and 4TB in size, just use 4 AGs, otherwise scale up
-	 * smoothly between min/max AG sizes.
+	 * For a single underlying storage device over 4TB in size
+	 * use the maximum AG size.  Between 128MB and 4TB, just use
+	 * 4 AGs and scale up smoothly between min/max AG sizes.
 	 */
-
-	if (!multidisk && dblocks >= MEGABYTES(128, blocklog)) {
+	if (!multidisk) {
 		if (dblocks >= TERABYTES(4, blocklog)) {
 			blocks = XFS_AG_MAX_BLOCKS(blocklog);
 			goto done;
+		} else if (dblocks >= MEGABYTES(128, blocklog)) {
+			shift = XFS_NOMULTIDISK_AGLOG;
+			goto calc_blocks;
 		}
-		shift = 2;
-	} else if (dblocks > GIGABYTES(512, blocklog))
-		shift = 5;
-	else if (dblocks > GIGABYTES(8, blocklog))
-		shift = 4;
-	else if (dblocks >= MEGABYTES(128, blocklog))
-		shift = 3;
-	else if (dblocks >= MEGABYTES(64, blocklog))
-		shift = 2;
-	else if (dblocks >= MEGABYTES(32, blocklog))
-		shift = 1;
-	else
-		shift = 0;
+	}
+
+	/*
+	 * For the multidisk configs we choose an AG count based on the number
+	 * of data blocks available, trying to keep the number of AGs higher
+	 * than the single disk configurations. This makes the assumption that
+	 * larger filesystems have more parallelism available to them.
+	 */
+	shift = XFS_MULTIDISK_AGLOG;
+	if (dblocks <= GIGABYTES(512, blocklog))
+		shift--;
+	if (dblocks <= GIGABYTES(8, blocklog))
+		shift--;
+	if (dblocks < MEGABYTES(128, blocklog))
+		shift--;
+	if (dblocks < MEGABYTES(64, blocklog))
+		shift--;
+	if (dblocks < MEGABYTES(32, blocklog))
+		shift--;
+
 	/*
 	 * If dblocks is not evenly divisible by the number of
 	 * desired AGs, round "blocks" up so we don't lose the
 	 * last bit of the filesystem. The same principle applies
 	 * to the AG count, so we don't lose the last AG!
 	 */
+calc_blocks:
+	ASSERT(shift >= 0 && shift <= XFS_MULTIDISK_AGLOG);
 	blocks = dblocks >> shift;
 	if (dblocks & xfs_mask32lo(shift)) {
 		if (blocks < XFS_AG_MAX_BLOCKS(blocklog))

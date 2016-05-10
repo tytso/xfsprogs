@@ -19,6 +19,7 @@
 #include "libxfs.h"
 #include "libxlog.h"
 #include <sys/resource.h>
+#include "xfs_multidisk.h"
 #include "avl.h"
 #include "avl64.h"
 #include "globals.h"
@@ -589,6 +590,33 @@ format_log_max_lsn(
 			 XLOG_FMT, new_cycle, true);
 }
 
+/*
+ * mkfs increases the AG count for "multidisk" configurations, we want
+ * to target these for an increase in thread count. Hence check the superlock
+ * geometry information to determine if mkfs considered this a multidisk
+ * configuration.
+ */
+static bool
+is_multidisk_filesystem(
+	struct xfs_mount	*mp)
+{
+	struct xfs_sb		*sbp = &mp->m_sb;
+
+	/* High agcount filesystems are always considered "multidisk" */
+	if (sbp->sb_agcount >= XFS_MULTIDISK_AGCOUNT)
+		return true;
+
+	/*
+	 * If it doesn't have a sunit/swidth, mkfs didn't consider it a
+	 * multi-disk array, so we don't either.
+	 */
+	if (!sbp->sb_unit)
+		return false;
+
+	ASSERT(sbp->sb_width);
+	return true;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -729,9 +757,21 @@ main(int argc, char **argv)
 	 * threads/CPU as this is enough threads to saturate a CPU on fast
 	 * devices, yet few enough that it will saturate but won't overload slow
 	 * devices.
+	 *
+	 * Multidisk filesystems can handle more IO parallelism so we should try
+	 * to process multiple AGs at a time in such a configuration to try to
+	 * saturate the underlying storage and speed the repair process. Only do
+	 * this if prefetching is enabled.
 	 */
-	if (!ag_stride && glob_agcount >= 16 && do_prefetch)
-		ag_stride = 15;
+	if (!ag_stride && do_prefetch && is_multidisk_filesystem(mp)) {
+		/*
+		 * For small agcount multidisk systems, just double the
+		 * parallelism. For larger AG count filesystems (32 and above)
+		 * use more parallelism, and linearly increase the parallelism
+		 * with the number of AGs.
+		 */
+		ag_stride = min(glob_agcount, XFS_MULTIDISK_AGCOUNT / 2) - 1;
+	}
 
 	if (ag_stride) {
 		int max_threads = platform_nproc() * 8;

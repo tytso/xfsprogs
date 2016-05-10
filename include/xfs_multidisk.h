@@ -15,8 +15,8 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifndef __XFS_MKFS_H__
-#define	__XFS_MKFS_H__
+#ifndef __XFS_MULTIDISK_H__
+#define	__XFS_MULTIDISK_H__
 
 #define XFS_DFL_SB_VERSION_BITS \
                 (XFS_SB_VERSION_NLINKBIT | \
@@ -70,6 +70,15 @@
 
 #define XFS_MAX_AGNUMBER	((xfs_agnumber_t)(NULLAGNUMBER - 1))
 
+/*
+ * These values define what we consider a "multi-disk" filesystem. That is, a
+ * filesystem that is likely to be made up of multiple devices, and hence have
+ * some level of parallelism available to it at the IO level.
+ */
+#define XFS_MULTIDISK_AGLOG		5	/* 32 AGs */
+#define XFS_NOMULTIDISK_AGLOG		2	/* 4 AGs */
+#define XFS_MULTIDISK_AGCOUNT		(1 << XFS_MULTIDISK_AGLOG)
+
 
 /* xfs_mkfs.c */
 extern int isdigits (char *str);
@@ -86,4 +95,4 @@ extern int max_trans_res (int crcs_enabled, int dirversion,
 		int sectorlog, int blocklog, int inodelog, int dirblocklog,
 		int logversion, int log_sunit, int finobt);
 
-#endif	/* __XFS_MKFS_H__ */
+#endif	/* __XFS_MULTIDISK_H__ */

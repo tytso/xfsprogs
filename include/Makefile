@@ -33,13 +33,16 @@ LIBHFILES = libxfs.h \
 	xfs_log_recover.h \
 	xfs_metadump.h \
 	xfs_mount.h \
+	xfs_quota_defs.h \
+	xfs_sb.h \
+	xfs_shared.h \
 	xfs_trace.h \
 	xfs_trans.h \
 	command.h \
 	input.h \
 	path.h \
 	project.h \
-	platform_defs.h \
+	platform_defs.h
 
 HFILES = handle.h \
 	jdm.h \

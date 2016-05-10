@@ -25,7 +25,7 @@
  */
 
 #include "libxfs.h"
-#include "xfs_mkfs.h"
+#include "xfs_multidisk.h"
 
 int
 max_trans_res(
