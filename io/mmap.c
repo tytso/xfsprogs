@@ -589,7 +589,7 @@ mremap_help(void)
 "\n"
 " Resizes the mappping, growing or shrinking from the current size.\n"
 " The default stored value is 'X', repeated to fill the range specified.\n"
-" -f -- use the MREMAP_FIXED flag\n"
+" -f <new_address> -- use MREMAP_FIXED flag to mremap on new_address\n"
 " -m -- use the MREMAP_MAYMOVE flag\n"
 "\n"));
 }
@@ -600,15 +600,19 @@ mremap_f(
 	char		**argv)
 {
 	ssize_t		new_length;
-	void		*new_addr;
+	void		*new_addr = NULL;
 	int		flags = 0;
 	int		c;
 	size_t		blocksize, sectsize;
 
-	while ((c = getopt(argc, argv, "fm")) != EOF) {
+	init_cvtnum(&blocksize, &sectsize);
+
+	while ((c = getopt(argc, argv, "f:m")) != EOF) {
 		switch (c) {
 		case 'f':
 			flags = MREMAP_FIXED|MREMAP_MAYMOVE;
+			new_addr = (void *)cvtnum(blocksize, sectsize,
+			                          optarg);
 			break;
 		case 'm':
 			flags = MREMAP_MAYMOVE;
@@ -618,7 +622,9 @@ mremap_f(
 		}
 	}
 
-	init_cvtnum(&blocksize, &sectsize);
+	if (optind != argc - 1)
+		return command_usage(&mremap_cmd);
+
 	new_length = cvtnum(blocksize, sectsize, argv[optind]);
 	if (new_length < 0) {
 		printf(_("non-numeric offset argument -- %s\n"),
@@ -626,7 +632,12 @@ mremap_f(
 		return 0;
 	}
 
-	new_addr = mremap(mapping->addr, mapping->length, new_length, flags);
+	if (!new_addr)
+		new_addr = mremap(mapping->addr, mapping->length,
+		                  new_length, flags);
+	else
+		new_addr = mremap(mapping->addr, mapping->length,
+		                  new_length, flags, new_addr);
 	if (new_addr == MAP_FAILED)
 		perror("mremap");
 	else {
@@ -697,9 +708,9 @@ mmap_init(void)
 	mremap_cmd.altname = "mrm";
 	mremap_cmd.cfunc = mremap_f;
 	mremap_cmd.argmin = 1;
-	mremap_cmd.argmax = 2;
+	mremap_cmd.argmax = 3;
 	mremap_cmd.flags = CMD_NOFILE_OK | CMD_FOREIGN_OK;
-	mremap_cmd.args = _("[-m|-f] newsize");
+	mremap_cmd.args = _("[-m|-f <new_address>] newsize");
 	mremap_cmd.oneline =
 		_("alters the size of the current memory mapping");
 	mremap_cmd.help = mremap_help;

@@ -581,7 +581,7 @@ See the
 .B mmap
 command.
 .TP
-.BI "mremap [ \-f ] [ \-m ] " new_length
+.BI "mremap [ \-f <new_address> ] [ \-m ] " new_length
 Changes the current mapping size to
 .IR new_length .
 Whether the mapping may be moved is controlled by the flags passed;
@@ -589,6 +589,9 @@ MREMAP_FIXED
 .RB ( \-f ),
 or MREMAP_MAYMOVE
 .RB ( \-m ).
+.IR new_length
+specifies a page-aligned address to which the mapping must be moved. It
+can be setted to 139946004389888, 4096k or 1g etc.
 .TP
 .B mrm
 See the
