@@ -3596,6 +3596,7 @@ cvtnum(
 {
 	long long	i;
 	char		*sp;
+	int		c;
 
 	i = strtoll(s, &sp, 0);
 	if (i == 0 && sp == s)
@@ -3603,23 +3604,31 @@ cvtnum(
 	if (*sp == '\0')
 		return i;
 
-	if (*sp == 'b' && sp[1] == '\0')
+	if (sp[1] != '\0')
+		return -1LL;
+
+	if (*sp == 'b')
 		return i * blksize;
-	if (*sp == 's' && sp[1] == '\0')
+	if (*sp == 's')
 		return i * sectsize;
 
-	if (*sp == 'k' && sp[1] == '\0')
-		return 1024LL * i;
-	if (*sp == 'm' && sp[1] == '\0')
-		return 1024LL * 1024LL * i;
-	if (*sp == 'g' && sp[1] == '\0')
-		return 1024LL * 1024LL * 1024LL * i;
-	if (*sp == 't' && sp[1] == '\0')
-		return 1024LL * 1024LL * 1024LL * 1024LL * i;
-	if (*sp == 'p' && sp[1] == '\0')
-		return 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * i;
-	if (*sp == 'e' && sp[1] == '\0')
-		return 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * i;
+	c = tolower(*sp);
+	switch (c) {
+	case 'e':
+		i *= 1024LL;
+	case 'p':
+		i *= 1024LL;
+	case 't':
+		i *= 1024LL;
+	case 'g':
+		i *= 1024LL;
+	case 'm':
+		i *= 1024LL;
+	case 'k':
+		return i * 1024LL;
+	default:
+		break;
+	}
 	return -1LL;
 }
 
