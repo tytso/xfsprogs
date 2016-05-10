@@ -146,6 +146,7 @@ mmap_help(void)
 " -r -- map with PROT_READ protection\n"
 " -w -- map with PROT_WRITE protection\n"
 " -x -- map with PROT_EXEC protection\n"
+" -s <size> -- first do mmap(size)/munmap(size), try to reserve some free space\n"
 " If no protection mode is specified, all are used by default.\n"
 "\n"));
 }
@@ -156,8 +157,8 @@ mmap_f(
 	char		**argv)
 {
 	off64_t		offset;
-	ssize_t		length;
-	void		*address;
+	ssize_t		length = 0, length2 = 0;
+	void		*address = NULL;
 	char		*filename;
 	size_t		blocksize, sectsize;
 	int		c, prot = 0;
@@ -181,7 +182,9 @@ mmap_f(
 		return 0;
 	}
 
-	while ((c = getopt(argc, argv, "rwx")) != EOF) {
+	init_cvtnum(&blocksize, &sectsize);
+
+	while ((c = getopt(argc, argv, "rwxs:")) != EOF) {
 		switch (c) {
 		case 'r':
 			prot |= PROT_READ;
@@ -191,6 +194,9 @@ mmap_f(
 			break;
 		case 'x':
 			prot |= PROT_EXEC;
+			break;
+		case 's':
+			length2 = cvtnum(blocksize, sectsize, optarg);
 			break;
 		default:
 			return command_usage(&mmap_cmd);
@@ -202,7 +208,6 @@ mmap_f(
 	if (optind != argc - 2)
 		return command_usage(&mmap_cmd);
 
-	init_cvtnum(&blocksize, &sectsize);
 	offset = cvtnum(blocksize, sectsize, argv[optind]);
 	if (offset < 0) {
 		printf(_("non-numeric offset argument -- %s\n"), argv[optind]);
@@ -221,7 +226,19 @@ mmap_f(
 		return 0;
 	}
 
-	address = mmap(NULL, length, prot, MAP_SHARED, file->fd, offset);
+	/*
+	 * mmap and munmap memory area of length2 region is helpful to
+	 * make a region of extendible free memory. It's generally used
+	 * for later mremap operation(no MREMAP_MAYMOVE flag). But there
+	 * isn't guarantee that the memory after length (up to length2)
+	 * will stay free.
+	 */
+	if (length2 > length) {
+		address = mmap(NULL, length2, prot,
+		               MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		munmap(address, length2);
+	}
+	address = mmap(address, length, prot, MAP_SHARED, file->fd, offset);
 	if (address == MAP_FAILED) {
 		perror("mmap");
 		free(filename);
@@ -658,7 +675,7 @@ mmap_init(void)
 	mmap_cmd.argmin = 0;
 	mmap_cmd.argmax = -1;
 	mmap_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK | CMD_FOREIGN_OK;
-	mmap_cmd.args = _("[N] | [-rwx] [off len]");
+	mmap_cmd.args = _("[N] | [-rwx] [-s size] [off len]");
 	mmap_cmd.oneline =
 		_("mmap a range in the current file, show mappings");
 	mmap_cmd.help = mmap_help;

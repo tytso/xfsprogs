@@ -559,7 +559,7 @@ Do not print timing statistics at all.
 
 .SH MEMORY MAPPED I/O COMMANDS
 .TP
-.BI "mmap [ " N " | [[ \-rwx ] " "offset length " ]]
+.BI "mmap [ " N " | [[ \-rwx ] [\-s " size " ] " "offset length " ]]
 With no arguments,
 .B mmap
 shows the current mappings. Specifying a single numeric argument
@@ -575,6 +575,21 @@ PROT_WRITE
 .RB ( \-w ),
 and PROT_EXEC
 .RB ( \-x ).
+.BI \-s " size"
+is used to do a mmap(size) && munmap(size) operation at first, try to reserve some
+extendible free memory space, if
+.I size
+is bigger than
+.I length
+parameter. But there's not guarantee that the memory after
+.I length
+( up to
+.I size
+) will stay free.
+.B e.g.
+"mmap -rw -s 8192 1024" will mmap 0 ~ 1024 bytes memory, but try to reserve 1024 ~ 8192
+free space(no guarantee). This free space will helpful for "mremap 8192" without
+MREMAP_MAYMOVE flag.
 .TP
 .B mm
 See the
