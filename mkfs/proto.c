@@ -198,7 +198,7 @@ rsvfile(
 
 	libxfs_trans_ijoin(tp, ip, 0);
 
-	ip->i_d.di_mode &= ~S_ISUID;
+	VFS_I(ip)->i_mode &= ~S_ISUID;
 
 	/*
 	 * Note that we don't have to worry about mandatory
@@ -207,8 +207,8 @@ rsvfile(
 	 * on, but if it was on then mandatory locking wouldn't
 	 * have been enabled.
 	 */
-	if (ip->i_d.di_mode & S_IXGRP)
-		ip->i_d.di_mode &= ~S_ISGID;
+	if (VFS_I(ip)->i_mode & S_IXGRP)
+		VFS_I(ip)->i_mode &= ~S_ISGID;
 
 	libxfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_MOD | XFS_ICHGTIME_CHG);
 
@@ -546,7 +546,7 @@ parseproto(
 				&creds, fsxp, &ip);
 		if (error)
 			fail(_("Inode allocation failed"), error);
-		ip->i_d.di_nlink++;		/* account for . */
+		inc_nlink(VFS_I(ip));		/* account for . */
 		if (!pip) {
 			pip = ip;
 			mp->m_sb.sb_rootino = ip->i_ino;
@@ -557,7 +557,7 @@ parseproto(
 			xname.type = XFS_DIR3_FT_DIR;
 			newdirent(mp, tp, pip, &xname, ip->i_ino,
 				  &first, &flist);
-			pip->i_d.di_nlink++;
+			inc_nlink(VFS_I(pip));
 			libxfs_trans_log_inode(tp, pip, XFS_ILOG_CORE);
 		}
 		newdirectory(mp, tp, ip, pip);
@@ -653,7 +653,7 @@ rtinit(
 	mp->m_sb.sb_rbmino = rbmip->i_ino;
 	rbmip->i_d.di_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 	rbmip->i_d.di_flags = XFS_DIFLAG_NEWRTBM;
-	*(__uint64_t *)&rbmip->i_d.di_atime = 0;
+	*(__uint64_t *)&VFS_I(rbmip)->i_atime = 0;
 	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
 	libxfs_log_sb(tp);
 	mp->m_rbmip = rbmip;

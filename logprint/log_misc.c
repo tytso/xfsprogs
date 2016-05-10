@@ -588,7 +588,8 @@ xlog_print_trans_qoff(char **ptr, uint len)
 
 
 void
-xlog_print_trans_inode_core(xfs_icdinode_t *ip)
+xlog_print_trans_inode_core(
+	struct xfs_log_dinode	*ip)
 {
     printf(_("INODE CORE\n"));
     printf(_("magic 0x%hx mode 0%ho version %d format %d\n"),
@@ -652,7 +653,7 @@ xlog_print_trans_inode(
 	int		num_ops,
 	int		continued)
 {
-    xfs_icdinode_t	   dino;
+    struct xfs_log_dinode dino;
     xlog_op_header_t	   *op_head;
     xfs_inode_log_format_t dst_lbuf;
     xfs_inode_log_format_64_t src_lbuf; /* buffer of biggest one */
@@ -705,7 +706,7 @@ xlog_print_trans_inode(
     mode = dino.di_mode & S_IFMT;
     size = (int)dino.di_size;
     xlog_print_trans_inode_core(&dino);
-    *ptr += xfs_icdinode_size(dino.di_version);
+    *ptr += xfs_log_dinode_size(dino.di_version);
 
     if (*i == num_ops-1 && f->ilf_size == 3)  {
 	return 1;

@@ -2619,11 +2619,10 @@ process_inode(
 {
 	blkmap_t		*blkmap;
 	xfs_fsblock_t		bno = 0;
-	xfs_icdinode_t		idic;
+	struct xfs_inode	xino;
 	inodata_t		*id = NULL;
 	xfs_ino_t		ino;
 	xfs_extnum_t		nextents = 0;
-	int			nlink;
 	int			security;
 	xfs_rfsblock_t		totblocks;
 	xfs_rfsblock_t		totdblocks = 0;
@@ -2637,6 +2636,7 @@ process_inode(
 	xfs_qcnt_t		rc = 0;
 	xfs_dqid_t		dqprid;
 	int			v = 0;
+	mode_t			mode;
 	static char		okfmts[] = {
 		0,				/* type 0 unused */
 		1 << XFS_DINODE_FMT_DEV,	/* FIFO */
@@ -2663,7 +2663,7 @@ process_inode(
 		"dev", "local", "extents", "btree", "uuid"
 	};
 
-	libxfs_dinode_from_disk(&idic, dip);
+	libxfs_inode_from_disk(&xino, dip);
 
 	ino = XFS_AGINO_TO_INO(mp, be32_to_cpu(agf->agf_seqno), agino);
 	if (!isfree) {
@@ -2672,42 +2672,38 @@ process_inode(
 		blkmap = NULL;
 	}
 	v = (!sflag || (id && id->ilist) || CHECK_BLIST(bno));
-	if (idic.di_magic != XFS_DINODE_MAGIC) {
+	if (dip->di_magic != cpu_to_be16(XFS_DINODE_MAGIC)) {
 		if (isfree || v)
 			dbprintf(_("bad magic number %#x for inode %lld\n"),
-				idic.di_magic, ino);
+				be16_to_cpu(dip->di_magic), ino);
 		error++;
 		return;
 	}
-	if (!xfs_dinode_good_version(mp, idic.di_version)) {
+	if (!xfs_dinode_good_version(mp, xino.i_d.di_version)) {
 		if (isfree || v)
 			dbprintf(_("bad version number %#x for inode %lld\n"),
-				idic.di_version, ino);
+				xino.i_d.di_version, ino);
 		error++;
 		return;
 	}
 	if (isfree) {
-		if (idic.di_nblocks != 0) {
+		if (xino.i_d.di_nblocks != 0) {
 			if (v)
 				dbprintf(_("bad nblocks %lld for free inode "
 					 "%lld\n"),
-					idic.di_nblocks, ino);
+					xino.i_d.di_nblocks, ino);
 			error++;
 		}
-		if (idic.di_version == 1)
-			nlink = idic.di_onlink;
-		else
-			nlink = idic.di_nlink;
-		if (nlink != 0) {
+		if (dip->di_nlink != 0) {
 			if (v)
 				dbprintf(_("bad nlink %d for free inode %lld\n"),
-					nlink, ino);
+					be32_to_cpu(dip->di_nlink), ino);
 			error++;
 		}
-		if (idic.di_mode != 0) {
+		if (dip->di_mode != 0) {
 			if (v)
 				dbprintf(_("bad mode %#o for free inode %lld\n"),
-					idic.di_mode, ino);
+					be16_to_cpu(dip->di_mode), ino);
 			error++;
 		}
 		return;
@@ -2722,26 +2718,27 @@ process_inode(
 	/*
 	 * di_mode is a 16-bit uint so no need to check the < 0 case
 	 */
-	if ((((idic.di_mode & S_IFMT) >> 12) > 15) ||
-	    (!(okfmts[(idic.di_mode & S_IFMT) >> 12] & (1 << idic.di_format)))) {
+	mode = be16_to_cpu(dip->di_mode);
+	if ((((mode & S_IFMT) >> 12) > 15) ||
+	    (!(okfmts[(mode & S_IFMT) >> 12] & (1 << xino.i_d.di_format)))) {
 		if (v)
 			dbprintf(_("bad format %d for inode %lld type %#o\n"),
-				idic.di_format, id->ino, idic.di_mode & S_IFMT);
+				xino.i_d.di_format, id->ino, mode & S_IFMT);
 		error++;
 		return;
 	}
 	if ((unsigned int)XFS_DFORK_ASIZE(dip, mp) >=
-					XFS_LITINO(mp, idic.di_version))  {
+					XFS_LITINO(mp, xino.i_d.di_version))  {
 		if (v)
 			dbprintf(_("bad fork offset %d for inode %lld\n"),
-				idic.di_forkoff, id->ino);
+				xino.i_d.di_forkoff, id->ino);
 		error++;
 		return;
 	}
-	if ((unsigned int)idic.di_aformat > XFS_DINODE_FMT_BTREE)  {
+	if ((unsigned int)xino.i_d.di_aformat > XFS_DINODE_FMT_BTREE)  {
 		if (v)
 			dbprintf(_("bad attribute format %d for inode %lld\n"),
-				idic.di_aformat, id->ino);
+				xino.i_d.di_aformat, id->ino);
 		error++;
 		return;
 	}
@@ -2749,48 +2746,48 @@ process_inode(
 		dbprintf(_("inode %lld mode %#o fmt %s "
 			 "afmt %s "
 			 "nex %d anex %d nblk %lld sz %lld%s%s%s%s%s%s%s\n"),
-			id->ino, idic.di_mode, fmtnames[(int)idic.di_format],
-			fmtnames[(int)idic.di_aformat],
-			idic.di_nextents,
-			idic.di_anextents,
-			idic.di_nblocks, idic.di_size,
-			idic.di_flags & XFS_DIFLAG_REALTIME ? " rt" : "",
-			idic.di_flags & XFS_DIFLAG_PREALLOC ? " pre" : "",
-			idic.di_flags & XFS_DIFLAG_IMMUTABLE? " imm" : "",
-			idic.di_flags & XFS_DIFLAG_APPEND   ? " app" : "",
-			idic.di_flags & XFS_DIFLAG_SYNC     ? " syn" : "",
-			idic.di_flags & XFS_DIFLAG_NOATIME  ? " noa" : "",
-			idic.di_flags & XFS_DIFLAG_NODUMP   ? " nod" : "");
+			id->ino, mode, fmtnames[(int)xino.i_d.di_format],
+			fmtnames[(int)xino.i_d.di_aformat],
+			xino.i_d.di_nextents,
+			xino.i_d.di_anextents,
+			xino.i_d.di_nblocks, xino.i_d.di_size,
+			xino.i_d.di_flags & XFS_DIFLAG_REALTIME ? " rt" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_PREALLOC ? " pre" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_IMMUTABLE? " imm" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_APPEND   ? " app" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_SYNC     ? " syn" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_NOATIME  ? " noa" : "",
+			xino.i_d.di_flags & XFS_DIFLAG_NODUMP   ? " nod" : "");
 	security = 0;
-	switch (idic.di_mode & S_IFMT) {
+	switch (mode & S_IFMT) {
 	case S_IFDIR:
 		type = DBM_DIR;
-		if (idic.di_format == XFS_DINODE_FMT_LOCAL)
+		if (xino.i_d.di_format == XFS_DINODE_FMT_LOCAL)
 			break;
-		blkmap = blkmap_alloc(idic.di_nextents);
+		blkmap = blkmap_alloc(xino.i_d.di_nextents);
 		break;
 	case S_IFREG:
-		if (idic.di_flags & XFS_DIFLAG_REALTIME)
+		if (xino.i_d.di_flags & XFS_DIFLAG_REALTIME)
 			type = DBM_RTDATA;
 		else if (id->ino == mp->m_sb.sb_rbmino) {
 			type = DBM_RTBITMAP;
-			blkmap = blkmap_alloc(idic.di_nextents);
+			blkmap = blkmap_alloc(xino.i_d.di_nextents);
 			addlink_inode(id);
 		} else if (id->ino == mp->m_sb.sb_rsumino) {
 			type = DBM_RTSUM;
-			blkmap = blkmap_alloc(idic.di_nextents);
+			blkmap = blkmap_alloc(xino.i_d.di_nextents);
 			addlink_inode(id);
 		}
 		else if (id->ino == mp->m_sb.sb_uquotino ||
 			 id->ino == mp->m_sb.sb_gquotino ||
 			 id->ino == mp->m_sb.sb_pquotino) {
 			type = DBM_QUOTA;
-			blkmap = blkmap_alloc(idic.di_nextents);
+			blkmap = blkmap_alloc(xino.i_d.di_nextents);
 			addlink_inode(id);
 		}
 		else
 			type = DBM_DATA;
-		if (idic.di_mode & (S_ISUID | S_ISGID))
+		if (mode & (S_ISUID | S_ISGID))
 			security = 1;
 		break;
 	case S_IFLNK:
@@ -2801,13 +2798,10 @@ process_inode(
 		type = DBM_UNKNOWN;
 		break;
 	}
-	if (idic.di_version == 1)
-		setlink_inode(id, idic.di_onlink, type == DBM_DIR, security);
-	else {
-		sbversion |= XFS_SB_VERSION_NLINKBIT;
-		setlink_inode(id, idic.di_nlink, type == DBM_DIR, security);
-	}
-	switch (idic.di_format) {
+
+	setlink_inode(id, VFS_I(&xino)->i_nlink, type == DBM_DIR, security);
+
+	switch (xino.i_d.di_format) {
 	case XFS_DINODE_FMT_LOCAL:
 		process_lclinode(id, dip, type, &totdblocks, &totiblocks,
 			&nextents, &blkmap, XFS_DATA_FORK);
@@ -2823,7 +2817,7 @@ process_inode(
 	}
 	if (XFS_DFORK_Q(dip)) {
 		sbversion |= XFS_SB_VERSION_ATTRBIT;
-		switch (idic.di_aformat) {
+		switch (xino.i_d.di_aformat) {
 		case XFS_DINODE_FMT_LOCAL:
 			process_lclinode(id, dip, DBM_ATTR, &atotdblocks,
 				&atotiblocks, &anextents, NULL, XFS_ATTR_FORK);
@@ -2859,30 +2853,30 @@ process_inode(
 			break;
 		}
 		if (ic) {
-			dqprid = xfs_get_projid(&idic);	/* dquot ID is u32 */
-			quota_add(&dqprid, &idic.di_gid, &idic.di_uid,
+			dqprid = xfs_get_projid(&xino.i_d);	/* dquot ID is u32 */
+			quota_add(&dqprid, &xino.i_d.di_gid, &xino.i_d.di_uid,
 				  0, bc, ic, rc);
 		}
 	}
 	totblocks = totdblocks + totiblocks + atotdblocks + atotiblocks;
-	if (totblocks != idic.di_nblocks) {
+	if (totblocks != xino.i_d.di_nblocks) {
 		if (v)
 			dbprintf(_("bad nblocks %lld for inode %lld, counted "
 				 "%lld\n"),
-				idic.di_nblocks, id->ino, totblocks);
+				xino.i_d.di_nblocks, id->ino, totblocks);
 		error++;
 	}
-	if (nextents != idic.di_nextents) {
+	if (nextents != xino.i_d.di_nextents) {
 		if (v)
 			dbprintf(_("bad nextents %d for inode %lld, counted %d\n"),
-				idic.di_nextents, id->ino, nextents);
+				xino.i_d.di_nextents, id->ino, nextents);
 		error++;
 	}
-	if (anextents != idic.di_anextents) {
+	if (anextents != xino.i_d.di_anextents) {
 		if (v)
 			dbprintf(_("bad anextents %d for inode %lld, counted "
 				 "%d\n"),
-				idic.di_anextents, id->ino, anextents);
+				xino.i_d.di_anextents, id->ino, anextents);
 		error++;
 	}
 	if (type == DBM_DIR)

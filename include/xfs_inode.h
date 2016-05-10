@@ -29,8 +29,20 @@ struct xfs_inode_log_item;
 struct xfs_dir_ops;
 
 /*
- * Inode interface
+ * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
+ * similar to the kernel which now is used tohold certain parts of the on-disk
+ * metadata.
  */
+struct inode {
+	mode_t		i_mode;
+	uint32_t	i_nlink;
+	uint32_t	i_generation;
+	uint64_t	i_version;
+	struct timespec	i_atime;
+	struct timespec	i_mtime;
+	struct timespec	i_ctime;
+};
+
 typedef struct xfs_inode {
 	struct cache_node	i_node;
 	struct xfs_mount	*i_mount;	/* fs mount struct ptr */
@@ -45,7 +57,26 @@ typedef struct xfs_inode {
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */
 	xfs_fsize_t		i_size;		/* in-memory size */
 	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
+	struct inode		i_vnode;
 } xfs_inode_t;
+
+static inline struct inode *VFS_I(struct xfs_inode *ip)
+{
+	return &ip->i_vnode;
+}
+
+/*
+ * wrappers around the mode checks to simplify code
+ */
+static inline bool XFS_ISREG(struct xfs_inode *ip)
+{
+	return S_ISREG(VFS_I(ip)->i_mode);
+}
+
+static inline bool XFS_ISDIR(struct xfs_inode *ip)
+{
+	return S_ISDIR(VFS_I(ip)->i_mode);
+}
 
 /*
  * For regular files we only update the on-disk filesize when actually
@@ -54,11 +85,21 @@ typedef struct xfs_inode {
  */
 static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 {
-	if (S_ISREG(ip->i_d.di_mode))
+	if (XFS_ISREG(ip))
 		return ip->i_size;
 	return ip->i_d.di_size;
 }
 #define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
+
+/* inode link counts */
+static inline void set_nlink(struct inode *inode, uint32_t nlink)
+{
+	inode->i_nlink = nlink;
+}
+static inline void inc_nlink(struct inode *inode)
+{
+	inode->i_nlink++;
+}
 
 /*
  * Project quota id helpers (previously projid was 16bit only and using two

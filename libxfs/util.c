@@ -161,14 +161,10 @@ libxfs_trans_ichgtime(
 	gettimeofday(&stv, (struct timezone *)0);
 	tv.tv_sec = stv.tv_sec;
 	tv.tv_nsec = stv.tv_usec * 1000;
-	if (flags & XFS_ICHGTIME_MOD) {
-		ip->i_d.di_mtime.t_sec = (__int32_t)tv.tv_sec;
-		ip->i_d.di_mtime.t_nsec = (__int32_t)tv.tv_nsec;
-	}
-	if (flags & XFS_ICHGTIME_CHG) {
-		ip->i_d.di_ctime.t_sec = (__int32_t)tv.tv_sec;
-		ip->i_d.di_ctime.t_nsec = (__int32_t)tv.tv_nsec;
-	}
+	if (flags & XFS_ICHGTIME_MOD)
+		VFS_I(ip)->i_mtime = tv;
+	if (flags & XFS_ICHGTIME_CHG)
+		VFS_I(ip)->i_ctime = tv;
 	if (flags & XFS_ICHGTIME_CREATE) {
 		ip->i_d.di_crtime.t_sec = (__int32_t)tv.tv_sec;
 		ip->i_d.di_crtime.t_nsec = (__int32_t)tv.tv_nsec;
@@ -221,14 +217,11 @@ libxfs_ialloc(
 		return error;
 	ASSERT(ip != NULL);
 
-	ip->i_d.di_mode = (__uint16_t)mode;
-	ip->i_d.di_onlink = 0;
-	ip->i_d.di_nlink = nlink;
-	ASSERT(ip->i_d.di_nlink == nlink);
+	VFS_I(ip)->i_mode = mode;
+	set_nlink(VFS_I(ip), nlink);
 	ip->i_d.di_uid = cr->cr_uid;
 	ip->i_d.di_gid = cr->cr_gid;
 	xfs_set_projid(&ip->i_d, pip ? 0 : fsx->fsx_projid);
-	memset(&(ip->i_d.di_pad[0]), 0, sizeof(ip->i_d.di_pad));
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
 	/*
@@ -245,18 +238,15 @@ libxfs_ialloc(
 		 */
 	}
 
-	if (pip && (pip->i_d.di_mode & S_ISGID)) {
+	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
 		ip->i_d.di_gid = pip->i_d.di_gid;
-		if ((pip->i_d.di_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
-			ip->i_d.di_mode |= S_ISGID;
+		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
+			VFS_I(ip)->i_mode |= S_ISGID;
 	}
 
 	ip->i_d.di_size = 0;
 	ip->i_d.di_nextents = 0;
 	ASSERT(ip->i_d.di_nblocks == 0);
-	/*
-	 * di_gen will have been taken care of in xfs_iread.
-	 */
 	ip->i_d.di_extsize = pip ? 0 : fsx->fsx_extsize;
 	ip->i_d.di_dmevmask = 0;
 	ip->i_d.di_dmstate = 0;
@@ -265,12 +255,10 @@ libxfs_ialloc(
 	if (ip->i_d.di_version == 3) {
 		ASSERT(ip->i_d.di_ino == ino);
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
-		ip->i_d.di_crc = 0;
-		ip->i_d.di_changecount = 1;
-		ip->i_d.di_lsn = 0;
+		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
-		memset(&(ip->i_d.di_pad2[0]), 0, sizeof(ip->i_d.di_pad2));
-		ip->i_d.di_crtime = ip->i_d.di_mtime;
+		ip->i_d.di_crtime.t_sec = (__int32_t)VFS_I(ip)->i_mtime.tv_sec;
+		ip->i_d.di_crtime.t_nsec = (__int32_t)VFS_I(ip)->i_mtime.tv_nsec;
 	}
 
 	flags = XFS_ILOG_CORE;
@@ -328,7 +316,7 @@ libxfs_ialloc(
 	/*
 	 * set up the inode ops structure that the libxfs code relies on
 	 */
-	if (S_ISDIR(ip->i_d.di_mode))
+	if (XFS_ISDIR(ip))
 		ip->d_ops = ip->i_mount->m_dir_inode_ops;
 	else
 		ip->d_ops = ip->i_mount->m_nondir_inode_ops;
@@ -345,7 +333,7 @@ void
 libxfs_iprint(
 	xfs_inode_t		*ip)
 {
-	xfs_icdinode_t		*dip;
+	struct xfs_icdinode	*dip;
 	xfs_bmbt_rec_host_t	*ep;
 	xfs_extnum_t		i;
 	xfs_extnum_t		nextents;
@@ -379,8 +367,7 @@ libxfs_iprint(
 
 	dip = &ip->i_d;
 	printf("\nOn disk portion\n");
-	printf("    di_magic %x\n", dip->di_magic);
-	printf("    di_mode %o\n", dip->di_mode);
+	printf("    di_mode %o\n", VFS_I(ip)->i_mode);
 	printf("    di_version %x\n", (uint)dip->di_version);
 	switch (ip->i_d.di_format) {
 	case XFS_DINODE_FMT_LOCAL:
@@ -396,12 +383,12 @@ libxfs_iprint(
 		printf("    Other inode\n");
 		break;
 	}
-	printf("   di_nlink %x\n", dip->di_nlink);
+	printf("   di_nlink %x\n", VFS_I(ip)->i_nlink);
 	printf("   di_uid %d\n", dip->di_uid);
 	printf("   di_gid %d\n", dip->di_gid);
 	printf("   di_nextents %d\n", dip->di_nextents);
 	printf("   di_size %llu\n", (unsigned long long)dip->di_size);
-	printf("   di_gen %x\n", dip->di_gen);
+	printf("   di_gen %x\n", VFS_I(ip)->i_generation);
 	printf("   di_extsize %d\n", dip->di_extsize);
 	printf("   di_flags %x\n", dip->di_flags);
 	printf("   di_nblocks %llu\n", (unsigned long long)dip->di_nblocks);
@@ -430,11 +417,10 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	dip = xfs_buf_offset(bp, ip->i_imap.im_boffset);
 
 	ASSERT(ip->i_d.di_magic == XFS_DINODE_MAGIC);
-	if ((ip->i_d.di_mode & S_IFMT) == S_IFREG) {
+	if (XFS_ISREG(ip)) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE) );
-	}
-	else if ((ip->i_d.di_mode & S_IFMT) == S_IFDIR) {
+	} else if (XFS_ISDIR(ip)) {
 		ASSERT( (ip->i_d.di_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE)   ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_LOCAL) );
@@ -444,7 +430,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 
 	/* bump the change count on v3 inodes */
 	if (ip->i_d.di_version == 3)
-		ip->i_d.di_changecount++;
+		VFS_I(ip)->i_version++;
 
 	/*
 	 * Copy the dirty parts of the inode into the on-disk
@@ -452,15 +438,11 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	 * because if the inode is dirty at all the core must
 	 * be.
 	 */
-	xfs_dinode_to_disk(dip, &ip->i_d);
+	xfs_inode_to_disk(ip, dip, iip->ili_item.li_lsn);
 
 	xfs_iflush_fork(ip, dip, iip, XFS_DATA_FORK);
 	if (XFS_IFORK_Q(ip))
 		xfs_iflush_fork(ip, dip, iip, XFS_ATTR_FORK);
-
-	/* update the lsn in the on disk inode if required */
-	if (ip->i_d.di_version == 3)
-		dip->di_lsn = cpu_to_be64(iip->ili_item.li_lsn);
 
 	/* generate the checksum. */
 	xfs_dinode_calc_crc(mp, dip);

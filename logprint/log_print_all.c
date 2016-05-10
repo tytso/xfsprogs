@@ -250,17 +250,17 @@ xlog_recover_print_dquot(
 
 STATIC void
 xlog_recover_print_inode_core(
-	xfs_icdinode_t		*di)
+	struct xfs_log_dinode	*di)
 {
 	printf(_("	CORE inode:\n"));
 	if (!print_inode)
 		return;
-	printf(_("		magic:%c%c  mode:0x%x  ver:%d  format:%d  "
-	     "onlink:%d\n"),
+	printf(_("		magic:%c%c  mode:0x%x  ver:%d  format:%d\n"),
 	       (di->di_magic>>8) & 0xff, di->di_magic & 0xff,
-	       di->di_mode, di->di_version, di->di_format, di->di_onlink);
-	printf(_("		uid:%d  gid:%d  nlink:%d projid:%u\n"),
-	       di->di_uid, di->di_gid, di->di_nlink, xfs_get_projid(di));
+	       di->di_mode, di->di_version, di->di_format);
+	printf(_("		uid:%d  gid:%d  nlink:%d projid:0x%04x%04x\n"),
+	       di->di_uid, di->di_gid, di->di_nlink,
+	       di->di_projid_hi, di->di_projid_lo);
 	printf(_("		atime:%d  mtime:%d  ctime:%d\n"),
 	       di->di_atime.t_sec, di->di_mtime.t_sec, di->di_ctime.t_sec);
 	printf(_("		flushiter:%d\n"), di->di_flushiter);
@@ -293,9 +293,9 @@ xlog_recover_print_inode(
 	       f->ilf_dsize);
 
 	/* core inode comes 2nd */
-	ASSERT(item->ri_buf[1].i_len == xfs_icdinode_size(1) ||
-		item->ri_buf[1].i_len == xfs_icdinode_size(3));
-	xlog_recover_print_inode_core((xfs_icdinode_t *)
+	ASSERT(item->ri_buf[1].i_len == xfs_log_dinode_size(2) ||
+		item->ri_buf[1].i_len == xfs_log_dinode_size(3));
+	xlog_recover_print_inode_core((struct xfs_log_dinode *)
 				      item->ri_buf[1].i_addr);
 
 	hasdata = (f->ilf_fields & XFS_ILOG_DFORK) != 0;
