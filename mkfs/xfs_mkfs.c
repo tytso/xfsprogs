@@ -163,6 +163,8 @@ struct opt_params dopts = {
 	},
 	.subopt_params = {
 		{ .index = D_AGCOUNT,
+		  .minval = 1,
+		  .maxval = XFS_MAX_AGNUMBER,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_FILE,
@@ -177,18 +179,26 @@ struct opt_params dopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_SUNIT,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_SWIDTH,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_AGSIZE,
+		  .minval = XFS_AG_MIN_BYTES,
+		  .maxval = XFS_AG_MAX_BYTES,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_SU,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_SW,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_SECTLOG,
@@ -207,12 +217,18 @@ struct opt_params dopts = {
 		  .defaultval = 1,
 		},
 		{ .index = D_RTINHERIT,
-		  .defaultval = SUBOPT_NEEDS_VAL,
+		  .minval = 1,
+		  .maxval = 1,
+		  .defaultval = 1,
 		},
 		{ .index = D_PROJINHERIT,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_EXTSZINHERIT,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 	},
@@ -252,15 +268,23 @@ struct opt_params iopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = I_MAXPCT,
+		  .minval = 0,
+		  .maxval = 100,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = I_PERBLOCK,
+		  .minval = XFS_MIN_INODE_PERBLOCK,
+		  .maxval = XFS_MAX_BLOCKSIZE / XFS_DINODE_MIN_SIZE,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = I_SIZE,
+		  .minval = XFS_DINODE_MIN_SIZE,
+		  .maxval = XFS_DINODE_MAX_SIZE,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = I_ATTR,
+		  .minval = 0,
+		  .maxval = 2,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = I_PROJID32BIT,
@@ -307,6 +331,8 @@ struct opt_params lopts = {
 	},
 	.subopt_params = {
 		{ .index = L_AGNUM,
+		  .minval = 0,
+		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = L_INTERNAL,
@@ -318,9 +344,13 @@ struct opt_params lopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = L_VERSION,
+		  .minval = 1,
+		  .maxval = 2,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = L_SUNIT,
+		  .minval = BTOBB(XLOG_MIN_RECORD_BSIZE),
+		  .maxval = BTOBB(XLOG_MAX_RECORD_BSIZE),
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = L_SU,
@@ -380,6 +410,8 @@ struct opt_params nopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = N_VERSION,
+		  .minval = 2,
+		  .maxval = 2,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = N_FTYPE,
@@ -1559,13 +1591,11 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case D_AGCOUNT:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_AGCOUNT);
 					if (daflag)
 						respec('d', subopts, D_AGCOUNT);
-					agcount = getnum(value, 0, 0, false);
-					if ((__int64_t)agcount <= 0)
-						illegal(value, "d agcount");
+
+					agcount = getnum_checked(value, &dopts,
+								 D_AGCOUNT);
 					daflag = 1;
 					break;
 				case D_AGSIZE:
@@ -1600,28 +1630,22 @@ main(
 					dsize = value;
 					break;
 				case D_SUNIT:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_SUNIT);
 					if (dsunit)
 						respec('d', subopts, D_SUNIT);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SUNIT);
-					dsunit = getnum(value, 0, 0, false);
-					if (dsunit < 0)
-						illegal(value, "d sunit");
+					dsunit = getnum_checked(value, &dopts,
+								 D_SUNIT);
 					break;
 				case D_SWIDTH:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_SWIDTH);
 					if (dswidth)
 						respec('d', subopts, D_SWIDTH);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SWIDTH);
-					dswidth = getnum(value, 0, 0, false);
-					if (dswidth < 0)
-						illegal(value, "d swidth");
+					dswidth = getnum_checked(value, &dopts,
+								 D_SWIDTH);
 					break;
 				case D_SU:
 					if (!value || *value == '\0')
@@ -1637,16 +1661,13 @@ main(
 						illegal(value, "d su");
 					break;
 				case D_SW:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_SW);
 					if (dsw)
 						respec('d', subopts, D_SW);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SW);
-					dsw = getnum(value, 0, 0, false);
-					if (dsw < 0)
-						illegal(value, "d sw");
+					dsw = getnum_checked(value, &dopts,
+								 D_SW);
 					break;
 				case D_NOALIGN:
 					nodsflag = getnum_checked(value,
@@ -1695,21 +1716,22 @@ main(
 					ssflag = 1;
 					break;
 				case D_RTINHERIT:
-					fsx.fsx_xflags |= \
-						XFS_DIFLAG_RTINHERIT;
+					c = getnum_checked(value, &dopts,
+							   D_RTINHERIT);
+					if (c)
+						fsx.fsx_xflags |=
+							XFS_DIFLAG_RTINHERIT;
 					break;
 				case D_PROJINHERIT:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_PROJINHERIT);
-					fsx.fsx_projid = atoi(value);
-					fsx.fsx_xflags |= \
+					fsx.fsx_projid = getnum_checked(value,
+							&dopts, D_PROJINHERIT);
+					fsx.fsx_xflags |=
 						XFS_DIFLAG_PROJINHERIT;
 					break;
 				case D_EXTSZINHERIT:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_EXTSZINHERIT);
-					fsx.fsx_extsize = atoi(value);
-					fsx.fsx_xflags |= \
+					fsx.fsx_extsize = getnum_checked(value,
+							&dopts, D_EXTSZINHERIT);
+					fsx.fsx_xflags |=
 						XFS_DIFLAG_EXTSZINHERIT;
 					break;
 				default:
@@ -1744,18 +1766,13 @@ main(
 					ilflag = 1;
 					break;
 				case I_MAXPCT:
-					if (!value || *value == '\0')
-						reqval('i', subopts, I_MAXPCT);
 					if (imflag)
 						respec('i', subopts, I_MAXPCT);
-					imaxpct = getnum(value, 0, 0, false);
-					if (imaxpct < 0 || imaxpct > 100)
-						illegal(value, "i maxpct");
+					imaxpct = getnum_checked(
+							value, &iopts, I_MAXPCT);
 					imflag = 1;
 					break;
 				case I_PERBLOCK:
-					if (!value || *value == '\0')
-						reqval('i', subopts, I_PERBLOCK);
 					if (ilflag)
 						conflict('i', subopts, I_LOG,
 							 I_PERBLOCK);
@@ -1764,16 +1781,13 @@ main(
 					if (isflag)
 						conflict('i', subopts, I_SIZE,
 							 I_PERBLOCK);
-					inopblock = getnum(value, 0, 0, false);
-					if (inopblock <
-						XFS_MIN_INODE_PERBLOCK ||
-					    !ispow2(inopblock))
+					inopblock = getnum_checked(value, &iopts,
+								   I_PERBLOCK);
+					if (!ispow2(inopblock))
 						illegal(value, "i perblock");
 					ipflag = 1;
 					break;
 				case I_SIZE:
-					if (!value || *value == '\0')
-						reqval('i', subopts, I_SIZE);
 					if (ilflag)
 						conflict('i', subopts, I_LOG,
 							 I_SIZE);
@@ -1782,19 +1796,16 @@ main(
 							 I_SIZE);
 					if (isflag)
 						respec('i', subopts, I_SIZE);
-					isize = getnum(value, 0, 0, true);
-					if (isize <= 0 || !ispow2(isize))
+					isize = getnum_checked(value, &iopts,
+							       I_SIZE);
+					if (!ispow2(isize))
 						illegal(value, "i size");
 					inodelog = libxfs_highbit32(isize);
 					isflag = 1;
 					break;
 				case I_ATTR:
-					if (!value || *value == '\0')
-						reqval('i', subopts, I_ATTR);
-					c = getnum(value, 0, 0, false);
-					if (c < 0 || c > 2)
-						illegal(value, "i attr");
-					sb_feat.attr_version = c;
+					sb_feat.attr_version = getnum_checked(
+							value, &iopts, I_ATTR);
 					break;
 				case I_PROJID32BIT:
 					sb_feat.projid16bit =
@@ -1820,15 +1831,12 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case L_AGNUM:
-					if (!value || *value == '\0')
-						reqval('l', subopts, L_AGNUM);
 					if (laflag)
 						respec('l', subopts, L_AGNUM);
 					if (ldflag)
 						conflict('l', subopts, L_AGNUM, L_DEV);
-					logagno = getnum(value, 0, 0, false);
-					if ((__int64_t)logagno < 0)
-						illegal(value, "l agno");
+					logagno = getnum_checked(value, &lopts,
+								 L_AGNUM);
 					laflag = 1;
 					break;
 				case L_FILE:
@@ -1865,13 +1873,10 @@ main(
 					lsuflag = 1;
 					break;
 				case L_SUNIT:
-					if (!value || *value == '\0')
-						reqval('l', subopts, L_SUNIT);
 					if (lsunit)
 						respec('l', subopts, L_SUNIT);
-					lsunit = getnum(value, 0, 0, false);
-					if (lsunit < 0)
-						illegal(value, "l sunit");
+					lsunit = getnum_checked(value, &lopts,
+								 L_SUNIT);
 					lsunitflag = 1;
 					break;
 				case L_NAME:
@@ -1890,14 +1895,10 @@ main(
 					xi.logname = value;
 					break;
 				case L_VERSION:
-					if (!value || *value == '\0')
-						reqval('l', subopts, L_VERSION);
 					if (lvflag)
 						respec('l', subopts, L_VERSION);
-					c = getnum(value, 0, 0, false);
-					if (c < 1 || c > 2)
-						illegal(value, "l version");
-					sb_feat.log_version = c;
+					sb_feat.log_version = getnum_checked(
+						value, &lopts, L_VERSION);
 					lvflag = 1;
 					break;
 				case L_SIZE:
@@ -2027,11 +2028,10 @@ main(
 						/* ASCII CI mode */
 						sb_feat.nci = true;
 					} else {
-						c = getnum(value, 0, 0, false);
-						if (c != 2)
-							illegal(value,
-								"n version");
-						sb_feat.dir_version = c;
+						sb_feat.dir_version =
+							getnum_checked(value,
+								&nopts,
+								N_VERSION);
 					}
 					nvflag = 1;
 					break;
