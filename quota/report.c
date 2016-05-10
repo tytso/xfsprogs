@@ -389,7 +389,11 @@ report_mount(
 					name = p->pr_name;
 			}
 		}
-		fprintf(fp, "%-10s", name);
+		/* If no name is found, print the id #num instead of (null) */
+		if (name != NULL)
+			fprintf(fp, "%-10s", name);
+		else
+			fprintf(fp, "#%-9u", d.d_id);
 	}
 
 	if (form & XFS_BLOCK_QUOTA) {
@@ -571,6 +575,16 @@ report_project_mount(
 			id = oid + 1;
 		}
 	} else {
+		if (!getprprid(0)) {
+			/*
+			 * Print default project quota, even if projid 0
+			 * isn't defined
+			 */
+			report_mount(fp, 0, NULL, NULL, form, XFS_PROJ_QUOTA,
+			             mount, flags);
+			flags |= NO_HEADER_FLAG;
+		}
+
 		setprent();
 		while ((p = getprent()) != NULL) {
 			if (report_mount(fp, p->pr_prid, p->pr_name, NULL,
