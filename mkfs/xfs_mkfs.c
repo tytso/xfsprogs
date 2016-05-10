@@ -787,7 +787,7 @@ calc_stripe_factors(
 #ifdef ENABLE_BLKID
 static int
 check_overwrite(
-	char		*device)
+	const char	*device)
 {
 	const char	*type;
 	blkid_probe	pr = NULL;
@@ -804,7 +804,7 @@ check_overwrite(
 	fd = open(device, O_RDONLY);
 	if (fd < 0)
 		goto out;
-	platform_findsizes(device, fd, &size, &bsz);
+	platform_findsizes((char *)device, fd, &size, &bsz);
 	close(fd);
 
 	/* nothing to overwrite on a 0-length device */
@@ -851,7 +851,6 @@ check_overwrite(
 			"according to blkid\n"), progname, device);
 	}
 	ret = 1;
-
 out:
 	if (pr)
 		blkid_free_probe(pr);
@@ -877,8 +876,12 @@ static void blkid_get_topology(
 	struct stat statbuf;
 
 	/* can't get topology info from a file */
-	if (!stat(device, &statbuf) && S_ISREG(statbuf.st_mode))
+	if (!stat(device, &statbuf) && S_ISREG(statbuf.st_mode)) {
+		fprintf(stderr,
+	_("%s: Warning: trying to probe topology of a file %s!\n"),
+			progname, device);
 		return;
+	}
 
 	pr = blkid_new_probe_from_filename(device);
 	if (!pr)
@@ -948,7 +951,7 @@ out_free_probe:
  access are not working!
 static int
 check_overwrite(
-	char		*device)
+	const char	*device)
 {
 	return 1;
 }
@@ -1013,6 +1016,80 @@ static void get_topology(
 		blkid_get_topology(xi->rtname, &sunit, &ft->rtswidth,
 				   &lsectorsize, &psectorsize, force_overwrite);
 	}
+}
+
+static void
+check_device_type(
+	const char	*name,
+	int		*isfile,
+	bool		no_size,
+	bool		no_name,
+	int		*create,
+	bool		force_overwrite,
+	const char	*optname)
+{
+	struct stat64 statbuf;
+
+	if (*isfile && (no_size || no_name)) {
+		fprintf(stderr,
+	_("if -%s file then -%s name and -%s size are required\n"),
+			optname, optname, optname);
+		usage();
+	}
+
+	if (!name) {
+		fprintf(stderr, _("No device name specified\n"));
+		usage();
+	}
+
+	if (stat64(name, &statbuf)) {
+		if (errno == ENOENT && *isfile) {
+			if (create)
+				*create = 1;
+			return;
+		}
+
+		fprintf(stderr,
+	_("Error accessing specified device %s: %s\n"),
+				name, strerror(errno));
+		usage();
+		return;
+	}
+
+	if (!force_overwrite && check_overwrite(name)) {
+		fprintf(stderr,
+	_("%s: Use the -f option to force overwrite.\n"),
+			progname);
+		exit(1);
+	}
+
+	/*
+	 * We only want to completely truncate and recreate an existing file if
+	 * we were specifically told it was a file. Set the create flag only in
+	 * this case to trigger that behaviour.
+	 */
+	if (S_ISREG(statbuf.st_mode)) {
+		if (!*isfile)
+			*isfile = 1;
+		else if (create)
+			*create = 1;
+		return;
+	}
+
+	if (S_ISBLK(statbuf.st_mode)) {
+		if (*isfile) {
+			fprintf(stderr,
+	_("specified \"-%s file\" on a block device %s\n"),
+				optname, name);
+			usage();
+		}
+		return;
+	}
+
+	fprintf(stderr,
+	_("specified device %s not a file or block device\n"),
+		name);
+	usage();
 }
 
 static void
@@ -1280,7 +1357,6 @@ zero_old_xfs_structures(
 	__uint32_t		bsize;
 	int			i;
 	xfs_off_t		off;
-	int			tmp;
 
 	/*
 	 * We open regular files with O_TRUNC|O_CREAT. Nothing to do here...
@@ -1300,15 +1376,18 @@ zero_old_xfs_structures(
 	}
 	memset(buf, 0, new_sb->sb_sectsize);
 
-	tmp = pread(xi->dfd, buf, new_sb->sb_sectsize, 0);
-	if (tmp < 0) {
-		fprintf(stderr, _("existing superblock read failed: %s\n"),
-			strerror(errno));
-		goto done;
-	}
-	if (tmp != new_sb->sb_sectsize) {
-		fprintf(stderr,
-	_("warning: could not read existing superblock, skip zeroing\n"));
+	/*
+	 * If we are creating an image file, it might be of zero length at this
+	 * point in time. Hence reading the existing superblock is going to
+	 * return zero bytes. It's not a failure we need to warn about in this
+	 * case.
+	 */
+	off = pread(xi->dfd, buf, new_sb->sb_sectsize, 0);
+	if (off != new_sb->sb_sectsize) {
+		if (!xi->disfile)
+			fprintf(stderr,
+	_("error reading existing superblock: %s\n"),
+				strerror(errno));
 		goto done;
 	}
 	libxfs_sb_from_disk(&sb, buf);
@@ -1784,8 +1863,6 @@ main(
 				case D_FILE:
 					xi.disfile = getnum(value, &dopts,
 							    D_FILE);
-					if (xi.disfile && !Nflag)
-						xi.dcreat = 1;
 					break;
 				case D_NAME:
 					xi.dname = getstr(value, &dopts, D_NAME);
@@ -1911,8 +1988,6 @@ main(
 				case L_FILE:
 					xi.lisfile = getnum(value, &lopts,
 							    L_FILE);
-					if (xi.lisfile)
-						xi.lcreat = 1;
 					break;
 				case L_INTERNAL:
 					loginternal = getnum(value, &lopts,
@@ -2070,8 +2145,6 @@ main(
 				case R_FILE:
 					xi.risfile = getnum(value, &ropts,
 							    R_FILE);
-					if (xi.risfile)
-						xi.rcreat = 1;
 					break;
 				case R_NAME:
 				case R_DEV:
@@ -2175,6 +2248,26 @@ _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 		lsectorlog = sectorlog;
 		lsectorsize = sectorsize;
 	}
+
+	/*
+	 * Before anything else, verify that we are correctly operating on
+	 * files or block devices and set the control parameters correctly.
+	 * Explicitly disable direct IO for image files so we don't error out on
+	 * sector size mismatches between the new filesystem and the underlying
+	 * host filesystem.
+	 */
+	check_device_type(dfile, &xi.disfile, !dsize, !dfile,
+			  Nflag ? NULL : &xi.dcreat, force_overwrite, "d");
+	if (!loginternal)
+		check_device_type(xi.logname, &xi.lisfile, !logsize, !xi.logname,
+				  Nflag ? NULL : &xi.lcreat,
+				  force_overwrite, "l");
+	if (xi.rtname)
+		check_device_type(xi.rtname, &xi.risfile, !rtsize, !xi.rtname,
+				  Nflag ? NULL : &xi.rcreat,
+				  force_overwrite, "r");
+	if (xi.disfile || xi.lisfile || xi.risfile)
+		xi.isdirect = 0;
 
 	memset(&ft, 0, sizeof(ft));
 	get_topology(&xi, &ft, force_overwrite);
@@ -2326,11 +2419,6 @@ _("warning: sparse inodes not supported without CRC support, disabled.\n"));
 	}
 
 
-	if (xi.disfile && (!dsize || !xi.dname)) {
-		fprintf(stderr,
-	_("if -d file then -d name and -d size are required\n"));
-		usage();
-	}
 	if (dsize) {
 		__uint64_t dbytes;
 
@@ -2363,11 +2451,6 @@ _("warning: sparse inodes not supported without CRC support, disabled.\n"));
 		usage();
 	}
 
-	if (xi.lisfile && (!logsize || !xi.logname)) {
-		fprintf(stderr,
-		_("if -l file then -l name and -l size are required\n"));
-		usage();
-	}
 	if (logsize) {
 		__uint64_t logbytes;
 
@@ -2384,11 +2467,6 @@ _("warning: sparse inodes not supported without CRC support, disabled.\n"));
 	_("warning: log length %lld not a multiple of %d, truncated to %lld\n"),
 				(long long)logbytes, blocksize,
 				(long long)(logblocks << blocklog));
-	}
-	if (xi.risfile && (!rtsize || !xi.rtname)) {
-		fprintf(stderr,
-		_("if -r file then -r name and -r size are required\n"));
-		usage();
 	}
 	if (rtsize) {
 		__uint64_t rtbytes;
@@ -2511,22 +2589,14 @@ _("warning: sparse inodes not supported without CRC support, disabled.\n"));
 	xi.rtsize &= sector_mask;
 	xi.logBBsize &= (__uint64_t)-1 << (MAX(lsectorlog, 10) - BBSHIFT);
 
-	if (!force_overwrite) {
-		if (check_overwrite(dfile) ||
-		    check_overwrite(logfile) ||
-		    check_overwrite(xi.rtname)) {
-			fprintf(stderr,
-			_("%s: Use the -f option to force overwrite.\n"),
-				progname);
-			exit(1);
-		}
-	}
 
+	/* don't do discards on print-only runs or on files */
 	if (discard && !Nflag) {
-		discard_blocks(xi.ddev, xi.dsize);
-		if (xi.rtdev)
+		if (!xi.disfile)
+			discard_blocks(xi.ddev, xi.dsize);
+		if (xi.rtdev && !xi.risfile)
 			discard_blocks(xi.rtdev, xi.rtsize);
-		if (xi.logdev && xi.logdev != xi.ddev)
+		if (xi.logdev && xi.logdev != xi.ddev && !xi.lisfile)
 			discard_blocks(xi.logdev, xi.logBBsize);
 	}
 
@@ -3055,13 +3125,16 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 
 	/*
 	 * If the data area is a file, then grow it out to its final size
-	 * so that the reads for the end of the device in the mount code
-	 * will succeed.
+	 * if needed so that the reads for the end of the device in the mount
+	 * code will succeed.
 	 */
-	if (xi.disfile && ftruncate64(xi.dfd, dblocks * blocksize) < 0) {
-		fprintf(stderr, _("%s: Growing the data section failed\n"),
-			progname);
-		exit(1);
+	if (xi.disfile && xi.dsize * xi.dbsize < dblocks * blocksize) {
+		if (ftruncate64(xi.dfd, dblocks * blocksize) < 0) {
+			fprintf(stderr,
+				_("%s: Growing the data section failed\n"),
+				progname);
+			exit(1);
+		}
 	}
 
 	/*

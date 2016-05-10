@@ -125,7 +125,16 @@ platform_set_blocksize(int fd, char *path, dev_t device, int blocksize, int fata
 void
 platform_flush_device(int fd, dev_t device)
 {
-	if (major(device) != RAMDISK_MAJOR)
+	struct stat64	st;
+	if (major(device) == RAMDISK_MAJOR)
+		return;
+
+	if (fstat64(fd, &st) < 0)
+		return;
+
+	if (S_ISREG(st.st_mode))
+		fsync(fd);
+	else
 		ioctl(fd, BLKFLSBUF, 0);
 }
 

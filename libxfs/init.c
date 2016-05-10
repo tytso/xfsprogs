@@ -253,8 +253,8 @@ libxfs_init(libxfs_init_t *a)
 	rtname = a->rtname;
 	a->dfd = a->logfd = a->rtfd = -1;
 	a->ddev = a->logdev = a->rtdev = 0;
-	a->dbsize = a->lbsize = a->rtbsize = 0;
-	a->dsize = a->logBBsize = a->logBBstart = a->rtsize = 0;
+	a->dsize = a->lbsize = a->rtbsize = 0;
+	a->dbsize = a->logBBsize = a->logBBstart = a->rtsize = 0;
 
 	(void)getcwd(curdir,MAXPATHLEN);
 	needcd = 0;
@@ -278,6 +278,8 @@ libxfs_init(libxfs_init_t *a)
 			a->ddev= libxfs_device_open(dname, a->dcreat, flags,
 						    a->setblksize);
 			a->dfd = libxfs_device_to_fd(a->ddev);
+			platform_findsizes(dname, a->dfd, &a->dsize,
+					   &a->dbsize);
 		} else {
 			if (!check_open(dname, flags, &rawfile, &blockfile))
 				goto done;
@@ -285,7 +287,7 @@ libxfs_init(libxfs_init_t *a)
 					a->dcreat, flags, a->setblksize);
 			a->dfd = libxfs_device_to_fd(a->ddev);
 			platform_findsizes(rawfile, a->dfd,
-						&a->dsize, &a->dbsize);
+					   &a->dsize, &a->dbsize);
 		}
 		needcd = 1;
 	} else
@@ -297,6 +299,8 @@ libxfs_init(libxfs_init_t *a)
 			a->logdev = libxfs_device_open(logname,
 					a->lcreat, flags, a->setblksize);
 			a->logfd = libxfs_device_to_fd(a->logdev);
+			platform_findsizes(dname, a->logfd, &a->logBBsize,
+					   &a->lbsize);
 		} else {
 			if (!check_open(logname, flags, &rawfile, &blockfile))
 				goto done;
@@ -304,7 +308,7 @@ libxfs_init(libxfs_init_t *a)
 					a->lcreat, flags, a->setblksize);
 			a->logfd = libxfs_device_to_fd(a->logdev);
 			platform_findsizes(rawfile, a->logfd,
-						&a->logBBsize, &a->lbsize);
+					   &a->logBBsize, &a->lbsize);
 		}
 		needcd = 1;
 	} else
@@ -316,6 +320,8 @@ libxfs_init(libxfs_init_t *a)
 			a->rtdev = libxfs_device_open(rtname,
 					a->rcreat, flags, a->setblksize);
 			a->rtfd = libxfs_device_to_fd(a->rtdev);
+			platform_findsizes(dname, a->rtfd, &a->rtsize,
+					   &a->rtbsize);
 		} else {
 			if (!check_open(rtname, flags, &rawfile, &blockfile))
 				goto done;
@@ -323,7 +329,7 @@ libxfs_init(libxfs_init_t *a)
 					a->rcreat, flags, a->setblksize);
 			a->rtfd = libxfs_device_to_fd(a->rtdev);
 			platform_findsizes(rawfile, a->rtfd,
-						&a->rtsize, &a->rtbsize);
+					   &a->rtsize, &a->rtbsize);
 		}
 		needcd = 1;
 	} else
