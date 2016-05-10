@@ -1022,6 +1022,27 @@ getbool(
 	return c ? true : false;
 }
 
+static int
+getnum_checked(
+	const char	*str,
+	long long	min_val,
+	long long	max_val,
+	const char	*illegal_str,
+	char		reqval_char,
+	char		*reqval_opts[],
+	int		reqval_optind)
+{
+	long long	c;
+
+	if (!str || *str == '\0')
+		reqval(reqval_char, reqval_opts, reqval_optind);
+
+	c = getnum(str, 0, 0, false);
+	if (c < min_val || c > max_val)
+		illegal(str, illegal_str);
+	return c;
+}
+
 int
 main(
 	int			argc,
@@ -1178,16 +1199,16 @@ main(
 
 				switch (getsubopt(&p, (constpp)bopts, &value)) {
 				case B_LOG:
-					if (!value || *value == '\0')
-						reqval('b', bopts, B_LOG);
 					if (blflag)
 						respec('b', bopts, B_LOG);
 					if (bsflag)
 						conflict('b', bopts, B_SIZE,
 							 B_LOG);
-					blocklog = getnum(value, 0, 0, false);
-					if (blocklog <= 0)
-						illegal(value, "b log");
+					blocklog = getnum_checked(value,
+							XFS_MIN_BLOCKSIZE_LOG,
+							XFS_MAX_BLOCKSIZE_LOG,
+							"b log", 'b', bopts,
+							B_LOG);
 					blocksize = 1 << blocklog;
 					blflag = 1;
 					break;
@@ -1324,16 +1345,16 @@ main(
 					nodsflag = 1;
 					break;
 				case D_SECTLOG:
-					if (!value || *value == '\0')
-						reqval('d', dopts, D_SECTLOG);
 					if (slflag)
 						respec('d', dopts, D_SECTLOG);
 					if (ssflag)
 						conflict('d', dopts, D_SECTSIZE,
 							 D_SECTLOG);
-					sectorlog = getnum(value, 0, 0, false);
-					if (sectorlog <= 0)
-						illegal(value, "d sectlog");
+					sectorlog = getnum_checked(value,
+							XFS_MIN_SECTORSIZE_LOG,
+							XFS_MAX_SECTORSIZE_LOG,
+							"d sectlog", 'd', dopts,
+							D_SECTLOG);
 					sectorsize = 1 << sectorlog;
 					slflag = 1;
 					break;
@@ -1398,9 +1419,11 @@ main(
 					if (isflag)
 						conflict('i', iopts, I_SIZE,
 							 I_LOG);
-					inodelog = getnum(value, 0, 0, false);
-					if (inodelog <= 0)
-						illegal(value, "i log");
+					inodelog = getnum_checked(value,
+							XFS_DINODE_MIN_LOG,
+							XFS_DINODE_MAX_LOG,
+							"i log", 'i', iopts,
+							I_LOG);
 					isize = 1 << inodelog;
 					ilflag = 1;
 					break;
@@ -1566,16 +1589,16 @@ main(
 					lsflag = 1;
 					break;
 				case L_SECTLOG:
-					if (!value || *value == '\0')
-						reqval('l', lopts, L_SECTLOG);
 					if (lslflag)
 						respec('l', lopts, L_SECTLOG);
 					if (lssflag)
 						conflict('l', lopts, L_SECTSIZE,
 							 L_SECTLOG);
-					lsectorlog = getnum(value, 0, 0, false);
-					if (lsectorlog <= 0)
-						illegal(value, "l sectlog");
+					lsectorlog = getnum_checked(value,
+							XFS_MIN_SECTORSIZE_LOG,
+							XFS_MAX_SECTORSIZE_LOG,
+							"l sectlog", 'l', lopts,
+							L_SECTLOG);
 					lsectorsize = 1 << lsectorlog;
 					lslflag = 1;
 					break;
@@ -1646,16 +1669,16 @@ main(
 
 				switch (getsubopt(&p, (constpp)nopts, &value)) {
 				case N_LOG:
-					if (!value || *value == '\0')
-						reqval('n', nopts, N_LOG);
 					if (nlflag)
 						respec('n', nopts, N_LOG);
 					if (nsflag)
 						conflict('n', nopts, N_SIZE,
 							 N_LOG);
-					dirblocklog = getnum(value, 0, 0, false);
-					if (dirblocklog <= 0)
-						illegal(value, "n log");
+					dirblocklog = getnum_checked(value,
+							XFS_MIN_REC_DIRSIZE,
+							XFS_MAX_BLOCKSIZE_LOG,
+							"n log", 'n', nopts,
+							N_LOG);
 					dirblocksize = 1 << dirblocklog;
 					nlflag = 1;
 					break;
@@ -1769,16 +1792,16 @@ main(
 				switch (getsubopt(&p, (constpp)sopts, &value)) {
 				case S_LOG:
 				case S_SECTLOG:
-					if (!value || *value == '\0')
-						reqval('s', sopts, S_SECTLOG);
 					if (slflag || lslflag)
 						respec('s', sopts, S_SECTLOG);
 					if (ssflag || lssflag)
 						conflict('s', sopts, S_SECTSIZE,
 							 S_SECTLOG);
-					sectorlog = getnum(value, 0, 0, false);
-					if (sectorlog <= 0)
-						illegal(value, "s sectlog");
+					sectorlog = getnum_checked(value,
+							XFS_MIN_SECTORSIZE_LOG,
+							XFS_MAX_SECTORSIZE_LOG,
+							"s sectlog", 's', sopts,
+							S_SECTLOG);
 					lsectorlog = sectorlog;
 					sectorsize = 1 << sectorlog;
 					lsectorsize = sectorsize;
