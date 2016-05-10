@@ -1597,7 +1597,10 @@ main(
 						reqval('n', nopts, N_FTYPE);
 					if (nftype)
 						respec('n', nopts, N_FTYPE);
-					dirftype = atoi(value);
+					c = atoi(value);
+					if (c < 0 || c > 1)
+						illegal(value, "n ftype");
+					dirftype = c;
 					nftype = 1;
 					break;
 				default:
