@@ -64,11 +64,11 @@ SCSI disk, use:
 .PP
 The metadata log can be placed on another device to reduce the number
 of disk seeks.  To create a filesystem on the first partition on the
-first SCSI disk with a 10000 block log located on the first partition
+first SCSI disk with a 10MiB log located on the first partition
 on the second SCSI disk, use:
 .RS
 .HP
-.B mkfs.xfs\ \-l\ logdev=/dev/sdb1,size=10000b /dev/sda1
+.B mkfs.xfs\ \-l\ logdev=/dev/sdb1,size=10m /dev/sda1
 .RE
 .PP
 Each of the
@@ -78,9 +78,9 @@ suboptions if multiple suboptions apply to the same option.
 Equivalently, each main option can be given multiple times with
 different suboptions.
 For example,
-.B \-l internal,size=10000b
+.B \-l internal,size=10m
 and
-.B \-l internal \-l size=10000b
+.B \-l internal \-l size=10m
 are equivalent.
 .PP
 In the descriptions below, sizes are given in sectors, bytes, blocks,
@@ -109,6 +109,15 @@ option below).
 .HP
 .BR e "\ \-\ multiply by one exabyte (1,048,576 terabytes)."
 .PD
+.RE
+.PP
+When specifying parameters in units of sectors or filesystem blocks, the
+.B \-s
+option or the
+.B \-b
+option first needs to be added to the command line.
+Failure to specify the size of the units will result in illegal value errors
+when parameters are quantified in those units.
 .SH OPTIONS
 .TP
 .BI \-b " block_size_options"
@@ -126,6 +135,11 @@ or in bytes with
 .BR size= .
 The default value is 4096 bytes (4 KiB), the minimum is 512, and the
 maximum is 65536 (64 KiB).
+.IP
+To specify any options on the command line in units of filesystem blocks, this
+option must be specified first so that the filesystem block size is
+applied consistently to all options.
+.IP
 Although
 .B mkfs.xfs
 will accept any of these values and create a valid filesystem,
@@ -811,6 +825,10 @@ is 512 bytes. The minimum value for sector size is
 .I sector_size
 must be a power of 2 size and cannot be made larger than the
 filesystem block size.
+.IP
+To specify any options on the command line in units of sectors, this
+option must be specified first so that the sector size is
+applied consistently to all options.
 .TP
 .BI \-L " label"
 Set the filesystem

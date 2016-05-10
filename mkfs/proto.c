@@ -23,7 +23,6 @@
 /*
  * Prototypes for internal functions.
  */
-static long getnum(char **pp);
 static char *getstr(char **pp);
 static void fail(char *msg, int i);
 static void getres(xfs_trans_t *tp, uint blocks);
@@ -78,8 +77,8 @@ setup_proto(
 	 * Skip past the stuff there for compatibility, a string and 2 numbers.
 	 */
 	(void)getstr(&buf);	/* boot image name */
-	(void)getnum(&buf);	/* block count */
-	(void)getnum(&buf);	/* inode count */
+	(void)getnum(getstr(&buf), 0, 0, false);	/* block count */
+	(void)getnum(getstr(&buf), 0, 0, false);	/* inode count */
 	close(fd);
 	return buf;
 
@@ -88,16 +87,6 @@ out_fail:
 		close(fd);
 	free(buf);
 	exit(1);
-}
-
-static long
-getnum(
-	char	**pp)
-{
-	char	*s;
-
-	s = getstr(pp);
-	return atol(s);
 }
 
 static void
@@ -440,8 +429,8 @@ parseproto(
 		val = val * 8 + mstr[i] - '0';
 	}
 	mode |= val;
-	creds.cr_uid = (int)getnum(pp);
-	creds.cr_gid = (int)getnum(pp);
+	creds.cr_uid = (int)getnum(getstr(pp), 0, 0, false);
+	creds.cr_gid = (int)getnum(getstr(pp), 0, 0, false);
 	xname.name = (unsigned char *)name;
 	xname.len = name ? strlen(name) : 0;
 	xname.type = 0;
@@ -466,7 +455,14 @@ parseproto(
 
 	case IF_RESERVED:			/* pre-allocated space only */
 		value = getstr(pp);
-		llen = cvtnum(mp->m_sb.sb_blocksize, mp->m_sb.sb_sectsize, value);
+		llen = getnum(value, mp->m_sb.sb_blocksize,
+			      mp->m_sb.sb_sectsize, true);
+		if (llen < 0) {
+			fprintf(stderr,
+				_("%s: Bad value %s for proto file %s\n"),
+				progname, value, name);
+			exit(1);
+		}
 		getres(tp, XFS_B_TO_FSB(mp, llen));
 
 		error = -libxfs_inode_alloc(&tp, pip, mode|S_IFREG, 1, 0,
@@ -490,8 +486,8 @@ parseproto(
 
 	case IF_BLOCK:
 		getres(tp, 0);
-		majdev = (int)getnum(pp);
-		mindev = (int)getnum(pp);
+		majdev = getnum(getstr(pp), 0, 0, false);
+		mindev = getnum(getstr(pp), 0, 0, false);
 		error = -libxfs_inode_alloc(&tp, pip, mode|S_IFBLK, 1,
 				IRIX_MKDEV(majdev, mindev), &creds, fsxp, &ip);
 		if (error) {
@@ -505,8 +501,8 @@ parseproto(
 
 	case IF_CHAR:
 		getres(tp, 0);
-		majdev = (int)getnum(pp);
-		mindev = (int)getnum(pp);
+		majdev = getnum(getstr(pp), 0, 0, false);
+		mindev = getnum(getstr(pp), 0, 0, false);
 		error = -libxfs_inode_alloc(&tp, pip, mode|S_IFCHR, 1,
 				IRIX_MKDEV(majdev, mindev), &creds, fsxp, &ip);
 		if (error)

@@ -56,11 +56,8 @@
 #define XFS_NOMULTIDISK_AGLOG		2	/* 4 AGs */
 #define XFS_MULTIDISK_AGCOUNT		(1 << XFS_MULTIDISK_AGLOG)
 
-
-/* xfs_mkfs.c */
-extern int isdigits (char *str);
-extern long long cvtnum (unsigned int blocksize,
-			 unsigned int sectorsize, char *s);
+extern long long getnum(const char *str, unsigned int blocksize,
+			unsigned int sectorsize, bool convert);
 
 /* proto.c */
 extern char *setup_proto (char *fname);
