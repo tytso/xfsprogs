@@ -72,6 +72,10 @@ static long long cvtnum(unsigned int blocksize,
  *     it is. The index has to be the same as is the order in subopts list,
  *     so we can access the right item both in subopt_param and subopts.
  *
+ *   seen INTERNAL
+ *     Do not set this flag when definning a subopt. It is used to remeber that
+ *     this subopt was already seen, for example for conflicts detection.
+ *
  *   minval, maxval OPTIONAL
  *     These options are used for automatic range check and they have to be
  *     always used together in pair. If you don't want to limit the max value,
@@ -95,8 +99,10 @@ static long long cvtnum(unsigned int blocksize,
 struct opt_params {
 	const char	name;
 	const char	*subopts[MAX_SUBOPTS];
+
 	struct subopt_param {
 		int		index;
+		bool		seen;
 		long long	minval;
 		long long	maxval;
 		long long	defaultval;
@@ -1228,7 +1234,6 @@ struct sb_feat_args {
 	int	dir_version;
 	int	spinodes;
 	int	finobt;
-	bool	finobtflag;
 	bool	inode_align;
 	bool	nci;
 	bool	lazy_sb_counters;
@@ -1363,7 +1368,7 @@ getnum_checked(
 	struct opt_params	*opts,
 	int			index)
 {
-	const struct subopt_param *sp = &opts->subopt_params[index];
+	struct subopt_param *sp = &opts->subopt_params[index];
 	long long		c;
 
 	if (sp->index != index) {
@@ -1372,6 +1377,11 @@ getnum_checked(
 			sp->index, index);
 		reqval(opts->name, (char **)opts->subopts, index);
 	}
+
+	/* check for respecification of the option */
+	if (sp->seen)
+		respec(opts->name, (char **)opts->subopts, index);
+	sp->seen = true;
 
 	if (!str || *str == '\0') {
 		if (sp->defaultval == SUBOPT_NEEDS_VAL)
@@ -1462,7 +1472,6 @@ main(
 	int			nodsflag;
 	int			norsflag;
 	xfs_alloc_rec_t		*nrec;
-	int			nftype;
 	int			nsflag;
 	int			nvflag;
 	int			Nflag;
@@ -1490,7 +1499,6 @@ main(
 	struct fs_topology	ft;
 	struct sb_feat_args	sb_feat = {
 		.finobt = 1,
-		.finobtflag = false,
 		.spinodes = 0,
 		.log_version = 2,
 		.attr_version = 2,
@@ -1520,7 +1528,6 @@ main(
 	loginternal = 1;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
 	Nflag = nlflag = nsflag = nvflag = 0;
-	nftype = 0;
 	dirblocklog = dirblocksize = 0;
 	qflag = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
@@ -1551,8 +1558,6 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case B_LOG:
-					if (blflag)
-						respec('b', subopts, B_LOG);
 					if (bsflag)
 						conflict('b', subopts, B_SIZE,
 							 B_LOG);
@@ -1591,9 +1596,6 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case D_AGCOUNT:
-					if (daflag)
-						respec('d', subopts, D_AGCOUNT);
-
 					agcount = getnum_checked(value, &dopts,
 								 D_AGCOUNT);
 					daflag = 1;
@@ -1630,8 +1632,6 @@ main(
 					dsize = value;
 					break;
 				case D_SUNIT:
-					if (dsunit)
-						respec('d', subopts, D_SUNIT);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SUNIT);
@@ -1639,8 +1639,6 @@ main(
 								 D_SUNIT);
 					break;
 				case D_SWIDTH:
-					if (dswidth)
-						respec('d', subopts, D_SWIDTH);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SWIDTH);
@@ -1661,8 +1659,6 @@ main(
 						illegal(value, "d su");
 					break;
 				case D_SW:
-					if (dsw)
-						respec('d', subopts, D_SW);
 					if (nodsflag)
 						conflict('d', subopts, D_NOALIGN,
 							 D_SW);
@@ -1688,8 +1684,6 @@ main(
 					}
 					break;
 				case D_SECTLOG:
-					if (slflag)
-						respec('d', subopts, D_SECTLOG);
 					if (ssflag)
 						conflict('d', subopts, D_SECTSIZE,
 							 D_SECTLOG);
@@ -1752,8 +1746,6 @@ main(
 							value, &iopts, I_ALIGN);
 					break;
 				case I_LOG:
-					if (ilflag)
-						respec('i', subopts, I_LOG);
 					if (ipflag)
 						conflict('i', subopts, I_PERBLOCK,
 							 I_LOG);
@@ -1766,18 +1758,14 @@ main(
 					ilflag = 1;
 					break;
 				case I_MAXPCT:
-					if (imflag)
-						respec('i', subopts, I_MAXPCT);
-					imaxpct = getnum_checked(
-							value, &iopts, I_MAXPCT);
+					imaxpct = getnum_checked(value, &iopts,
+								 I_MAXPCT);
 					imflag = 1;
 					break;
 				case I_PERBLOCK:
 					if (ilflag)
 						conflict('i', subopts, I_LOG,
 							 I_PERBLOCK);
-					if (ipflag)
-						respec('i', subopts, I_PERBLOCK);
 					if (isflag)
 						conflict('i', subopts, I_SIZE,
 							 I_PERBLOCK);
@@ -1794,8 +1782,6 @@ main(
 					if (ipflag)
 						conflict('i', subopts, I_PERBLOCK,
 							 I_SIZE);
-					if (isflag)
-						respec('i', subopts, I_SIZE);
 					isize = getnum_checked(value, &iopts,
 							       I_SIZE);
 					if (!ispow2(isize))
@@ -1831,8 +1817,6 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case L_AGNUM:
-					if (laflag)
-						respec('l', subopts, L_AGNUM);
 					if (ldflag)
 						conflict('l', subopts, L_AGNUM, L_DEV);
 					logagno = getnum_checked(value, &lopts,
@@ -1854,8 +1838,6 @@ main(
 					if (xi.lisfile)
 						conflict('l', subopts, L_FILE,
 							 L_INTERNAL);
-					if (liflag)
-						respec('l', subopts, L_INTERNAL);
 
 					loginternal = getnum_checked(value,
 							&lopts, L_INTERNAL);
@@ -1873,8 +1855,6 @@ main(
 					lsuflag = 1;
 					break;
 				case L_SUNIT:
-					if (lsunit)
-						respec('l', subopts, L_SUNIT);
 					lsunit = getnum_checked(value, &lopts,
 								 L_SUNIT);
 					lsunitflag = 1;
@@ -1895,10 +1875,9 @@ main(
 					xi.logname = value;
 					break;
 				case L_VERSION:
-					if (lvflag)
-						respec('l', subopts, L_VERSION);
-					sb_feat.log_version = getnum_checked(
-						value, &lopts, L_VERSION);
+					sb_feat.log_version =
+						getnum_checked(value, &lopts,
+							       L_VERSION);
 					lvflag = 1;
 					break;
 				case L_SIZE:
@@ -1910,8 +1889,6 @@ main(
 					lsflag = 1;
 					break;
 				case L_SECTLOG:
-					if (lslflag)
-						respec('l', subopts, L_SECTLOG);
 					if (lssflag)
 						conflict('l', subopts, L_SECTSIZE,
 							 L_SECTLOG);
@@ -1968,7 +1945,6 @@ main(
 						sb_feat.dirftype = true;
 					break;
 				case M_FINOBT:
-					sb_feat.finobtflag = true;
 					sb_feat.finobt = getnum_checked(
 						value, &mopts, M_FINOBT);
 					break;
@@ -1992,8 +1968,6 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case N_LOG:
-					if (nlflag)
-						respec('n', subopts, N_LOG);
 					if (nsflag)
 						conflict('n', subopts, N_SIZE,
 							 N_LOG);
@@ -2036,11 +2010,8 @@ main(
 					nvflag = 1;
 					break;
 				case N_FTYPE:
-					if (nftype)
-						respec('n', subopts, N_FTYPE);
 					sb_feat.dirftype = getnum_checked(value,
 								&nopts, N_FTYPE);
-					nftype = 1;
 					break;
 				default:
 					unknown('n', value);
@@ -2116,8 +2087,6 @@ main(
 						  &value)) {
 				case S_LOG:
 				case S_SECTLOG:
-					if (slflag || lslflag)
-						respec('s', subopts, S_SECTLOG);
 					if (ssflag || lssflag)
 						conflict('s', subopts,
 							 S_SECTSIZE, S_SECTLOG);
@@ -2328,7 +2297,7 @@ _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 		 * tried to use crc=0,finobt=1, then issue a warning before
 		 * turning them off.
 		 */
-		if (sb_feat.finobt && sb_feat.finobtflag) {
+		if (sb_feat.finobt && mopts.subopt_params[M_FINOBT].seen) {
 			fprintf(stderr,
 _("warning: finobt not supported without CRC support, disabled.\n"));
 		}
