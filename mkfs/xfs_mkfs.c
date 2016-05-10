@@ -83,6 +83,10 @@ unsigned int		sectorsize;
  *     Do not set this flag when definning a subopt. It is used to remeber that
  *     this subopt was already seen, for example for conflicts detection.
  *
+ *   str_seen INTERNAL
+ *     Do not set. It is used internally for respecification, when some options
+ *     has to be parsed twice - at first as a string, then later as a number.
+ *
  *   convert OPTIONAL
  *     A flag signalling whether the user-given value can use suffixes.
  *     If you want to allow the use of user-friendly values like 13k, 42G,
@@ -124,6 +128,7 @@ struct opt_params {
 	struct subopt_param {
 		int		index;
 		bool		seen;
+		bool		str_seen;
 		bool		convert;
 		bool		is_power_2;
 		int		conflicts[MAX_CONFLICTS];
@@ -1470,14 +1475,17 @@ illegal_option(
 	usage();
 }
 
-static long long
-getnum(
-	const char		*str,
+/*
+ * Check for conflicts and option respecification.
+ */
+static void
+check_opt(
 	struct opt_params	*opts,
-	int			index)
+	int			index,
+	bool			str_seen)
 {
-	struct subopt_param *sp = &opts->subopt_params[index];
-	long long		c;
+	struct subopt_param	*sp = &opts->subopt_params[index];
+	int			i;
 
 	if (sp->index != index) {
 		fprintf(stderr,
@@ -1486,22 +1494,47 @@ getnum(
 		reqval(opts->name, (char **)opts->subopts, index);
 	}
 
-	/* check for respecification of the option */
-	if (sp->seen)
-		respec(opts->name, (char **)opts->subopts, index);
-	sp->seen = true;
+	/*
+	 * Check for respecification of the option. This is more complex than it
+	 * seems because some options are parsed twice - once as a string during
+	 * input parsing, then later the string is passed to getnum for
+	 * conversion into a number and bounds checking. Hence the two variables
+	 * used to track the different uses based on the @str parameter passed
+	 * to us.
+	 */
+	if (!str_seen) {
+		if (sp->seen)
+			respec(opts->name, (char **)opts->subopts, index);
+		sp->seen = true;
+	} else {
+		if (sp->str_seen)
+			respec(opts->name, (char **)opts->subopts, index);
+		sp->str_seen = true;
+	}
 
 	/* check for conflicts with the option */
-	for (c = 0; c < MAX_CONFLICTS; c++) {
-		int conflict_opt = sp->conflicts[c];
+	for (i = 0; i < MAX_CONFLICTS; i++) {
+		int conflict_opt = sp->conflicts[i];
 
 		if (conflict_opt == LAST_CONFLICT)
 			break;
-		if (opts->subopt_params[conflict_opt].seen)
+		if (opts->subopt_params[conflict_opt].seen ||
+		    opts->subopt_params[conflict_opt].str_seen)
 			conflict(opts->name, (char **)opts->subopts,
 				 conflict_opt, index);
 	}
+}
 
+static long long
+getnum(
+	const char		*str,
+	struct opt_params	*opts,
+	int			index)
+{
+	struct subopt_param	*sp = &opts->subopt_params[index];
+	long long		c;
+
+	check_opt(opts, index, false);
 	/* empty strings might just return a default value */
 	if (!str || *str == '\0') {
 		if (sp->defaultval == SUBOPT_NEEDS_VAL)
@@ -1541,6 +1574,26 @@ getnum(
 	if (sp->is_power_2 && !ispow2(c))
 		illegal_option(str, opts, index);
 	return c;
+}
+
+/*
+ * Option is a string - do all the option table work, and check there
+ * is actually an option string. Otherwise we don't do anything with the string
+ * here - validation will be done later when the string is converted to a value
+ * or used as a file/device path.
+ */
+static char *
+getstr(
+	char			*str,
+	struct opt_params	*opts,
+	int			index)
+{
+	check_opt(opts, index, true);
+
+	/* empty strings for string options are not valid */
+	if (!str || *str == '\0')
+		reqval(opts->name, (char **)opts->subopts, index);
+	return str;
 }
 
 int
@@ -1735,18 +1788,10 @@ main(
 						xi.dcreat = 1;
 					break;
 				case D_NAME:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_NAME);
-					if (xi.dname)
-						respec('d', subopts, D_NAME);
-					xi.dname = value;
+					xi.dname = getstr(value, &dopts, D_NAME);
 					break;
 				case D_SIZE:
-					if (!value || *value == '\0')
-						reqval('d', subopts, D_SIZE);
-					if (dsize)
-						respec('d', subopts, D_SIZE);
-					dsize = value;
+					dsize = getstr(value, &dopts, D_SIZE);
 					break;
 				case D_SUNIT:
 					dsunit = getnum(value, &dopts, D_SUNIT);
@@ -1884,18 +1929,10 @@ main(
 					break;
 				case L_NAME:
 				case L_DEV:
-					if (laflag)
-						conflict('l', subopts, L_AGNUM, L_DEV);
-					if (liflag)
-						conflict('l', subopts, L_INTERNAL, L_DEV);
-					if (!value || *value == '\0')
-						reqval('l', subopts, L_NAME);
-					if (xi.logname)
-						respec('l', subopts, L_NAME);
+					logfile = getstr(value, &lopts, L_NAME);
+					xi.logname = logfile;
 					ldflag = 1;
 					loginternal = 0;
-					logfile = value;
-					xi.logname = value;
 					break;
 				case L_VERSION:
 					sb_feat.log_version =
@@ -1903,12 +1940,7 @@ main(
 					lvflag = 1;
 					break;
 				case L_SIZE:
-					if (!value || *value == '\0')
-						reqval('l', subopts, L_SIZE);
-					if (logsize)
-						respec('l', subopts, L_SIZE);
-					logsize = value;
-					lsflag = 1;
+					logsize = getstr(value, &lopts, L_SIZE);
 					break;
 				case L_SECTLOG:
 					lsectorlog = getnum(value, &lopts,
@@ -1989,10 +2021,7 @@ main(
 					nsflag = 1;
 					break;
 				case N_VERSION:
-					if (!value || *value == '\0')
-						reqval('n', subopts, N_VERSION);
-					if (nvflag)
-						respec('n', subopts, N_VERSION);
+					value = getstr(value, &nopts, N_VERSION);
 					if (!strcasecmp(value, "ci")) {
 						/* ASCII CI mode */
 						sb_feat.nci = true;
@@ -2035,11 +2064,8 @@ main(
 				switch (getsubopt(&p, (constpp)subopts,
 						  &value)) {
 				case R_EXTSIZE:
-					if (!value || *value == '\0')
-						reqval('r', subopts, R_EXTSIZE);
-					if (rtextsize)
-						respec('r', subopts, R_EXTSIZE);
-					rtextsize = value;
+					rtextsize = getstr(value, &ropts,
+							   R_EXTSIZE);
 					break;
 				case R_FILE:
 					xi.risfile = getnum(value, &ropts,
@@ -2049,18 +2075,11 @@ main(
 					break;
 				case R_NAME:
 				case R_DEV:
-					if (!value || *value == '\0')
-						reqval('r', subopts, R_NAME);
-					if (xi.rtname)
-						respec('r', subopts, R_NAME);
-					xi.rtname = value;
+					xi.rtname = getstr(value, &ropts,
+							   R_NAME);
 					break;
 				case R_SIZE:
-					if (!value || *value == '\0')
-						reqval('r', subopts, R_SIZE);
-					if (rtsize)
-						respec('r', subopts, R_SIZE);
-					rtsize = value;
+					rtsize = getstr(value, &ropts, R_SIZE);
 					break;
 				case R_NOALIGN:
 					norsflag = getnum(value, &ropts,
@@ -2120,13 +2139,7 @@ main(
 		fprintf(stderr, _("extra arguments\n"));
 		usage();
 	} else if (argc - optind == 1) {
-		dfile = xi.volname = argv[optind];
-		if (xi.dname) {
-			fprintf(stderr,
-				_("cannot specify both %s and -d name=%s\n"),
-				xi.volname, xi.dname);
-			usage();
-		}
+		dfile = xi.volname = getstr(argv[optind], &dopts, D_NAME);
 	} else
 		dfile = xi.dname;
 
