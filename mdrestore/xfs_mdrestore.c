@@ -60,7 +60,7 @@ perform_restore(
 	__be64			*block_index;
 	char			*block_buffer;
 	int			block_size;
-	int			max_indicies;
+	int			max_indices;
 	int			cur_index;
 	int			mb_count;
 	xfs_metablock_t		tmb;
@@ -80,14 +80,14 @@ perform_restore(
 		fatal("specified file is not a metadata dump\n");
 
 	block_size = 1 << tmb.mb_blocklog;
-	max_indicies = (block_size - sizeof(xfs_metablock_t)) / sizeof(__be64);
+	max_indices = (block_size - sizeof(xfs_metablock_t)) / sizeof(__be64);
 
-	metablock = (xfs_metablock_t *)calloc(max_indicies + 1, block_size);
+	metablock = (xfs_metablock_t *)calloc(max_indices + 1, block_size);
 	if (metablock == NULL)
 		fatal("memory allocation failure\n");
 
 	mb_count = be16_to_cpu(tmb.mb_count);
-	if (mb_count == 0 || mb_count > max_indicies)
+	if (mb_count == 0 || mb_count > max_indices)
 		fatal("bad block count: %u\n", mb_count);
 
 	block_index = (__be64 *)((char *)metablock + sizeof(xfs_metablock_t));
@@ -108,6 +108,16 @@ perform_restore(
 
 	if (sb.sb_magicnum != XFS_SB_MAGIC)
 		fatal("bad magic number for primary superblock\n");
+
+	/*
+	 * Normally the upper bound would be simply XFS_MAX_SECTORSIZE
+	 * but the metadump format has a maximum number of BBSIZE blocks
+	 * it can store in a single metablock.
+	 */
+	if (sb.sb_sectsize < XFS_MIN_SECTORSIZE ||
+	    sb.sb_sectsize > XFS_MAX_SECTORSIZE ||
+	    sb.sb_sectsize > max_indices * block_size)
+		fatal("bad sector size %u in metadump image\n", sb.sb_sectsize);
 
 	((xfs_dsb_t*)block_buffer)->sb_inprogress = 1;
 
@@ -144,7 +154,7 @@ perform_restore(
 					be64_to_cpu(block_index[cur_index]) << BBSHIFT,
 					strerror(errno));
 		}
-		if (mb_count < max_indicies)
+		if (mb_count < max_indices)
 			break;
 
 		if (fread(metablock, block_size, 1, src_f) != 1)
@@ -153,7 +163,7 @@ perform_restore(
 		mb_count = be16_to_cpu(metablock->mb_count);
 		if (mb_count == 0)
 			break;
-		if (mb_count > max_indicies)
+		if (mb_count > max_indices)
 			fatal("bad block count: %u\n", mb_count);
 
 		if (fread(block_buffer, mb_count << tmb.mb_blocklog,

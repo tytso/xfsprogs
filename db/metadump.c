@@ -66,7 +66,7 @@ static xfs_metablock_t 	*metablock;	/* header + index + buffers */
 static __be64		*block_index;
 static char		*block_buffer;
 
-static int		num_indicies;
+static int		num_indices;
 static int		cur_index;
 
 static xfs_ino_t	cur_ino;
@@ -147,7 +147,7 @@ print_progress(const char *fmt, ...)
  * A complete dump file will have a "zero" entry in the last index block,
  * even if the dump is exactly aligned, the last index will be full of
  * zeros. If the last index entry is non-zero, the dump is incomplete.
- * Correspondingly, the last chunk will have a count < num_indicies.
+ * Correspondingly, the last chunk will have a count < num_indices.
  *
  * Return 0 for success, -1 for failure.
  */
@@ -164,7 +164,7 @@ write_index(void)
 		return -errno;
 	}
 
-	memset(block_index, 0, num_indicies * sizeof(__be64));
+	memset(block_index, 0, num_indices * sizeof(__be64));
 	cur_index = 0;
 	return 0;
 }
@@ -184,7 +184,7 @@ write_buf_segment(
 	for (i = 0; i < len; i++, off++, data += BBSIZE) {
 		block_index[cur_index] = cpu_to_be64(off);
 		memcpy(&block_buffer[cur_index << BBSHIFT], data, BBSIZE);
-		if (++cur_index == num_indicies) {
+		if (++cur_index == num_indices) {
 			ret = write_index();
 			if (ret)
 				return -EIO;
@@ -2656,7 +2656,20 @@ metadump_f(
 
 	block_index = (__be64 *)((char *)metablock + sizeof(xfs_metablock_t));
 	block_buffer = (char *)metablock + BBSIZE;
-	num_indicies = (BBSIZE - sizeof(xfs_metablock_t)) / sizeof(__be64);
+	num_indices = (BBSIZE - sizeof(xfs_metablock_t)) / sizeof(__be64);
+
+	/*
+	 * A metadump block can hold at most num_indices of BBSIZE sectors;
+	 * do not try to dump a filesystem with a sector size which does not
+	 * fit within num_indices (i.e. within a single metablock).
+	 */
+	if (mp->m_sb.sb_sectsize > num_indices * BBSIZE) {
+		print_warning("Cannot dump filesystem with sector size %u",
+			      mp->m_sb.sb_sectsize);
+		free(metablock);
+		return 0;
+	}
+
 	cur_index = 0;
 	start_iocur_sp = iocur_sp;
 
