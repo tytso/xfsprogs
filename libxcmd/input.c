@@ -366,7 +366,7 @@ uid_from_string(
 	char		*sp;
 
 	uid_long = strtoul(user, &sp, 10);
-	if (sp != user) {
+	if (sp != user && *sp == '\0') {
 		if ((uid_long == ULONG_MAX && errno == ERANGE)
 				|| (uid_long > (uid_t)-1))
 			return -1;
@@ -387,7 +387,7 @@ gid_from_string(
 	char		*sp;
 
 	gid_long = strtoul(group, &sp, 10);
-	if (sp != group) {
+	if (sp != group && *sp == '\0') {
 		if ((gid_long == ULONG_MAX && errno == ERANGE)
 				|| (gid_long > (gid_t)-1))
 			return -1;
