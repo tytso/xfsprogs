@@ -15,6 +15,12 @@ xfs_quota \- manage use of quota on XFS filesystems
 .B \-d
 .I project
 ] ... [
+.B \-D
+.I projects_file
+] [
+.B \-P
+.I projid_file
+] [
 .IR path " ... ]"
 .br
 .B xfs_quota \-V
@@ -52,6 +58,18 @@ which restricts the output of the individual
 commands to the set of projects specified. Multiple
 .B \-d
 arguments may be given.
+.TP
+.BI \-D " projects_file"
+Specify a file containing the mapping of numeric project identifiers
+to directory trees.
+.I /etc/projects
+as default, if this option is none.
+.TP
+.BI \-P " projid_file"
+Specify a file containing the mapping of numeric project identifiers
+to project names.
+.I /etc/projid
+as default, if this option is none.
 .TP
 .B \-V
 Prints the version number and exits.
