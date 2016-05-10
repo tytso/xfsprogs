@@ -89,7 +89,11 @@ Mac OS X Instructions
 	TAR=/usr/bin/gnutar
 	LIBTOOL=/usr/bin/glibtool
 	INSTALL_GROUP=wheel
-	LOCAL_CONFIGURE_OPTIONS="--enable-gettext=no --enable-blkid=no"
+	LOCAL_CONFIGURE_OPTIONS="\
+				 --enable-gettext=no\
+				 --enable-blkid=no\
+				 --enable-librt=no\
+				 "
 
 	$ make
 	$ su root
