@@ -94,7 +94,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 	if (be32_to_cpu(agf->agf_flfirst) >= XFS_AGFL_SIZE(mp))  {
 		do_warn(_("flfirst %d in agf %d too large (max = %zu)\n"),
 			be32_to_cpu(agf->agf_flfirst),
-			i, XFS_AGFL_SIZE(mp));
+			i, XFS_AGFL_SIZE(mp) - 1);
 		if (!no_modify)
 			agf->agf_flfirst = cpu_to_be32(0);
 	}
@@ -102,7 +102,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 	if (be32_to_cpu(agf->agf_fllast) >= XFS_AGFL_SIZE(mp))  {
 		do_warn(_("fllast %d in agf %d too large (max = %zu)\n"),
 			be32_to_cpu(agf->agf_fllast),
-			i, XFS_AGFL_SIZE(mp));
+			i, XFS_AGFL_SIZE(mp) - 1);
 		if (!no_modify)
 			agf->agf_fllast = cpu_to_be32(0);
 	}
