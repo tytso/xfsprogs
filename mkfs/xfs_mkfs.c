@@ -1544,13 +1544,15 @@ sb_set_features(
 
 static __attribute__((noreturn)) void
 illegal_option(
-	const char	*value,
+	const char		*value,
 	struct opt_params	*opts,
-	int		index)
+	int			index,
+	const char		*reason)
 {
 	fprintf(stderr,
-		_("Illegal value %s for -%c %s option\n"),
-		value, opts->name, opts->subopts[index]);
+		_("Illegal value %s for -%c %s option. %s\n"),
+		value, opts->name, opts->subopts[index],
+		reason ? reason : "");
 	usage();
 }
 
@@ -1642,16 +1644,18 @@ getnum(
 
 		c = strtoll(str, &str_end, 0);
 		if (c == 0 && str_end == str)
-			illegal_option(str, opts, index);
+			illegal_option(str, opts, index, NULL);
 		if (*str_end != '\0')
-			illegal_option(str, opts, index);
+			illegal_option(str, opts, index, NULL);
 	}
 
 	/* Validity check the result. */
-	if (c < sp->minval || c > sp->maxval)
-		illegal_option(str, opts, index);
+	if (c < sp->minval)
+		illegal_option(str, opts, index, _("value is too small"));
+	else if (c > sp->maxval)
+		illegal_option(str, opts, index, _("value is too large"));
 	if (sp->is_power_2 && !ispow2(c))
-		illegal_option(str, opts, index);
+		illegal_option(str, opts, index, _("value must be a power of 2"));
 	return c;
 }
 
