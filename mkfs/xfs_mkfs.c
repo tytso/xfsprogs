@@ -2388,21 +2388,24 @@ _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 	} else {
 		/*
 		 * The kernel doesn't currently support crc=0,finobt=1
-		 * filesystems. If crcs are not enabled and the user has
-		 * explicitly turned them off then silently turn them off
-		 * to avoid an unnecessary warning. If the user explicitly
-		 * tried to use crc=0,finobt=1, then issue a warning before
-		 * turning them off. The same is also for sparse inodes.
+		 * filesystems. If crcs are not enabled and the user has not
+		 * explicitly turned finobt on, then silently turn it off to
+		 * avoid an unnecessary warning.
+		 * If the user explicitly tried to use crc=0,finobt=1,
+		 * then issue an error.
+		 * The same is also for sparse inodes.
 		 */
 		if (sb_feat.finobt && mopts.subopt_params[M_FINOBT].seen) {
 			fprintf(stderr,
-_("warning: finobt not supported without CRC support, disabled.\n"));
+_("finobt not supported without CRC support\n"));
+			usage();
 		}
 		sb_feat.finobt = 0;
 
 		if (sb_feat.spinodes) {
 			fprintf(stderr,
-	_("warning: sparse inodes not supported without CRC support, disabled.\n"));
+_("sparse inodes not supported without CRC support\n"));
+			usage();
 		}
 		sb_feat.spinodes = 0;
 
