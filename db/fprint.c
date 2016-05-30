@@ -93,7 +93,7 @@ fp_num(
 			val == -1LL : val == ((1LL << size) - 1LL);
 		if ((arg & FTARG_SKIPNULL) && isnull)
 			continue;
-		if (array)
+		if (array && count > 1)
 			dbprintf("%d:", i + base);
 		if ((arg & FTARG_DONULL) && isnull)
 			dbprintf(_("null"));

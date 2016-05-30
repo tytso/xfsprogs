@@ -107,6 +107,7 @@ print_flist_1(
 	const ftattr_t	*fa;
 	flist_t		*fl;
 	int		low;
+	int		count;
 	int		neednl;
 	char		**pfx;
 
@@ -139,10 +140,12 @@ print_flist_1(
 				low = fl->low;
 			else
 				low = 0;
+			count = fcount(f, iocur_top->data, parentoff);
+			if (fl->flags & FL_OKHIGH)
+				count = min(count, fl->high - low + 1);
 			if (fa->prfunc) {
 				neednl = fa->prfunc(iocur_top->data, fl->offset,
-					fcount(f, iocur_top->data, parentoff),
-					fa->fmtstr,
+					count, fa->fmtstr,
 					fsize(f, iocur_top->data, parentoff, 0),
 					fa->arg, low,
 					(f->flags & FLD_ARRAY) != 0);
