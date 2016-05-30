@@ -17,6 +17,7 @@
  */
 
 #include "libxfs.h"
+#include "libxcmd.h"
 #include "libxlog.h"
 #include "agheader.h"
 #include "globals.h"
@@ -85,10 +86,15 @@ copy_sb(xfs_sb_t *source, xfs_sb_t *dest)
 }
 
 /*
- * find a secondary superblock, copy it into the sb buffer
+ * find a secondary superblock, copy it into the sb buffer.
+ * start is the point to begin reading BSIZE bytes.
+ * skip contains a byte-count of how far to advance for next read.
  */
-int
-find_secondary_sb(xfs_sb_t *rsb)
+static int
+__find_secondary_sb(
+	xfs_sb_t	*rsb,
+	__uint64_t	start,
+	__uint64_t	skip)
 {
 	xfs_off_t	off;
 	xfs_sb_t	*sb;
@@ -117,7 +123,7 @@ find_secondary_sb(xfs_sb_t *rsb)
 	/*
 	 * skip first sector since we know that's bad
 	 */
-	for (done = 0, off = XFS_AG_MIN_BYTES; !done ; off += bsize)  {
+	for (done = 0, off = start; !done ; off += skip)  {
 		/*
 		 * read disk 1 MByte at a time.
 		 */
@@ -166,7 +172,63 @@ find_secondary_sb(xfs_sb_t *rsb)
 	}
 
 	free(sb);
-	return(retval);
+	return retval;
+}
+
+static int
+guess_default_geometry(
+	__uint64_t		*agsize,
+	__uint64_t		*agcount,
+	libxfs_init_t		*x)
+{
+	struct fs_topology	ft;
+	int			blocklog;
+	__uint64_t		dblocks;
+	int			multidisk;
+
+	memset(&ft, 0, sizeof(ft));
+	get_topology(x, &ft, 1);
+
+	/*
+	 * get geometry from get_topology result.
+	 * Use default block size (2^12)
+	 */
+	blocklog = 12;
+	multidisk = ft.dswidth | ft.dsunit;
+	dblocks = x->dsize >> (blocklog - BBSHIFT);
+	calc_default_ag_geometry(blocklog, dblocks, multidisk,
+				 agsize, agcount);
+
+	return blocklog;
+}
+
+int
+find_secondary_sb(xfs_sb_t *rsb)
+{
+	int		retval;
+	__uint64_t	agcount;
+	__uint64_t	agsize;
+	__uint64_t	skip;
+	int		blocklog;
+
+	/*
+	 * Attempt to find secondary sb with a coarse approach.
+	 * Failing that, fallback to a fine-grained approach.
+	 */
+	blocklog = guess_default_geometry(&agsize, &agcount, &x);
+
+	/*
+	 * use found ag geometry to quickly find secondary sb
+	 */
+	skip = agsize << blocklog;
+	retval = __find_secondary_sb(rsb, skip, skip);
+	if (!retval)  {
+		/*
+		 * fallback: Start at min agsize and scan all blocks
+		 */
+		retval = __find_secondary_sb(rsb, XFS_AG_MIN_BYTES, BSIZE);
+	}
+	return retval;
 }
 
 /*
