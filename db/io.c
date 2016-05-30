@@ -464,6 +464,13 @@ xfs_dummy_verify(
 }
 
 void
+xfs_verify_recalc_crc(
+	struct xfs_buf *bp)
+{
+	xfs_buf_update_cksum(bp, iocur_top->typ->crc_off);
+}
+
+void
 write_cur(void)
 {
 	if (iocur_sp < 0) {

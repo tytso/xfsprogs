@@ -43,6 +43,8 @@ typedef struct typ
 	pfunc_t			pfunc;
 	const struct field	*fields;
 	const struct xfs_buf_ops *bops;
+	unsigned long		crc_off;
+#define TYP_F_NO_CRC_OFF	(-1UL)
 } typ_t;
 extern const typ_t	*typtab, *cur_typ;
 

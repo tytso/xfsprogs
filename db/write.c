@@ -79,7 +79,10 @@ write_help(void)
 "  String mode: 'write \"This_is_a_filename\" - write null terminated string.\n"
 "\n"
 " In data mode type 'write' by itself for a list of specific commands.\n\n"
-" Specifying the -c option will allow writes of invalid (corrupt) data.\n\n"
+" Specifying the -c option will allow writes of invalid (corrupt) data with\n"
+" an invalid CRC. Specifying the -d option will allow writes of invalid data,\n"
+" but still recalculate the CRC so we are forced to check and detect the\n"
+" invalid data appropriately.\n\n"
 ));
 
 }
@@ -92,8 +95,9 @@ write_f(
 	pfunc_t	pf;
 	extern char *progname;
 	int c;
-	int corrupt = 0;		/* Allow write of corrupt data; skip verification */
-	struct xfs_buf_ops nowrite_ops;
+	bool corrupt = false;	/* Allow write of bad data w/ invalid CRC */
+	bool invalid_data = false; /* Allow write of bad data w/ valid CRC */
+	struct xfs_buf_ops local_ops;
 	const struct xfs_buf_ops *stashed_ops = NULL;
 
 	if (x.isreadonly & LIBXFS_ISREADONLY) {
@@ -114,10 +118,13 @@ write_f(
 		return 0;
 	}
 
-	while ((c = getopt(argc, argv, "c")) != EOF) {
+	while ((c = getopt(argc, argv, "cd")) != EOF) {
 		switch (c) {
 		case 'c':
-			corrupt = 1;
+			corrupt = true;
+			break;
+		case 'd':
+			invalid_data = true;
 			break;
 		default:
 			dbprintf(_("bad option for write command\n"));
@@ -125,22 +132,46 @@ write_f(
 		}
 	}
 
+	if (corrupt && invalid_data) {
+		dbprintf(_("Cannot specify both -c and -d options\n"));
+		return 0;
+	}
+
+	if (invalid_data && iocur_top->typ->crc_off == TYP_F_NO_CRC_OFF) {
+		dbprintf(_("Cannot recalculate CRCs on this type of object\n"));
+		return 0;
+	}
+
 	argc -= optind;
 	argv += optind;
 
-	if (iocur_top->bp->b_ops && corrupt) {
-		/* Temporarily remove write verifier to write bad data */
-		stashed_ops = iocur_top->bp->b_ops;
-		nowrite_ops.verify_read = stashed_ops->verify_read;
-		nowrite_ops.verify_write = xfs_dummy_verify;
-		iocur_top->bp->b_ops = &nowrite_ops;
-		dbprintf(_("Allowing write of corrupted data\n"));
+	/*
+	 * If the buffer has no verifier or we are using standard verifier
+	 * paths, then just write it out and return
+	 */
+	if (!iocur_top->bp->b_ops ||
+	    !(corrupt || invalid_data)) {
+		(*pf)(DB_WRITE, cur_typ->fields, argc, argv);
+		return 0;
+	}
+
+
+	/* Temporarily remove write verifier to write bad data */
+	stashed_ops = iocur_top->bp->b_ops;
+	local_ops.verify_read = stashed_ops->verify_read;
+	iocur_top->bp->b_ops = &local_ops;
+
+	if (corrupt) {
+		local_ops.verify_write = xfs_dummy_verify;
+		dbprintf(_("Allowing write of corrupted data and bad CRC\n"));
+	} else { /* invalid data */
+		local_ops.verify_write = xfs_verify_recalc_crc;
+		dbprintf(_("Allowing write of corrupted data with good CRC\n"));
 	}
 
 	(*pf)(DB_WRITE, cur_typ->fields, argc, argv);
 
-	if (stashed_ops)
-		iocur_top->bp->b_ops = stashed_ops;
+	iocur_top->bp->b_ops = stashed_ops;
 
 	return 0;
 }
