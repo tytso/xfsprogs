@@ -3298,14 +3298,19 @@ cvtnum(
 	switch (c) {
 	case 'e':
 		i *= 1024LL;
+		/* fall through */
 	case 'p':
 		i *= 1024LL;
+		/* fall through */
 	case 't':
 		i *= 1024LL;
+		/* fall through */
 	case 'g':
 		i *= 1024LL;
+		/* fall through */
 	case 'm':
 		i *= 1024LL;
+		/* fall through */
 	case 'k':
 		return i * 1024LL;
 	default:
