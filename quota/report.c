@@ -580,9 +580,9 @@ report_project_mount(
 			 * Print default project quota, even if projid 0
 			 * isn't defined
 			 */
-			report_mount(fp, 0, NULL, NULL, form, XFS_PROJ_QUOTA,
-			             mount, flags);
-			flags |= NO_HEADER_FLAG;
+			if (report_mount(fp, 0, NULL, NULL,
+					form, XFS_PROJ_QUOTA, mount, flags))
+				flags |= NO_HEADER_FLAG;
 		}
 
 		setprent();
