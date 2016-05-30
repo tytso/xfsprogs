@@ -172,6 +172,10 @@ frag_f(
 		answer = 0.0;
 	dbprintf(_("actual %llu, ideal %llu, fragmentation factor %.2f%%\n"),
 		extcount_actual, extcount_ideal, answer);
+	dbprintf(_("Note, this number is largely meaningless.\n"));
+	answer = (double)extcount_actual / (double)extcount_ideal;
+	dbprintf(_("Files on this filesystem average %.2f extents per file\n"),
+		answer);
 	return 0;
 }
 
