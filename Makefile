@@ -82,6 +82,7 @@ io: libxcmd libhandle
 quota: libxcmd
 repair: libxlog
 copy: libxlog
+mkfs: libxcmd
 
 ifeq ($(HAVE_BUILDDEFS), yes)
 include $(BUILDRULES)

@@ -10,7 +10,7 @@ LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
 
-CFILES = command.c input.c paths.c projects.c help.c quit.c
+CFILES = command.c input.c paths.c projects.c help.c quit.c topology.c
 
 ifeq ($(HAVE_GETMNTENT),yes)
 LCFLAGS += -DHAVE_GETMNTENT

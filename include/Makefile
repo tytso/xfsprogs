@@ -20,6 +20,7 @@ include $(TOPDIR)/include/builddefs
 
 LIBHFILES = libxfs.h \
 	libxlog.h \
+	libxcmd.h \
 	atomic.h \
 	bitops.h \
 	cache.h \
