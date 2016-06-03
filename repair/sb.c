@@ -23,11 +23,9 @@
 #include "globals.h"
 #include "protos.h"
 #include "err_protos.h"
+#include "xfs_multidisk.h"
 
 #define BSIZE	(1024 * 1024)
-
-#define XFS_AG_BYTES(bblog)	((long long)BBSIZE << (bblog))
-#define	XFS_AG_MIN_BYTES	((XFS_AG_BYTES(15)))	/* 16 MB */
 
 /*
  * copy the fields of a superblock that are present in primary and
@@ -85,6 +83,21 @@ copy_sb(xfs_sb_t *source, xfs_sb_t *dest)
 	memset(source->sb_fname, 0, 12);
 }
 
+int
+verify_sb_blocksize(xfs_sb_t *sb)
+{
+	/* check to make sure blocksize is legal 2^N, 9 <= N <= 16 */
+	if (sb->sb_blocksize == 0)
+		return XR_BAD_BLOCKSIZE;
+	if (sb->sb_blocksize != (1 << sb->sb_blocklog))
+		return XR_BAD_BLOCKLOG;
+	if (sb->sb_blocklog < XFS_MIN_BLOCKSIZE_LOG ||
+	    sb->sb_blocklog > XFS_MAX_BLOCKSIZE_LOG)
+		return XR_BAD_BLOCKLOG;
+
+	return 0;
+}
+
 /*
  * find a secondary superblock, copy it into the sb buffer.
  * start is the point to begin reading BSIZE bytes.
@@ -105,8 +118,6 @@ __find_secondary_sb(
 	int		dirty;
 	int		retval;
 	int		bsize;
-
-	do_warn(_("\nattempting to find secondary superblock...\n"));
 
 	sb = (xfs_sb_t *)memalign(libxfs_device_alignment(), BSIZE);
 	if (!sb) {
@@ -205,29 +216,36 @@ guess_default_geometry(
 int
 find_secondary_sb(xfs_sb_t *rsb)
 {
-	int		retval;
+	int		retval = 0;
 	__uint64_t	agcount;
 	__uint64_t	agsize;
 	__uint64_t	skip;
 	int		blocklog;
 
 	/*
-	 * Attempt to find secondary sb with a coarse approach.
-	 * Failing that, fallback to a fine-grained approach.
+	 * Attempt to find secondary sb with a coarse approach,
+	 * first trying agblocks and blocksize read from sb, providing
+	 * they're sane.
 	 */
-	blocklog = guess_default_geometry(&agsize, &agcount, &x);
+	do_warn(_("\nattempting to find secondary superblock...\n"));
 
-	/*
-	 * use found ag geometry to quickly find secondary sb
-	 */
-	skip = agsize << blocklog;
-	retval = __find_secondary_sb(rsb, skip, skip);
-	if (!retval)  {
-		/*
-		 * fallback: Start at min agsize and scan all blocks
-		 */
-		retval = __find_secondary_sb(rsb, XFS_AG_MIN_BYTES, BSIZE);
+	if (verify_sb_blocksize(rsb) == 0) {
+		skip = rsb->sb_agblocks * rsb->sb_blocksize;
+		if (skip >= XFS_AG_MIN_BYTES && skip <= XFS_AG_MAX_BYTES)
+			retval = __find_secondary_sb(rsb, skip, skip);
 	}
+
+        /* If that failed, retry coarse approach, using default geometry */
+        if (!retval) {
+                blocklog = guess_default_geometry(&agsize, &agcount, &x);
+                skip = agsize << blocklog;
+                retval = __find_secondary_sb(rsb, skip, skip);
+        }
+
+        /* If that failed, fall back to the brute force method */
+        if (!retval)
+                retval = __find_secondary_sb(rsb, XFS_AG_MIN_BYTES, BSIZE);
+
 	return retval;
 }
 
@@ -328,6 +346,7 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 {
 	__uint32_t	bsize;
 	int		i;
+	int		ret;
 
 	/* check magic number and version number */
 
@@ -369,23 +388,10 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 	    !xfs_verify_cksum(sb_buf, sb->sb_sectsize, XFS_SB_CRC_OFF))
 		return XR_BAD_CRC;
 
-	/* check to make sure blocksize is legal 2^N, 9 <= N <= 16 */
-	if (sb->sb_blocksize == 0)
-		return(XR_BAD_BLOCKSIZE);
-
-	bsize = 1;
-
-	for (i = 0; bsize < sb->sb_blocksize &&
-		i < sizeof(sb->sb_blocksize) * NBBY; i++)
-		bsize <<= 1;
-
-	if (i < XFS_MIN_BLOCKSIZE_LOG || i > XFS_MAX_BLOCKSIZE_LOG)
-		return(XR_BAD_BLOCKSIZE);
-
-	/* check sb blocksize field against sb blocklog field */
-
-	if (i != sb->sb_blocklog)
-		return(XR_BAD_BLOCKLOG);
+	/* check to ensure blocksize and blocklog are legal */
+	ret = verify_sb_blocksize(sb);
+	if (ret != 0)
+		return ret;
 
 	/* sanity check ag count, size fields against data size field */
 
