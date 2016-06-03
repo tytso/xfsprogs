@@ -43,6 +43,18 @@ time_to_string(
 		timer = MAX(origin - now, 0);
 	}
 
+	/*
+	 * If we are in verbose mode, or if less than a day remains, we
+	 * will show "X days hh:mm:ss" so the user knows the exact timer status.
+	 *
+	 * Otherwise, we round down to the nearest day - so we add 30s here
+	 * such that setting and reporting a limit in rapid succession will
+	 * show the limit which was just set, rather than immediately reporting
+	 * one day less.
+	 */
+	if ((timer > SECONDS_IN_A_DAY) && !(flags & VERBOSE_FLAG))
+		timer += 30;	/* seconds */
+
 	days = timer / SECONDS_IN_A_DAY;
 	if (days)
 		timer %= SECONDS_IN_A_DAY;
