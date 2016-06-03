@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <asm/types.h>
 #include <mntent.h>
+#include <linux/fs.h> /* fsxattr defintion for new kernels */
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {
