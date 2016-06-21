@@ -70,7 +70,7 @@ kmem_zalloc(size_t size, int flags)
 }
 
 void *
-kmem_realloc(void *ptr, size_t new_size, size_t old_size, int flags)
+kmem_realloc(void *ptr, size_t new_size, int flags)
 {
 	ptr = realloc(ptr, new_size);
 	if (ptr == NULL) {

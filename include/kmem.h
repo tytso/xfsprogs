@@ -49,6 +49,6 @@ kmem_free(void *ptr) {
 	free(ptr);
 }
 
-extern void	*kmem_realloc(void *, size_t, size_t, int);
+extern void	*kmem_realloc(void *, size_t, int);
 
 #endif
