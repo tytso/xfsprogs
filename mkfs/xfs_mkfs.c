@@ -3136,15 +3136,16 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		xfs_trans_t	*tp;
 		struct xfs_trans_res tres = {0};
 
+		c = libxfs_trans_alloc(mp, &tres, worst_freelist, 0, 0, &tp);
+		if (c)
+			res_failed(c);
+
 		memset(&args, 0, sizeof(args));
-		args.tp = tp = libxfs_trans_alloc(mp, 0);
+		args.tp = tp;
 		args.mp = mp;
 		args.agno = agno;
 		args.alignment = 1;
 		args.pag = xfs_perag_get(mp,agno);
-		c = -libxfs_trans_reserve(tp, &tres, worst_freelist, 0);
-		if (c)
-			res_failed(c);
 
 		libxfs_alloc_fix_freelist(&args, 0);
 		xfs_perag_put(args.pag);

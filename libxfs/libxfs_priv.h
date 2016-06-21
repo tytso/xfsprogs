@@ -361,7 +361,6 @@ roundup_64(__uint64_t x, __uint32_t y)
 #define XFS_MOUNT_RDONLY		0	/* ignored in userspace */
 
 
-#define _xfs_trans_alloc(mp, type, f)	libxfs_trans_alloc(mp, type)
 #define xfs_trans_get_block_res(tp)	1
 #define xfs_trans_set_sync(tp)		((void) 0)
 #define xfs_trans_ordered_buf(tp, bp)	((void) 0)

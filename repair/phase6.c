@@ -494,9 +494,7 @@ mk_rbmino(xfs_mount_t *mp)
 	/*
 	 * first set up inode
 	 */
-	tp = libxfs_trans_alloc(mp, 0);
-
-	i = -libxfs_trans_reserve(tp, &tres, 10, 0);
+	i = -libxfs_trans_alloc(mp, &tres, 10, 0, 0, &tp);
 	if (i)
 		res_failed(i);
 
@@ -544,9 +542,9 @@ mk_rbmino(xfs_mount_t *mp)
 	 * then allocate blocks for file and fill with zeroes (stolen
 	 * from mkfs)
 	 */
-	tp = libxfs_trans_alloc(mp, 0);
-	error = -libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
-				(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1), 0);
+	error = -libxfs_trans_alloc(mp, &tres,
+		mp->m_sb.sb_rbmblocks + (XFS_BM_MAXLEVELS(mp,XFS_DATA_FORK) - 1),
+				   0, 0, &tp);
 	if (error)
 		res_failed(error);
 
@@ -598,9 +596,7 @@ fill_rbmino(xfs_mount_t *mp)
 	bmp = btmcompute;
 	bno = 0;
 
-	tp = libxfs_trans_alloc(mp, 0);
-
-	error = -libxfs_trans_reserve(tp, &tres, 10, 0);
+	error = -libxfs_trans_alloc(mp, &tres, 10, 0, 0, &tp);
 	if (error)
 		res_failed(error);
 
@@ -671,9 +667,7 @@ fill_rsumino(xfs_mount_t *mp)
 	bno = 0;
 	end_bno = mp->m_rsumsize >> mp->m_sb.sb_blocklog;
 
-	tp = libxfs_trans_alloc(mp, 0);
-
-	error = -libxfs_trans_reserve(tp, &tres, 10, 0);
+	error = -libxfs_trans_alloc(mp, &tres, 10, 0, 0, &tp);
 	if (error)
 		res_failed(error);
 
@@ -747,9 +741,7 @@ mk_rsumino(xfs_mount_t *mp)
 	/*
 	 * first set up inode
 	 */
-	tp = libxfs_trans_alloc(mp, 0);
-
-	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
+	i = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 10, 0, 0, &tp);
 	if (i)
 		res_failed(i);
 
@@ -797,15 +789,15 @@ mk_rsumino(xfs_mount_t *mp)
 	 * then allocate blocks for file and fill with zeroes (stolen
 	 * from mkfs)
 	 */
-	tp = libxfs_trans_alloc(mp, 0);
 	xfs_bmap_init(&flist, &first);
 
 	nsumblocks = mp->m_rsumsize >> mp->m_sb.sb_blocklog;
 	tres.tr_logres = BBTOB(128);
 	tres.tr_logcount = XFS_DEFAULT_PERM_LOG_COUNT;
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
-	error = -libxfs_trans_reserve(tp, &tres, mp->m_sb.sb_rbmblocks +
-			      (XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1), 0);
+	error = -libxfs_trans_alloc(mp, &tres,
+		mp->m_sb.sb_rbmblocks + (XFS_BM_MAXLEVELS(mp,XFS_DATA_FORK) - 1),
+				    0, 0, &tp);
 	if (error)
 		res_failed(error);
 
@@ -854,10 +846,8 @@ mk_root_dir(xfs_mount_t *mp)
 	int		vers;
 	int		times;
 
-	tp = libxfs_trans_alloc(mp, 0);
 	ip = NULL;
-
-	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_ichange, 10, 0);
+	i = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 10, 0, 0, &tp);
 	if (i)
 		res_failed(i);
 
@@ -953,12 +943,9 @@ mk_orphanage(xfs_mount_t *mp)
 	/*
 	 * could not be found, create it
 	 */
-
-	tp = libxfs_trans_alloc(mp, 0);
 	xfs_bmap_init(&flist, &first);
-
 	nres = XFS_MKDIR_SPACE_RES(mp, xname.len);
-	i = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
+	i = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_mkdir, nres, 0, 0, &tp);
 	if (i)
 		res_failed(i);
 
@@ -1092,8 +1079,6 @@ mv_orphanage(
 		xname.len = snprintf((char *)fname, sizeof(fname), "%llu.%d",
 					(unsigned long long)ino, ++incr);
 
-	tp = libxfs_trans_alloc(mp, 0);
-
 	if ((err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, 0)))
 		do_error(_("%d - couldn't iget disconnected inode\n"), err);
 
@@ -1112,8 +1097,8 @@ mv_orphanage(
 		if (err) {
 			ASSERT(err == ENOENT);
 
-			err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
-						   nres, 0);
+			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
+						  nres, 0, 0, &tp);
 			if (err)
 				do_error(
 	_("space reservation failed (%d), filesystem may be out of space\n"),
@@ -1154,8 +1139,8 @@ mv_orphanage(
 
 			libxfs_trans_commit(tp);
 		} else  {
-			err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_rename,
-						   nres, 0);
+			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
+						  nres, 0, 0, &tp);
 			if (err)
 				do_error(
 	_("space reservation failed (%d), filesystem may be out of space\n"),
@@ -1210,8 +1195,8 @@ mv_orphanage(
 		 * also accounted for in the create
 		 */
 		nres = XFS_DIRENTER_SPACE_RES(mp, xname.len);
-		err = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
-					   nres, 0);
+		err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove,
+					  nres, 0, 0, &tp);
 		if (err)
 			do_error(
 	_("space reservation failed (%d), filesystem may be out of space\n"),
@@ -1306,9 +1291,8 @@ longform_dir2_rebuild(
 
 	xfs_bmap_init(&flist, &firstblock);
 
-	tp = libxfs_trans_alloc(mp, 0);
 	nres = XFS_REMOVE_SPACE_RES(mp);
-	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove, nres, 0, 0, &tp);
 	if (error)
 		res_failed(error);
 	libxfs_trans_ijoin(tp, ip, 0);
@@ -1349,10 +1333,9 @@ longform_dir2_rebuild(
 						p->name.name[1] == '.'))))
 			continue;
 
-		tp = libxfs_trans_alloc(mp, 0);
 		nres = XFS_CREATE_SPACE_RES(mp, p->name.len);
-		error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_create,
-					     nres, 0);
+		error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_create,
+					    nres, 0, 0, &tp);
 		if (error)
 			res_failed(error);
 
@@ -1406,9 +1389,8 @@ dir2_kill_block(
 	int		nres;
 	xfs_trans_t	*tp;
 
-	tp = libxfs_trans_alloc(mp, 0);
 	nres = XFS_REMOVE_SPACE_RES(mp);
-	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, nres, 0);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove, nres, 0, 0, &tp);
 	if (error)
 		res_failed(error);
 	libxfs_trans_ijoin(tp, ip, 0);
@@ -1598,8 +1580,7 @@ longform_dir2_entry_check_data(
 	if (freetab->nents < db + 1)
 		freetab->nents = db + 1;
 
-	tp = libxfs_trans_alloc(mp, 0);
-	error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove, 0, 0);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove, 0, 0, 0, &tp);
 	if (error)
 		res_failed(error);
 	da.trans = tp;
@@ -2902,7 +2883,6 @@ process_dir_inode(
 			break;
 
 		case XFS_DINODE_FMT_LOCAL:
-			tp = libxfs_trans_alloc(mp, 0);
 			/*
 			 * using the remove reservation is overkill
 			 * since at most we'll only need to log the
@@ -2910,8 +2890,8 @@ process_dir_inode(
 			 * new define in ourselves.
 			 */
 			nres = no_modify ? 0 : XFS_REMOVE_SPACE_RES(mp);
-			error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_remove,
-						     nres, 0);
+			error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove,
+						    nres, 0, 0, &tp);
 			if (error)
 				res_failed(error);
 
@@ -2951,11 +2931,9 @@ process_dir_inode(
 
 		do_warn(_("recreating root directory .. entry\n"));
 
-		tp = libxfs_trans_alloc(mp, 0);
-		ASSERT(tp != NULL);
-
 		nres = XFS_MKDIR_SPACE_RES(mp, 2);
-		error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir, nres, 0);
+		error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_mkdir,
+					    nres, 0, 0, &tp);
 		if (error)
 			res_failed(error);
 
@@ -3010,12 +2988,9 @@ process_dir_inode(
 			do_warn(
 	_("creating missing \".\" entry in dir ino %" PRIu64 "\n"), ino);
 
-			tp = libxfs_trans_alloc(mp, 0);
-			ASSERT(tp != NULL);
-
 			nres = XFS_MKDIR_SPACE_RES(mp, 1);
-			error = -libxfs_trans_reserve(tp, &M_RES(mp)->tr_mkdir,
-						     nres, 0);
+			error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_mkdir,
+						    nres, 0, 0, &tp);
 			if (error)
 				res_failed(error);
 

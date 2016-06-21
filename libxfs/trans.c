@@ -119,7 +119,6 @@ libxfs_trans_roll(
 	 */
 	tres.tr_logres = trans->t_log_res;
 	tres.tr_logcount = trans->t_log_count;
-	*tpp = libxfs_trans_alloc(trans->t_mountp, trans->t_type);
 
 	/*
 	 * Commit the current transaction.
@@ -132,7 +131,6 @@ libxfs_trans_roll(
 	if (error)
 		return error;
 
-	trans = *tpp;
 
 	/*
 	 * Reserve space in the log for th next transaction.
@@ -143,7 +141,8 @@ libxfs_trans_roll(
 	 * the prior and the next transactions.
 	 */
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
-	error = xfs_trans_reserve(trans, &tres, 0, 0);
+	error = libxfs_trans_alloc(trans->t_mountp, &tres, 0, 0, 0, tpp);
+	trans = *tpp;
 	/*
 	 *  Ensure that the inode is in the new transaction and locked.
 	 */
@@ -155,35 +154,18 @@ libxfs_trans_roll(
 	return 0;
 }
 
-xfs_trans_t *
-libxfs_trans_alloc(
-	xfs_mount_t	*mp,
-	int		type)
-{
-	xfs_trans_t	*ptr;
-
-	if ((ptr = calloc(sizeof(xfs_trans_t), 1)) == NULL) {
-		fprintf(stderr, _("%s: xact calloc failed (%d bytes): %s\n"),
-			progname, (int)sizeof(xfs_trans_t), strerror(errno));
-		exit(1);
-	}
-	ptr->t_mountp = mp;
-	ptr->t_type = type;
-	INIT_LIST_HEAD(&ptr->t_items);
-#ifdef XACT_DEBUG
-	fprintf(stderr, "allocated new transaction %p\n", ptr);
-#endif
-	return ptr;
-}
-
 int
-libxfs_trans_reserve(
-	struct xfs_trans	*tp,
+libxfs_trans_alloc(
+	struct xfs_mount	*mp,
 	struct xfs_trans_res	*resp,
-	uint			blocks,
-	uint			rtextents)
+	unsigned int		blocks,
+	unsigned int		rtextents,
+	unsigned int		flags,
+	struct xfs_trans	**tpp)
+
 {
-	xfs_sb_t	*mpsb = &tp->t_mountp->m_sb;
+	struct xfs_sb	*sb = &mp->m_sb;
+	struct xfs_trans *ptr;
 
 	/*
 	 * Attempt to reserve the needed disk blocks by decrementing
@@ -191,10 +173,21 @@ libxfs_trans_reserve(
 	 * fail if the count would go below zero.
 	 */
 	if (blocks > 0) {
-		if (mpsb->sb_fdblocks < blocks)
+		if (sb->sb_fdblocks < blocks)
 			return -ENOSPC;
 	}
-	/* user space, don't need log/RT stuff (preserve the API though) */
+
+	if ((ptr = calloc(sizeof(xfs_trans_t), 1)) == NULL) {
+		fprintf(stderr, _("%s: xact calloc failed (%d bytes): %s\n"),
+			progname, (int)sizeof(xfs_trans_t), strerror(errno));
+		exit(1);
+	}
+	ptr->t_mountp = mp;
+	INIT_LIST_HEAD(&ptr->t_items);
+#ifdef XACT_DEBUG
+	fprintf(stderr, "allocated new transaction %p\n", ptr);
+#endif
+	*tpp = ptr;
 	return 0;
 }
 

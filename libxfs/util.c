@@ -541,10 +541,9 @@ libxfs_alloc_file_space(
 	while (allocatesize_fsb && !error) {
 		datablocks = allocatesize_fsb;
 
-		tp = xfs_trans_alloc(mp, XFS_TRANS_DIOSTRAT);
 		resblks = (uint)XFS_DIOSTRAT_SPACE_RES(mp, datablocks);
-		error = xfs_trans_reserve(tp, &M_RES(mp)->tr_write,
-					  resblks, 0);
+		error = xfs_trans_alloc(mp, &M_RES(mp)->tr_write, resblks,
+					0, 0, &tp);
 		/*
 		 * Check for running out of space
 		 */

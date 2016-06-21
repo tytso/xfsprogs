@@ -87,9 +87,9 @@ typedef struct xfs_trans {
 void	xfs_trans_init(struct xfs_mount *);
 int	xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 
-xfs_trans_t	*libxfs_trans_alloc(struct xfs_mount *, int);
-int	libxfs_trans_reserve(struct xfs_trans *, struct xfs_trans_res *,
-				     uint, uint);
+int	libxfs_trans_alloc(struct xfs_mount *mp, struct xfs_trans_res *resp,
+			   uint blocks, uint rtextents, uint flags,
+			   struct xfs_trans **tpp);
 int	libxfs_trans_commit(struct xfs_trans *);
 void	libxfs_trans_cancel(struct xfs_trans *);
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);

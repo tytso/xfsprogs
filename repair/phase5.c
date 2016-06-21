@@ -1505,13 +1505,13 @@ build_agf_agfl(xfs_mount_t	*mp,
 		int		error;
 
 		memset(&args, 0, sizeof(args));
-		args.tp = tp = libxfs_trans_alloc(mp, 0);
+		args.pag = xfs_perag_get(mp,agno);
+		libxfs_trans_alloc(mp, &tres,
+			xfs_alloc_min_freelist(mp, args.pag), 0, 0, &tp);
+		args.tp = tp;
 		args.mp = mp;
 		args.agno = agno;
 		args.alignment = 1;
-		args.pag = xfs_perag_get(mp,agno);
-		libxfs_trans_reserve(tp, &tres,
-				     xfs_alloc_min_freelist(mp, args.pag), 0);
 		error = libxfs_alloc_fix_freelist(&args, 0);
 		xfs_perag_put(args.pag);
 		if (error) {

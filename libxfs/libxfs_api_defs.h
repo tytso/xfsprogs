@@ -55,7 +55,6 @@
 #define xfs_trans_read_buf_map		libxfs_trans_read_buf_map
 #define xfs_trans_roll			libxfs_trans_roll
 #define xfs_trans_get_buf_map		libxfs_trans_get_buf_map
-#define xfs_trans_reserve		libxfs_trans_reserve
 #define xfs_trans_resv_calc		libxfs_trans_resv_calc
 
 #define xfs_attr_get			libxfs_attr_get
