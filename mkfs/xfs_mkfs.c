@@ -716,6 +716,9 @@ struct opt_params mopts = {
  */
 #define WHACK_SIZE (128 * 1024)
 
+/*
+ * Convert lsu to lsunit for 512 bytes blocks and check validity of the values.
+ */
 static void
 calc_stripe_factors(
 	int		dsu,
@@ -765,6 +768,20 @@ calc_stripe_factors(
 
 	if (lsu)
 		*lsunit = (int)BTOBBT(lsu);
+
+	/* verify if lsu/lsunit is a multiple block size */
+	if (lsu % blocksize != 0) {
+		fprintf(stderr,
+_("log stripe unit (%d) must be a multiple of the block size (%d)\n"),
+		lsu, blocksize);
+		exit(1);
+	}
+	if ((BBTOB(*lsunit) % blocksize != 0)) {
+		fprintf(stderr,
+_("log stripe unit (%d) must be a multiple of the block size (%d)\n"),
+		BBTOB(*lsunit), blocksize);
+		exit(1);
+	}
 }
 
 static void
@@ -2537,12 +2554,6 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 	 */
 
 	if (lsunit) {
-		if ((BBTOB(lsunit) % blocksize != 0)) {
-			fprintf(stderr,
-	_("log stripe unit (%d) must be a multiple of the block size (%d)\n"),
-			BBTOB(lsunit), blocksize);
-			exit(1);
-		}
 		/* convert from 512 byte blocks to fs blocks */
 		lsunit = DTOBT(lsunit);
 	} else if (sb_feat.log_version == 2 && loginternal && dsunit) {
