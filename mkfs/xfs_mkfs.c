@@ -3289,10 +3289,24 @@ cvtnum(
 	if (sp[1] != '\0')
 		return -1LL;
 
-	if (*sp == 'b')
-		return i * blksize;
-	if (*sp == 's')
-		return i * sectsize;
+	if (*sp == 'b') {
+		if (!blksize) {
+			fprintf(stderr,
+_("Blocksize must be provided prior to using 'b' suffix.\n"));
+			usage();
+		} else {
+			return i * blksize;
+		}
+	}
+	if (*sp == 's') {
+		if (!sectsize) {
+			fprintf(stderr,
+_("Sectorsize must be specified prior to using 's' suffix.\n"));
+			usage();
+		} else {
+			return i * sectsize;
+		}
+	}
 
 	c = tolower(*sp);
 	switch (c) {
