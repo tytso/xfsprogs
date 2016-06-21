@@ -4324,10 +4324,24 @@ scanfunc_ino(
 	int			i;
 	int			isfree;
 	int			j;
+	int			freecount;
 	int			nfree;
 	int			off;
 	xfs_inobt_ptr_t		*pp;
 	xfs_inobt_rec_t		*rp;
+	xfs_agblock_t		agbno;
+	xfs_agblock_t		end_agbno;
+	struct xfs_dinode	*dip;
+	int			blks_per_buf;
+	int			inodes_per_buf;
+	int			ioff;
+
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		blks_per_buf = xfs_icluster_size_fsb(mp);
+	else
+		blks_per_buf = mp->m_ialloc_blks;
+	inodes_per_buf = min(blks_per_buf << mp->m_sb.sb_inopblog,
+			     XFS_INODES_PER_CHUNK);
 
 	if (be32_to_cpu(block->bb_magic) != XFS_IBT_MAGIC &&
 	    be32_to_cpu(block->bb_magic) != XFS_IBT_CRC_MAGIC) {
@@ -4357,54 +4371,74 @@ scanfunc_ino(
 		rp = XFS_INOBT_REC_ADDR(mp, block, 1);
 		for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++) {
 			agino = be32_to_cpu(rp[i].ir_startino);
-			off = XFS_INO_TO_OFFSET(mp, agino);
+			agbno = XFS_AGINO_TO_AGBNO(mp, agino);
+			off = XFS_AGINO_TO_OFFSET(mp, agino);
+			end_agbno = agbno + mp->m_ialloc_blks;
 			if (off == 0) {
 				if ((sbversion & XFS_SB_VERSION_ALIGNBIT) &&
 				    mp->m_sb.sb_inoalignmt &&
 				    (XFS_INO_TO_AGBNO(mp, agino) %
 				     mp->m_sb.sb_inoalignmt))
 					sbversion &= ~XFS_SB_VERSION_ALIGNBIT;
-				set_dbmap(seqno, XFS_AGINO_TO_AGBNO(mp, agino),
-					(xfs_extlen_t)MAX(1,
-						XFS_INODES_PER_CHUNK >>
-						mp->m_sb.sb_inopblog),
-					DBM_INODE, seqno, bno);
 			}
-			icount += XFS_INODES_PER_CHUNK;
-			agicount += XFS_INODES_PER_CHUNK;
-			ifree += be32_to_cpu(rp[i].ir_u.f.ir_freecount);
-			agifreecount += be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+
 			push_cur();
-			set_cur(&typtab[TYP_INODE],
-				XFS_AGB_TO_DADDR(mp, seqno,
-						 XFS_AGINO_TO_AGBNO(mp, agino)),
-				(int)XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
-				DB_RING_IGN, NULL);
-			if (iocur_top->data == NULL) {
-				if (!sflag)
-					dbprintf(_("can't read inode block "
-						 "%u/%u\n"),
-						seqno,
-						XFS_AGINO_TO_AGBNO(mp, agino));
-				error++;
-				pop_cur();
-				continue;
+
+			ioff = 0;
+			nfree = 0;
+			while (agbno < end_agbno &&
+			       ioff < XFS_INODES_PER_CHUNK) {
+				if (xfs_inobt_is_sparse_disk(&rp[i], ioff))
+					goto next_buf;
+
+				if (off < XFS_INODES_PER_CHUNK)
+					set_dbmap(seqno, agbno, blks_per_buf,
+						  DBM_INODE, seqno, bno);
+
+				icount += inodes_per_buf;
+				agicount += inodes_per_buf;
+
+				set_cur(&typtab[TYP_INODE],
+					XFS_AGB_TO_DADDR(mp, seqno, agbno),
+					XFS_FSB_TO_BB(mp, blks_per_buf),
+					DB_RING_IGN, NULL);
+				if (iocur_top->data == NULL) {
+					if (!sflag)
+						dbprintf(_("can't read inode block "
+							   "%u/%u\n"), seqno,
+							 agbno);
+					error++;
+					goto next_buf;
+				}
+
+				for (j = 0; j < inodes_per_buf; j++) {
+					isfree = XFS_INOBT_IS_FREE_DISK(&rp[i], ioff + j);
+					if (isfree)
+						nfree++;
+					dip = (xfs_dinode_t *)((char *)iocur_top->data +
+						((off + j) << mp->m_sb.sb_inodelog));
+					process_inode(agf, agino + ioff + j, dip, isfree);
+				}
+
+next_buf:
+				agbno += blks_per_buf;
+				ioff += inodes_per_buf;
 			}
-			for (j = 0, nfree = 0; j < XFS_INODES_PER_CHUNK; j++) {
-				isfree = XFS_INOBT_IS_FREE_DISK(&rp[i], j);
-				if (isfree)
-					nfree++;
-				process_inode(agf, agino + j,
-					(xfs_dinode_t *)((char *)iocur_top->data + ((off + j) << mp->m_sb.sb_inodelog)),
-						isfree);
-			}
-			if (nfree != be32_to_cpu(rp[i].ir_u.f.ir_freecount)) {
+
+			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+				freecount = rp[i].ir_u.sp.ir_freecount;
+			else
+				freecount = be32_to_cpu(rp[i].ir_u.f.ir_freecount);
+
+			ifree += freecount;
+			agifreecount += freecount;
+
+			if (nfree != freecount) {
 				if (!sflag)
 					dbprintf(_("ir_freecount/free mismatch, "
 						 "inode chunk %u/%u, freecount "
 						 "%d nfree %d\n"),
-						seqno, agino,
-						be32_to_cpu(rp[i].ir_u.f.ir_freecount), nfree);
+						seqno, agino, freecount, nfree);
 				error++;
 			}
 			pop_cur();
@@ -4439,6 +4473,18 @@ scanfunc_fino(
 	int			off;
 	xfs_inobt_ptr_t		*pp;
 	struct xfs_inobt_rec	*rp;
+	xfs_agblock_t		agbno;
+	xfs_agblock_t		end_agbno;
+	int			blks_per_buf;
+	int			inodes_per_buf;
+	int			ioff;
+
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+		blks_per_buf = xfs_icluster_size_fsb(mp);
+	else
+		blks_per_buf = mp->m_ialloc_blks;
+	inodes_per_buf = min(blks_per_buf << mp->m_sb.sb_inopblog,
+			     XFS_INODES_PER_CHUNK);
 
 	if (be32_to_cpu(block->bb_magic) != XFS_FIBT_MAGIC &&
 	    be32_to_cpu(block->bb_magic) != XFS_FIBT_CRC_MAGIC) {
@@ -4468,19 +4514,34 @@ scanfunc_fino(
 		rp = XFS_INOBT_REC_ADDR(mp, block, 1);
 		for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++) {
 			agino = be32_to_cpu(rp[i].ir_startino);
-			off = XFS_INO_TO_OFFSET(mp, agino);
+			agbno = XFS_AGINO_TO_AGBNO(mp, agino);
+			off = XFS_AGINO_TO_OFFSET(mp, agino);
+			end_agbno = agbno + mp->m_ialloc_blks;
 			if (off == 0) {
 				if ((sbversion & XFS_SB_VERSION_ALIGNBIT) &&
 				    mp->m_sb.sb_inoalignmt &&
 				    (XFS_INO_TO_AGBNO(mp, agino) %
 				     mp->m_sb.sb_inoalignmt))
 					sbversion &= ~XFS_SB_VERSION_ALIGNBIT;
-				check_set_dbmap(seqno, XFS_AGINO_TO_AGBNO(mp, agino),
-					(xfs_extlen_t)MAX(1,
-						XFS_INODES_PER_CHUNK >>
-						mp->m_sb.sb_inopblog),
-					DBM_INODE, DBM_INODE, seqno, bno);
 			}
+
+			ioff = 0;
+			while (agbno < end_agbno &&
+			       ioff < XFS_INODES_PER_CHUNK) {
+				if (xfs_inobt_is_sparse_disk(&rp[i], ioff))
+					goto next_buf;
+
+                                check_set_dbmap(seqno, agbno,
+                                        (xfs_extlen_t)MAX(1,
+                                                inodes_per_buf >>
+                                                mp->m_sb.sb_inopblog),
+                                        DBM_INODE, DBM_INODE, seqno, bno);
+
+next_buf:
+				agbno += blks_per_buf;
+				ioff += inodes_per_buf;
+			}
+
 		}
 		return;
 	}
