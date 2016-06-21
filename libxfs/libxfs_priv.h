@@ -195,7 +195,7 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
  */
 #define prandom_u32()		0
 
-#define PAGE_CACHE_SIZE		getpagesize()
+#define PAGE_SIZE		getpagesize()
 
 static inline int __do_div(unsigned long long *n, unsigned base)
 {
