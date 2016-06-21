@@ -760,7 +760,7 @@ mk_rsumino(xfs_mount_t *mp)
 			error);
 	}
 
-	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 1;
+	vers = xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	VFS_I(ip)->i_mode = S_IFREG;
