@@ -1,3 +1,23 @@
+xfsprogs-4.7.0-rc1 (22 Jun 2015)
+	- libxfs kernel sync up to 4.7-rc1
+	- quota: new efficient iteration mechanism (Eric Sandeen)
+	- quota: support usernames starting with digits (Zorro Lang)
+	- xfs_io: mmap/mremap fixes (Zorro Lang)
+	- build/translation fixes (Mike Frysinger)
+	- repair: error messge cleanups (Eric Sandeen)
+	- mkfs: table based option parsing (Jan Tulak, Eric Sandeen)
+	- metadump: sector size support fixes (Eric Sandeen)
+	- db: unaligned acces fixes (Eric Sandeen)
+	- db: add CRC recalculation for corrupt blocks
+	- db: fix array notation handling in print commands
+	- db: Note that fragmenation factor is meaningless (Eric Sandeen)
+	- repair: more efficient secondary superblock search (Bill O'Donnell)
+	- quota: timer reporting corner case fixes (Eric Sandeen)
+	- headers: struct fsxattr redifinition fixes (Christoph Hellwig)
+	- man page updates (Eric Sandeen, Jan Tulak, Zorro Lang)
+	- repair: RT summary inode rebuild fix (Eric Sandeen)
+	- db: sparse inode check fixes (Brian Foster)
+
 xfsprogs-4.5.0 (15 Mar 2015)
 	- xfs_io: prevent divide-by-zero on random IO (Dmitry Monakhov)
 	- xfs_db: dquot command documentation fixes (Eric Sandeen)
