@@ -548,11 +548,7 @@ libxfs_alloc_file_space(
 		 * Check for running out of space
 		 */
 		if (error) {
-			/*
-			 * Free the transaction structure.
-			 */
 			ASSERT(error == -ENOSPC);
-			xfs_trans_cancel(tp);
 			break;
 		}
 		xfs_trans_ijoin(tp, ip, 0);
