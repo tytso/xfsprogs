@@ -103,6 +103,7 @@ libxfs_trans_roll(
 	struct xfs_trans	**tpp,
 	struct xfs_inode	*dp)
 {
+	struct xfs_mount	*mp;
 	struct xfs_trans	*trans;
 	struct xfs_trans_res	tres;
 	int			error;
@@ -117,6 +118,7 @@ libxfs_trans_roll(
 	/*
 	 * Copy the critical parameters from one trans to the next.
 	 */
+	mp = trans->t_mountp;
 	tres.tr_logres = trans->t_log_res;
 	tres.tr_logcount = trans->t_log_count;
 
@@ -141,7 +143,7 @@ libxfs_trans_roll(
 	 * the prior and the next transactions.
 	 */
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
-	error = libxfs_trans_alloc(trans->t_mountp, &tres, 0, 0, 0, tpp);
+	error = libxfs_trans_alloc(mp, &tres, 0, 0, 0, tpp);
 	trans = *tpp;
 	/*
 	 *  Ensure that the inode is in the new transaction and locked.
