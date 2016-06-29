@@ -230,7 +230,7 @@ find_secondary_sb(xfs_sb_t *rsb)
 	do_warn(_("\nattempting to find secondary superblock...\n"));
 
 	if (verify_sb_blocksize(rsb) == 0) {
-		skip = rsb->sb_agblocks * rsb->sb_blocksize;
+		skip = (__uint64_t)rsb->sb_agblocks * rsb->sb_blocksize;
 		if (skip >= XFS_AG_MIN_BYTES && skip <= XFS_AG_MAX_BYTES)
 			retval = __find_secondary_sb(rsb, skip, skip);
 	}
