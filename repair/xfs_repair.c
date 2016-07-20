@@ -851,16 +851,16 @@ main(int argc, char **argv)
 	  "with the -m option. Please increase it to at least %lu.\n"),
 					mem_used / 1024);
 			}
-			do_warn(
+			do_log(
 	_("Memory available for repair (%luMB) may not be sufficient.\n"
 	  "At least %luMB is needed to repair this filesystem efficiently\n"
 	  "If repair fails due to lack of memory, please\n"),
 				max_mem / 1024, mem_used / 1024);
 			if (do_prefetch)
-				do_warn(
+				do_log(
 	_("turn prefetching off (-P) to reduce the memory footprint.\n"));
 			else
-				do_warn(
+				do_log(
 	_("increase system RAM and/or swap space to at least %luMB.\n"),
 			mem_used * 2 / 1024);
 
