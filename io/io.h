@@ -150,6 +150,12 @@ extern void		fiemap_init(void);
 #define fiemap_init()	do { } while (0)
 #endif
 
+#ifdef HAVE_COPY_FILE_RANGE
+extern void		copy_range_init(void);
+#else
+#define copy_range_init()	do { } while (0)
+#endif
+
 #ifdef HAVE_SYNC_FILE_RANGE
 extern void		sync_range_init(void);
 #else

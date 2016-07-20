@@ -59,6 +59,11 @@ CFILES += inject.c resblks.c
 LCFLAGS += -DHAVE_INJECT -DHAVE_RESBLKS
 endif
 
+ifeq ($(HAVE_COPY_FILE_RANGE),yes)
+CFILES += copy_file_range.c
+LCFLAGS += -DHAVE_COPY_FILE_RANGE
+endif
+
 ifeq ($(HAVE_SYNC_FILE_RANGE),yes)
 CFILES += sync_file_range.c
 LCFLAGS += -DHAVE_SYNC_FILE_RANGE
