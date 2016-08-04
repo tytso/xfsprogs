@@ -90,8 +90,10 @@ dump_file(
 	else
 		cmd = XFS_GETQUOTA;
 
+	/* Fall back silently if XFS_GETNEXTQUOTA fails, warn on XFS_GETQUOTA */
 	if (xfsquotactl(cmd, dev, type, id, (void *)&d) < 0) {
-		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH)
+		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH &&
+		    cmd == XFS_GETQUOTA)
 			perror("XFS_GETQUOTA");
 		return 0;
 	}
@@ -347,8 +349,10 @@ report_mount(
 	else
 		cmd = XFS_GETQUOTA;
 
+	/* Fall back silently if XFS_GETNEXTQUOTA fails, warn on XFS_GETQUOTA*/
 	if (xfsquotactl(cmd, dev, type, id, (void *)&d) < 0) {
-		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH)
+		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH &&
+		    cmd == XFS_GETQUOTA)
 			perror("XFS_GETQUOTA");
 		return 0;
 	}
