@@ -184,8 +184,6 @@ typedef struct xfs_efd_log_format_32 {
 #define inline		__inline
 #endif
 
-#define constpp		char * const *
-
 /*ARGSUSED*/
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *arg)
 {

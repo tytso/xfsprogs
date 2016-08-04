@@ -33,8 +33,6 @@
 #include <paths.h>
 #include <mntent.h>
 
-#define constpp	char * const *
-
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */
 

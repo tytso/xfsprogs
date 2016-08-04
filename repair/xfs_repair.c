@@ -225,7 +225,7 @@ process_args(int argc, char **argv)
 			while (*p != '\0')  {
 				char *val;
 
-				switch (getsubopt(&p, (constpp)o_opts, &val))  {
+				switch (getsubopt(&p, o_opts, &val))  {
 				case ASSUME_XFS:
 					if (val)
 						noval('o', o_opts, ASSUME_XFS);
@@ -276,7 +276,7 @@ process_args(int argc, char **argv)
 			while (*p) {
 				char *val;
 
-				switch (getsubopt(&p, (constpp)c_opts, &val)) {
+				switch (getsubopt(&p, c_opts, &val)) {
 				case CONVERT_LAZY_COUNT:
 					lazy_count = (int)strtol(val, NULL, 0);
 					convert_lazy_count = 1;

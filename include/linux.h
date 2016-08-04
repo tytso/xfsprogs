@@ -133,12 +133,6 @@ platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 	return 0;
 }
 
-#if (__GLIBC__ < 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ <= 1))
-# define constpp	const char * const *
-#else
-# define constpp	char * const *
-#endif
-
 #define ENOATTR		ENODATA	/* Attribute not found */
 #define EFSCORRUPTED	EUCLEAN	/* Filesystem is corrupted */
 #define EFSBADCRC	EBADMSG	/* Bad CRC detected */

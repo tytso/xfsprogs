@@ -1521,8 +1521,7 @@ main(
 				char	**subopts = (char **)bopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case B_LOG:
 					blocklog = getnum(value, &bopts, B_LOG);
 					blocksize = 1 << blocklog;
@@ -1545,8 +1544,7 @@ main(
 				char	**subopts = (char **)dopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case D_AGCOUNT:
 					agcount = getnum(value, &dopts,
 							 D_AGCOUNT);
@@ -1625,8 +1623,7 @@ main(
 				char	**subopts = (char **)iopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case I_ALIGN:
 					sb_feat.inode_align = getnum(value,
 								&iopts, I_ALIGN);
@@ -1675,8 +1672,7 @@ main(
 				char	**subopts = (char **)lopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case L_AGNUM:
 					logagno = getnum(value, &lopts, L_AGNUM);
 					laflag = 1;
@@ -1747,8 +1743,7 @@ main(
 				char	**subopts = (char **)mopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case M_CRC:
 					sb_feat.crcs_enabled =
 						getnum(value, &mopts, M_CRC);
@@ -1776,8 +1771,7 @@ main(
 				char	**subopts = (char **)nopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case N_LOG:
 					dirblocklog = getnum(value, &nopts,
 							     N_LOG);
@@ -1832,8 +1826,7 @@ main(
 				char	**subopts = (char **)ropts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case R_EXTSIZE:
 					rtextsize = getstr(value, &ropts,
 							   R_EXTSIZE);
@@ -1865,8 +1858,7 @@ main(
 				char	**subopts = (char **)sopts.subopts;
 				char	*value;
 
-				switch (getsubopt(&p, (constpp)subopts,
-						  &value)) {
+				switch (getsubopt(&p, subopts, &value)) {
 				case S_LOG:
 				case S_SECTLOG:
 					if (lssflag)

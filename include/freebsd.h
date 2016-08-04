@@ -43,8 +43,6 @@
 #define fdatasync	fsync
 #define memalign(a,sz)	valloc(sz)
 
-#define constpp	char * const *
-
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */
 

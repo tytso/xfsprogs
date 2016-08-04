@@ -160,7 +160,6 @@ typedef int64_t		xfs_daddr_t;
 
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */
-#define constpp		char * const *
 
 #define HAVE_FID	1
 
