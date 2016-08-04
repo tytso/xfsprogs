@@ -1,4 +1,15 @@
-xfsprogs-4.7.0-rc1 (22 Jun 2015)
+xfsprogs-4.7.0 (5 Aug 2016)
+	- xfs_io: man page for copy_file_range (Anna Schumaker)
+	- xfs_quota: handle XFS_GETNEXTQUOTA failure sanely (Zorro Lang)
+	- mkfs: remove old glibc build failure workaround (Felix Janda)
+
+xfsprogs-4.7.0-rc2 (20 Jul 2016)
+	- xfs_io: add support for copy_file_range (Anna Schumaker)
+	- repair: fix exit value after low memory is detected (Zorro Lang)
+	- repair: fix quota inode detection issue (Eric Sandeen)
+	- fix coverity issues from 4.7-rc1 (Bill O'Donnell)
+
+xfsprogs-4.7.0-rc1 (22 Jun 2016)
 	- libxfs kernel sync up to 4.7-rc1
 	- quota: new efficient iteration mechanism (Eric Sandeen)
 	- quota: support usernames starting with digits (Zorro Lang)
@@ -17,19 +28,14 @@ xfsprogs-4.7.0-rc1 (22 Jun 2015)
 	- man page updates (Eric Sandeen, Jan Tulak, Zorro Lang)
 	- repair: RT summary inode rebuild fix (Eric Sandeen)
 	- db: sparse inode check fixes (Brian Foster)
-xfsprogs-4.7.0-rc2 (20 Jul 2015)
-	- xfs_io: add support for copy_file_range (Anna Schumaker)
-	- repair: fix exit value after low memory is detected (Zorro Lang)
-	- repair: fix quota inode detection issue (Eric Sandeen)
-	- fix coverity issues from 4.7-rc1 (Bill O'Donnell)
 
-xfsprogs-4.5.0 (15 Mar 2015)
+xfsprogs-4.5.0 (15 Mar 2016)
 	- xfs_io: prevent divide-by-zero on random IO (Dmitry Monakhov)
 	- xfs_db: dquot command documentation fixes (Eric Sandeen)
 	- xfs_quota: better command line parsing and documentation
 	  (Zorro Lang)
 
-xfsprogs-4.5.0-rc1 (17 Feb 2015)
+xfsprogs-4.5.0-rc1 (17 Feb 2016)
 	- libxfs: update to match kernel 4.5-rc1 code base
 	- xfs_io: add DAX inode flag support
 	- repair: scalability improvements on large corrupt filesystems
