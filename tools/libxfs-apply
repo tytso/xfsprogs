@@ -20,10 +20,11 @@ cleanup()
 	rm -f $PATCH
 }
 
+# output to stderr so it is not caught by file redirects
 fail()
 {
-	echo "Fail:"
-	echo $*
+	>&2 echo "Fail:"
+	>&2 echo $*
 	cleanup
 	exit
 }
@@ -130,11 +131,6 @@ filter_kernel_patch()
 	local _patch=$1
 	local _libxfs_files=""
 
-	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/libxfs/"
-	if [ $? -ne 0 ]; then
-		fail "Doesn't look like an xfsprogs patch with libxfs changes"
-	fi
-
 	# The files we will try to apply to
 	_libxfs_files=`mktemp`
 	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $_libxfs_files
@@ -156,14 +152,12 @@ filter_xfsprogs_patch()
 	local _patch=$1
 	local _libxfs_files=""
 
-	[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "a/fs/xfs/libxfs/"
-	if [ $? -ne 0 ]; then
-		fail "Doesn't look like a kernel patch with libxfs changes"
-	fi
-
-	# The files we will try to apply to
+	# The files we will try to apply to. We need to pull this from the
+	# patch, as the may be libxfs files added in this patch and so we
+	# need to capture them.
 	_libxfs_files=`mktemp`
-	ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
+	#ls -1 libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
+	lsdiff $_patch | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
 
 	# Create the new patch
 	filterdiff \
@@ -177,22 +171,134 @@ filter_xfsprogs_patch()
 	rm -f $_libxfs_files
 }
 
+fixup_header_format()
+{
+	local _source=$1
+	local _patch=$2
+	local _hdr=`mktemp`
+	local _diff=`mktemp`
+	local _new_hdr=$_hdr.new
+
+	# there's a bug in filterdiff that leaves a line at the end of the
+	# header in the filtered git show output like:
+	#
+	# difflibxfs/xfs_alloc.c b/fs/xfs/libxfs/xfs_alloc.c
+	#
+	# split the header on that (convenient!)
+	sed -e /^difflib/q $_patch > $_hdr
+	cat $_patch | awk '
+		BEGIN { difflib_seen = 0; index_seen = 0 }
+		/^difflib/ { difflib_seen++; next }
+		/^index/ { if (++index_seen == 1) { next } }
+		// { if (difflib_seen) { print $0 } }' > $_diff
+
+	# the header now has the format:
+	# commit 0d5a75e9e23ee39cd0d8a167393dcedb4f0f47b2
+	# Author: Eric Sandeen <sandeen@sandeen.net>
+	# Date:   Wed Jun 1 17:38:15 2016 +1000
+	# 
+	#     xfs: make several functions static
+	#....
+	#     Signed-off-by: Dave Chinner <david@fromorbit.com>
+	#
+	#difflibxfs/xfs_alloc.c b/fs/xfs/libxfs/xfs_alloc.c
+	#
+	# We want to format it like a normal patch with a line to say what repo
+	# and commit it was sourced from:
+	#
+	# xfs: make several functions static
+	#
+	# From: Eric Sandeen <sandeen@sandeen.net>
+	#
+	# Source kernel commit: 0d5a75e9e23ee39cd0d8a167393dcedb4f0f47b2
+	#
+	# <body>
+	#
+	# To do this, use sed to first strip whitespace, then pass it into awk
+	# to rearrange the headers.
+	sed -e 's/^ *//' $_hdr | awk -v src=$_source '
+		BEGIN {
+			date_seen=0
+			subject_seen=0
+		}
+		/^commit/ {
+			commit=$2
+			next;
+		}
+		/^Author:/ {
+			split($0, a, ":")
+			from=a[2]
+			next;
+		}
+		/^Date:/ { date_seen=1; next }
+		/^difflib/ { next }
+
+		// {
+			if (date_seen == 0)
+				next;
+			if (subject_seen == 0) {
+				if (length($0) != 0) {
+					subject_seen=1
+					subject=$0;
+				}
+				next;
+			}
+			if (subject_seen == 1) {
+				print subject
+				print
+				print "From:" from
+				print
+				print "Source " src " commit: " commit
+				subject_seen=2
+			}
+			print $0
+		}' > $_hdr.new
+
+	# now output the new patch
+	cat $_hdr.new $_diff
+
+	rm -f $_hdr* $_diff
+
+}
+
 apply_patch()
 {
 	local _patch=$1
 	local _patch_name=$2
 	local _current_commit=$3
 	local _new_patch=`mktemp`
+	local _source="kernel"
 
+	# filter just the libxfs parts of the patch
 	if [ -d "fs/xfs/libxfs" ]; then
+
+		[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "[ab]/libxfs/"
+		if [ $? -ne 0 ]; then
+			echo "Doesn't look like an xfsprogs patch with libxfs changes"
+			echo "Skipping commit $_current_commit"
+			return
+		fi
+
 		filter_kernel_patch $_patch > $_new_patch
+		_source="xfsprogs"
 	elif [ -d "libxfs" -a -d "libxlog" ]; then
+
+		[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "[ab]/fs/xfs/libxfs/"
+		if [ $? -ne 0 ]; then
+			echo "Doesn't look like a kernel patch with libxfs changes"
+			echo "Skipping commit $_current_commit"
+			return
+		fi
+
 		filter_xfsprogs_patch $_patch > $_new_patch
 	fi
 
+	# now munge the header to be in the correct format.
+	fixup_header_format $_source $_new_patch > $_new_patch.2
+
 	if [ -n "$VERBOSE" ]; then
 		echo "Filtered patch from $REPO contains:"
-		lsdiff $_new_patch
+		lsdiff $_new_patch.2
 	fi
 
 	# Ok, now apply with guilt or patch; either may fail and require a force
@@ -205,22 +311,28 @@ apply_patch()
 			guilt top
 		fi
 
-		guilt import -P $_patch_name $_new_patch
+		guilt import -P $_patch_name $_new_patch.2
 		guilt push
-		if [ $? -ne 0 ]; then
+		if [ $? -eq 0 ]; then
+			guilt refresh
+		else
 			echo "Guilt push failed!"
-			echo "Force push patch, fix and refresh."
-			echo "Restart from commit $_current_commit"
-			fail "Manual cleanup required!"
+			read -r -p "Skip of Fail [s|F]? " response
+			if [ -z "$response" -o "$response" != "s" ]; then
+				echo "Force push patch, fix and refresh."
+				echo "Restart from commit $_current_commit"
+				fail "Manual cleanup required!"
+			else
+				echo "Skipping. Manual series file cleanup needed!"
+			fi
 		fi
-		guilt refresh
 	else
 		echo "Applying with patch utility:"
-		patch -p1 < $_new_patch
+		patch -p1 < $_new_patch.2
 		echo "Patch was applied in $REPO; check for rejects, etc"
 	fi
 
-	rm -f $_new_patch
+	rm -f $_new_patch*
 }
 
 # name a guilt patch. Code is lifted from guilt import-commit.
