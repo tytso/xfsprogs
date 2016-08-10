@@ -370,6 +370,7 @@ roundup_64(__uint64_t x, __uint32_t y)
 #define xfs_trans_buf_set_type(tp, bp, t)	({	\
 	int __t = (t);					\
 	__t = __t; /* no set-but-unused warning */	\
+	tp = tp;  /* no set-but-unused warning */	\
 })
 
 #define xfs_trans_buf_copy_type(dbp, sbp)
