@@ -1260,7 +1260,7 @@ libxfs_bulkrelse(
 	}
 
 	pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
-	__list_splice(list, &xfs_buf_freelist.cm_list);
+	list_splice(list, &xfs_buf_freelist.cm_list);
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 
 	return count;

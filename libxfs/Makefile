@@ -51,6 +51,7 @@ CFILES = cache.c \
 	crc32.c \
 	init.c \
 	kmem.c \
+	list_sort.c \
 	logitem.c \
 	radix-tree.c \
 	rdwr.c \

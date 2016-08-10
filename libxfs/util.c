@@ -777,3 +777,4 @@ libxfs_zero_extent(
 
 	return libxfs_device_zero(xfs_find_bdev_for_inode(ip), sector, size);
 }
+
