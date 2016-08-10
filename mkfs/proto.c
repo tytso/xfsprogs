@@ -27,7 +27,7 @@ static char *getstr(char **pp);
 static void fail(char *msg, int i);
 static struct xfs_trans * getres(struct xfs_mount *mp, uint blocks);
 static void rsvfile(xfs_mount_t *mp, xfs_inode_t *ip, long long len);
-static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, xfs_bmap_free_t *flist,
+static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, struct xfs_defer_ops *flist,
 	xfs_fsblock_t *first, int dolocal, int logit, char *buf, int len);
 static char *newregfile(char **pp, int *len);
 static void rtinit(xfs_mount_t *mp);
@@ -231,7 +231,7 @@ static int
 newfile(
 	xfs_trans_t	*tp,
 	xfs_inode_t	*ip,
-	xfs_bmap_free_t	*flist,
+	struct xfs_defer_ops	*flist,
 	xfs_fsblock_t	*first,
 	int		dolocal,
 	int		logit,
@@ -324,7 +324,7 @@ newdirent(
 	struct xfs_name	*name,
 	xfs_ino_t	inum,
 	xfs_fsblock_t	*first,
-	xfs_bmap_free_t	*flist)
+	struct xfs_defer_ops	*flist)
 {
 	int	error;
 	int	rsv;
@@ -370,7 +370,7 @@ parseproto(
 	int		error;
 	xfs_fsblock_t	first;
 	int		flags;
-	xfs_bmap_free_t	flist;
+	struct xfs_defer_ops	flist;
 	int		fmt;
 	int		i;
 	xfs_inode_t	*ip;
@@ -455,7 +455,7 @@ parseproto(
 	xname.len = name ? strlen(name) : 0;
 	xname.type = 0;
 	flags = XFS_ILOG_CORE;
-	xfs_bmap_init(&flist, &first);
+	libxfs_defer_init(&flist, &first);
 	switch (fmt) {
 	case IF_REGULAR:
 		buf = newregfile(pp, &len);
@@ -495,7 +495,7 @@ parseproto(
 		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &flist);
 		libxfs_trans_log_inode(tp, ip, flags);
 
-		error = -libxfs_bmap_finish(&tp, &flist, ip);
+		error = -libxfs_defer_finish(&tp, &flist, ip);
 		if (error)
 			fail(_("Pre-allocated file creation failed"), error);
 		libxfs_trans_commit(tp);
@@ -577,7 +577,7 @@ parseproto(
 		}
 		newdirectory(mp, tp, ip, pip);
 		libxfs_trans_log_inode(tp, ip, flags);
-		error = -libxfs_bmap_finish(&tp, &flist, ip);
+		error = -libxfs_defer_finish(&tp, &flist, ip);
 		if (error)
 			fail(_("Directory creation failed"), error);
 		libxfs_trans_commit(tp);
@@ -603,7 +603,7 @@ parseproto(
 		fail(_("Unknown format"), EINVAL);
 	}
 	libxfs_trans_log_inode(tp, ip, flags);
-	error = -libxfs_bmap_finish(&tp, &flist, ip);
+	error = -libxfs_defer_finish(&tp, &flist, ip);
 	if (error) {
 		fail(_("Error encountered creating file from prototype file"),
 			error);
@@ -633,7 +633,7 @@ rtinit(
 	xfs_bmbt_irec_t	*ep;
 	int		error;
 	xfs_fsblock_t	first;
-	xfs_bmap_free_t	flist;
+	struct xfs_defer_ops	flist;
 	int		i;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	xfs_extlen_t	nsumblocks;
@@ -693,7 +693,7 @@ rtinit(
 
 	libxfs_trans_ijoin(tp, rbmip, 0);
 	bno = 0;
-	xfs_bmap_init(&flist, &first);
+	libxfs_defer_init(&flist, &first);
 	while (bno < mp->m_sb.sb_rbmblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
 		error = -libxfs_bmapi_write(tp, rbmip, bno,
@@ -712,7 +712,7 @@ rtinit(
 		}
 	}
 
-	error = -libxfs_bmap_finish(&tp, &flist, rbmip);
+	error = -libxfs_defer_finish(&tp, &flist, rbmip);
 	if (error) {
 		fail(_("Completion of the realtime bitmap failed"), error);
 	}
@@ -729,7 +729,7 @@ rtinit(
 		res_failed(i);
 	libxfs_trans_ijoin(tp, rsumip, 0);
 	bno = 0;
-	xfs_bmap_init(&flist, &first);
+	libxfs_defer_init(&flist, &first);
 	while (bno < nsumblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
 		error = -libxfs_bmapi_write(tp, rsumip, bno,
@@ -747,7 +747,7 @@ rtinit(
 			bno += ep->br_blockcount;
 		}
 	}
-	error = -libxfs_bmap_finish(&tp, &flist, rsumip);
+	error = -libxfs_defer_finish(&tp, &flist, rsumip);
 	if (error) {
 		fail(_("Completion of the realtime summary failed"), error);
 	}
@@ -762,7 +762,7 @@ rtinit(
 		if (i)
 			res_failed(i);
 		libxfs_trans_ijoin(tp, rbmip, 0);
-		xfs_bmap_init(&flist, &first);
+		libxfs_defer_init(&flist, &first);
 		ebno = XFS_RTMIN(mp->m_sb.sb_rextents,
 			bno + NBBY * mp->m_sb.sb_blocksize);
 		error = -libxfs_rtfree_extent(tp, bno, (xfs_extlen_t)(ebno-bno));
@@ -770,7 +770,7 @@ rtinit(
 			fail(_("Error initializing the realtime space"),
 				error);
 		}
-		error = -libxfs_bmap_finish(&tp, &flist, rbmip);
+		error = -libxfs_defer_finish(&tp, &flist, rbmip);
 		if (error) {
 			fail(_("Error completing the realtime space"), error);
 		}

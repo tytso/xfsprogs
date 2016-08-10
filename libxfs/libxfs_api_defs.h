@@ -72,6 +72,10 @@
 #define xfs_rtfree_extent		libxfs_rtfree_extent
 #define xfs_zero_extent			libxfs_zero_extent
 
+#define xfs_defer_init			libxfs_defer_init
+#define xfs_defer_finish		libxfs_defer_finish
+#define xfs_defer_cancel		libxfs_defer_cancel
+
 #define xfs_da_brelse			libxfs_da_brelse
 #define xfs_da_hashname			libxfs_da_hashname
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
