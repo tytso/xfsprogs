@@ -54,6 +54,13 @@
 #define __user
 #endif
 
+/*
+ * kernel struct packing shortcut
+ */
+#ifndef __packed
+#define __packed __attribute__((packed))
+#endif
+
 #include <xfs/xfs_types.h>
 #include <xfs/xfs_fs.h>
 

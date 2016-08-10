@@ -278,11 +278,4 @@ static inline void put_unaligned_be64(__uint64_t val, void *p)
 	put_unaligned_be32(val, p + 4);
 }
 
-/* ARM old ABI has some weird alignment/padding */
-#if defined(__arm__) && !defined(__ARM_EABI__)
-#define __arch_pack __attribute__((packed))
-#else
-#define __arch_pack
-#endif
-
 #endif	/* __XFS_ARCH_H__ */
