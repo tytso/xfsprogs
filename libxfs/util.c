@@ -479,20 +479,20 @@ libxfs_bmap_finish(
 	struct xfs_bmap_free	*flist,
 	struct xfs_inode	*ip)
 {
-	xfs_bmap_free_item_t	*free;	/* free extent list item */
-	xfs_bmap_free_item_t	*next;	/* next item on free list */
+	struct xfs_bmap_free_item *free;	/* free extent list item */
 	int			error;
 
 	if (flist->xbf_count == 0)
 		return 0;
 
-	for (free = flist->xbf_first; free != NULL; free = next) {
-		next = free->xbfi_next;
+	while (!list_empty(&flist->xbf_flist)) {
+		free = list_first_entry(&flist->xbf_flist,
+			struct xfs_bmap_free_item, xbfi_list);
 		error = xfs_free_extent(*tp, free->xbfi_startblock,
 					free->xbfi_blockcount);
 		if (error)
 			return error;
-		xfs_bmap_del_free(flist, NULL, free);
+		xfs_bmap_del_free(flist, free);
 	}
 	return 0;
 }

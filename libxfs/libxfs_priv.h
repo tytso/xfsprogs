@@ -474,8 +474,7 @@ struct xfs_buftarg;
 int xfs_attr_rmtval_get(struct xfs_da_args *);
 
 /* xfs_bmap.c */
-void xfs_bmap_del_free(struct xfs_bmap_free *, struct xfs_bmap_free_item *,
-			struct xfs_bmap_free_item *);
+void xfs_bmap_del_free(struct xfs_bmap_free *, struct xfs_bmap_free_item *);
 
 /* xfs_mount.c */
 int xfs_initialize_perag_data(struct xfs_mount *, xfs_agnumber_t);
