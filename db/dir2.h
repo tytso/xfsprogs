@@ -53,9 +53,9 @@ extern const field_t	dir3_data_union_flds[];
 extern const field_t	da3_blkinfo_flds[];
 extern const field_t	da3_node_hdr_flds[];
 
-static inline xfs_dir2_inou_t *xfs_dir2_sf_inumberp(xfs_dir2_sf_entry_t *sfep)
+static inline uint8_t *xfs_dir2_sf_inumberp(xfs_dir2_sf_entry_t *sfep)
 {
-	return (xfs_dir2_inou_t *)&(sfep)->name[(sfep)->namelen];
+	return &(sfep)->name[(sfep)->namelen];
 }
 
 extern int	dir2_data_union_size(void *obj, int startoff, int idx);

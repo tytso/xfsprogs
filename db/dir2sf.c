@@ -41,12 +41,9 @@ const field_t	dir2sf_flds[] = {
 	{ NULL }
 };
 
-#define UOFF(f)	bitize(offsetof(xfs_dir2_inou_t, f))
 const field_t	dir2_inou_flds[] = {
-	{ "i8", FLDT_DIR2_INO8, OI(UOFF(i8)), dir2_inou_i8_count, FLD_COUNT,
-	  TYP_INODE },
-	{ "i4", FLDT_DIR2_INO4, OI(UOFF(i4)), dir2_inou_i4_count, FLD_COUNT,
-	  TYP_INODE },
+	{ "i8", FLDT_DIR2_INO8, 0, dir2_inou_i8_count, FLD_COUNT, TYP_INODE },
+	{ "i4", FLDT_DIR2_INO4, 0, dir2_inou_i4_count, FLD_COUNT, TYP_INODE },
 	{ NULL }
 };
 
@@ -110,9 +107,7 @@ dir2_inou_size(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(idx == 0);
 	sf = (struct xfs_dir2_sf_hdr *)XFS_DFORK_DPTR(dip);
-	return bitize(sf->i8count ?
-		      (uint)sizeof(xfs_dir2_ino8_t) :
-		      (uint)sizeof(xfs_dir2_ino4_t));
+	return bitize(sf->i8count ? XFS_INO64_SIZE : XFS_INO32_SIZE);
 }
 
 static int

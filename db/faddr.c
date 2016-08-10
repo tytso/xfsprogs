@@ -363,10 +363,9 @@ fa_ino4(
 	typnm_t		next)
 {
 	xfs_ino_t	ino;
-	xfs_dir2_ino4_t	ino4;
 
 	ASSERT(next == TYP_INODE);
-	ino = (xfs_ino_t)getbitval(obj, bit, bitsz(ino4), BVUNSIGNED);
+	ino = (xfs_ino_t)getbitval(obj, bit, bitsz(XFS_INO32_SIZE), BVUNSIGNED);
 	if (ino == NULLFSINO) {
 		dbprintf(_("null inode number, cannot set new addr\n"));
 		return;
@@ -381,10 +380,9 @@ fa_ino8(
 	typnm_t		next)
 {
 	xfs_ino_t	ino;
-	xfs_dir2_ino8_t	ino8;
 
 	ASSERT(next == TYP_INODE);
-	ino = (xfs_ino_t)getbitval(obj, bit, bitsz(ino8), BVUNSIGNED);
+	ino = (xfs_ino_t)getbitval(obj, bit, bitsz(XFS_INO64_SIZE), BVUNSIGNED);
 	if (ino == NULLFSINO) {
 		dbprintf(_("null inode number, cannot set new addr\n"));
 		return;
