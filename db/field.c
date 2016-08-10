@@ -225,7 +225,7 @@ const ftattr_t	ftattrtab[] = {
 	{ FLDT_DIR2_SF_HDR, "dir2_sf_hdr", NULL, (char *)dir2_sf_hdr_flds,
 	  dir2_sf_hdr_size, FTARG_SIZE, NULL, dir2_sf_hdr_flds },
 	{ FLDT_DIR2_SF_OFF, "dir2_sf_off", fp_num, "%#x",
-	  SI(bitsz(xfs_dir2_sf_off_t)), 0, NULL, NULL },
+	  SI(bitize(2*sizeof(__u8))), 0, NULL, NULL },
 	{ FLDT_DIR2SF, "dir2sf", NULL, (char *)dir2sf_flds, dir2sf_size,
 	  FTARG_SIZE, NULL, dir2sf_flds },
 
