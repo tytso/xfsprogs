@@ -84,6 +84,7 @@ CFILES = cache.c \
 	xfs_ialloc_btree.c \
 	xfs_log_rlimit.c \
 	xfs_rmap.c \
+	xfs_rmap_btree.c \
 	xfs_rtbitmap.c \
 	xfs_sb.c \
 	xfs_symlink_remote.c \

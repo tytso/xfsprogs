@@ -19,6 +19,38 @@
 #define	__XFS_RMAP_BTREE_H__
 
 struct xfs_buf;
+struct xfs_btree_cur;
+struct xfs_mount;
+
+/* rmaps only exist on crc enabled filesystems */
+#define XFS_RMAP_BLOCK_LEN	XFS_BTREE_SBLOCK_CRC_LEN
+
+/*
+ * Record, key, and pointer address macros for btree blocks.
+ *
+ * (note that some of these may appear unused, but they are used in userspace)
+ */
+#define XFS_RMAP_REC_ADDR(block, index) \
+	((struct xfs_rmap_rec *) \
+		((char *)(block) + XFS_RMAP_BLOCK_LEN + \
+		 (((index) - 1) * sizeof(struct xfs_rmap_rec))))
+
+#define XFS_RMAP_KEY_ADDR(block, index) \
+	((struct xfs_rmap_key *) \
+		((char *)(block) + XFS_RMAP_BLOCK_LEN + \
+		 ((index) - 1) * sizeof(struct xfs_rmap_key)))
+
+#define XFS_RMAP_PTR_ADDR(block, index, maxrecs) \
+	((xfs_rmap_ptr_t *) \
+		((char *)(block) + XFS_RMAP_BLOCK_LEN + \
+		 (maxrecs) * sizeof(struct xfs_rmap_key) + \
+		 ((index) - 1) * sizeof(xfs_rmap_ptr_t)))
+
+struct xfs_btree_cur *xfs_rmapbt_init_cursor(struct xfs_mount *mp,
+				struct xfs_trans *tp, struct xfs_buf *bp,
+				xfs_agnumber_t agno);
+int xfs_rmapbt_maxrecs(struct xfs_mount *mp, int blocklen, int leaf);
+extern void xfs_rmapbt_compute_maxlevels(struct xfs_mount *mp);
 
 int xfs_rmap_alloc(struct xfs_trans *tp, struct xfs_buf *agbp,
 		   xfs_agnumber_t agno, xfs_agblock_t bno, xfs_extlen_t len,
