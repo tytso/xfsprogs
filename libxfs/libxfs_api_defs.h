@@ -63,10 +63,8 @@
 #define xfs_attr_leaf_newentsize	libxfs_attr_leaf_newentsize
 
 #define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
-#define xfs_bmap_cancel			libxfs_bmap_cancel
 #define xfs_bmap_last_offset		libxfs_bmap_last_offset
 #define xfs_bmap_search_extents		libxfs_bmap_search_extents
-#define xfs_bmap_finish			libxfs_bmap_finish
 #define xfs_bmapi_write			libxfs_bmapi_write
 #define xfs_bmapi_read			libxfs_bmapi_read
 #define xfs_bunmapi			libxfs_bunmapi

@@ -25,6 +25,7 @@
 #include "xfs_log_format.h"
 #include "xfs_trans_resv.h"
 #include "xfs_mount.h"
+#include "xfs_defer.h"
 #include "xfs_inode_buf.h"
 #include "xfs_inode_fork.h"
 #include "xfs_inode.h"
@@ -471,30 +472,6 @@ libxfs_mod_incore_sb(
 		ASSERT(0);
 		return -EINVAL;
 	}
-}
-
-int
-libxfs_bmap_finish(
-	struct xfs_trans	**tp,
-	struct xfs_bmap_free	*flist,
-	struct xfs_inode	*ip)
-{
-	struct xfs_bmap_free_item *free;	/* free extent list item */
-	int			error;
-
-	if (flist->xbf_count == 0)
-		return 0;
-
-	while (!list_empty(&flist->xbf_flist)) {
-		free = list_first_entry(&flist->xbf_flist,
-			struct xfs_bmap_free_item, xbfi_list);
-		error = xfs_free_extent(*tp, free->xbfi_startblock,
-					free->xbfi_blockcount);
-		if (error)
-			return error;
-		xfs_bmap_del_free(flist, free);
-	}
-	return 0;
 }
 
 /*
