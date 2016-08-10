@@ -35,6 +35,7 @@ HFILES = \
 	xfs_inode_buf.h \
 	xfs_inode_fork.h \
 	xfs_quota_defs.h \
+	xfs_rmap.h \
 	xfs_sb.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \
