@@ -2655,7 +2655,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		 */
 		if (!logsize) {
 			logblocks = MIN(logblocks,
-					XFS_ALLOC_AG_MAX_USABLE(mp));
+					xfs_alloc_ag_max_usable(mp));
 
 			/* revalidate the log size is valid if we changed it */
 			validate_log_size(logblocks, blocklog, min_logblocks);
