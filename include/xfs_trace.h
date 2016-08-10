@@ -188,4 +188,7 @@
 #define trace_xfs_defer_finish_error(a,b,c)	((void) 0)
 #define trace_xfs_defer_finish_done(a,b)	((void) 0)
 
+#define trace_xfs_bmap_free_defer(a,b,c,d,e)	((void) 0)
+#define trace_xfs_bmap_free_deferred(a,b,c,d,e)	((void) 0)
+
 #endif /* __TRACE_H__ */
