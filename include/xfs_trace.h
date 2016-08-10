@@ -197,6 +197,7 @@
 #define trace_xfs_rmap_unmap(...)		((void) 0)
 #define trace_xfs_rmap_unmap_error(...)		((void) 0)
 #define trace_xfs_rmap_unmap_done(...)		((void) 0)
-
+#define trace_xfs_rmapbt_free_block(...)	((void) 0)
+#define trace_xfs_rmapbt_alloc_block(...)	((void) 0)
 
 #endif /* __TRACE_H__ */
