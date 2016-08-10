@@ -173,4 +173,19 @@
 #define trace_xfs_perag_get_tag(a,b,c,d) ((c) = (c))
 #define trace_xfs_perag_put(a,b,c,d)	((c) = (c))
 
+#define trace_xfs_defer_init(a,b)		((void) 0)
+#define trace_xfs_defer_cancel(a,b)		((void) 0)
+#define trace_xfs_defer_intake_work(a,b)	((void) 0)
+#define trace_xfs_defer_intake_cancel(a,b)	((void) 0)
+#define trace_xfs_defer_pending_commit(a,b)	((void) 0)
+#define trace_xfs_defer_pending_abort(a,b)	((void) 0)
+#define trace_xfs_defer_pending_cancel(a,b)	((void) 0)
+#define trace_xfs_defer_pending_finish(a,b)	((void) 0)
+#define trace_xfs_defer_trans_abort(a,b)	((void) 0)
+#define trace_xfs_defer_trans_roll(a,b)		((void) 0)
+#define trace_xfs_defer_trans_roll_error(a,b,c)	((void) 0)
+#define trace_xfs_defer_finish(a,b)		((void) 0)
+#define trace_xfs_defer_finish_error(a,b,c)	((void) 0)
+#define trace_xfs_defer_finish_done(a,b)	((void) 0)
+
 #endif /* __TRACE_H__ */
