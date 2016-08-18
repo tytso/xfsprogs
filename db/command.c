@@ -49,6 +49,7 @@
 #include "write.h"
 #include "malloc.h"
 #include "dquot.h"
+#include "fsmap.h"
 
 cmdinfo_t	*cmdtab;
 int		ncmds;
@@ -128,6 +129,7 @@ init_commands(void)
 	echo_init();
 	frag_init();
 	freesp_init();
+	fsmap_init();
 	help_init();
 	hash_init();
 	inode_init();

@@ -568,6 +568,15 @@ command to convert to and from this form. Block numbers given for file blocks
 .B bmap
 command) are in this form.
 .TP
+.BI "fsmap [ " start " ] [ " end " ]
+Prints the mapping of disk blocks used by an XFS filesystem.  The map
+lists each extent used by files, allocation group metadata,
+journalling logs, and static filesystem metadata, as well as any
+regions that are unused.  All blocks, offsets, and lengths are specified
+in units of 512-byte blocks, no matter what the filesystem's block size is.
+.BI "The optional " start " and " end " arguments can be used to constrain
+the output to a particular range of disk blocks.
+.TP
 .BI hash " string
 Prints the hash value of
 .I string
