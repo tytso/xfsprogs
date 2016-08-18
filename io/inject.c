@@ -74,7 +74,9 @@ error_tag(char *name)
 		{ XFS_ERRTAG_DIOWRITE_IOERR,		"diowrite" },
 #define XFS_ERRTAG_BMAPIFORMAT                          21
 		{ XFS_ERRTAG_BMAPIFORMAT,		"bmapifmt" },
-#define XFS_ERRTAG_MAX                                  22
+#define XFS_ERRTAG_FREE_EXTENT				22
+		{ XFS_ERRTAG_FREE_EXTENT,		"free_extent" },
+#define XFS_ERRTAG_MAX                                  23
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
