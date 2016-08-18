@@ -258,6 +258,7 @@ secondary_sb_whack(
 	int		size;
 	char		*ip;
 	int		rval = 0;;
+	uuid_t		tmpuuid;
 
 	rval = do_bzero = 0;
 
@@ -310,10 +311,13 @@ secondary_sb_whack(
 			 * be set, and the latter is never updated past
 			 * the last field - just zap them both.
 			 */
+			memcpy(&tmpuuid, &sb->sb_meta_uuid, sizeof(uuid_t));
 			memset((void *)((intptr_t)sb + size), 0,
 				mp->m_sb.sb_sectsize - size);
 			memset(XFS_BUF_PTR(sbuf) + size, 0,
 				mp->m_sb.sb_sectsize - size);
+			/* Preserve meta_uuid so we don't fail uuid checks */
+			memcpy(&sb->sb_meta_uuid, &tmpuuid, sizeof(uuid_t));
 		} else
 			do_warn(
 	_("would zero unused portion of %s superblock (AG #%u)\n"),
