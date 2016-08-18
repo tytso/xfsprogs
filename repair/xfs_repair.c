@@ -409,7 +409,7 @@ calc_mkfs(xfs_mount_t *mp)
 	 * Because the current shape of the btrees may differ from the current
 	 * shape, we open code the mkfs freelist block count here. mkfs creates
 	 * single level trees, so the calculation is pertty straight forward for
-	 * the two trees that use the AGFL.
+	 * the trees that use the AGFL.
 	 */
 	bnobt_root = howmany(4 * mp->m_sb.sb_sectsize, mp->m_sb.sb_blocksize);
 	bcntbt_root = bnobt_root + 1;
@@ -417,8 +417,10 @@ calc_mkfs(xfs_mount_t *mp)
 	fino_bno = inobt_root + (2 * min(2, mp->m_ag_maxlevels)) + 1;
 	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		fino_bno++;
-	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+		fino_bno += min(2, mp->m_rmap_maxlevels); /* agfl blocks */
 		fino_bno++;
+	}
 
 	/*
 	 * If the log is allocated in the first allocation group we need to
