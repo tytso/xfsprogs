@@ -76,7 +76,9 @@ error_tag(char *name)
 		{ XFS_ERRTAG_BMAPIFORMAT,		"bmapifmt" },
 #define XFS_ERRTAG_FREE_EXTENT				22
 		{ XFS_ERRTAG_FREE_EXTENT,		"free_extent" },
-#define XFS_ERRTAG_MAX                                  23
+#define XFS_ERRTAG_RMAP_FINISH_ONE			23
+		{ XFS_ERRTAG_RMAP_FINISH_ONE,		"rmap_finish_one" },
+#define XFS_ERRTAG_MAX                                  24
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
