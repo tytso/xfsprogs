@@ -249,6 +249,8 @@ bmap_f(
 				map[i + 1].bmv_length - 1LL));
 			if (map[i + 1].bmv_block == -1)
 				printf(_("hole"));
+			else if (map[i + 1].bmv_block == -2)
+				printf(_("delalloc"));
 			else {
 				printf("%lld..%lld",
 					(long long) map[i + 1].bmv_block,
