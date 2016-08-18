@@ -10,7 +10,7 @@ LTCOMMAND = mkfs.xfs
 HFILES =
 CFILES = maxtrres.c proto.c xfs_mkfs.c
 
-LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBUUID) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID)
+LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID) $(LIBUUID)
 LTDEPENDENCIES += $(LIBXFS) $(LIBXCMD)
 LLDFLAGS = -static-libtool-libs
 
