@@ -229,3 +229,154 @@ xlog_recover_print_efd(
 		f->efd_size, f->efd_nextents,
 		(unsigned long long)f->efd_efi_id);
 }
+
+/* Reverse Mapping Update Items */
+
+static int
+xfs_rui_copy_format(
+	char			  *buf,
+	uint			  len,
+	struct xfs_rui_log_format *dst_fmt,
+	int			  continued)
+{
+	uint nextents = ((struct xfs_rui_log_format *)buf)->rui_nextents;
+	uint dst_len = sizeof(struct xfs_rui_log_format) +
+			(nextents - 1) * sizeof(struct xfs_map_extent);
+
+	if (len == dst_len || continued) {
+		memcpy((char *)dst_fmt, buf, len);
+		return 0;
+	}
+	fprintf(stderr, _("%s: bad size of RUI format: %u; expected %u; nextents = %u\n"),
+		progname, len, dst_len, nextents);
+	return 1;
+}
+
+int
+xlog_print_trans_rui(
+	char			**ptr,
+	uint			src_len,
+	int			continued)
+{
+	struct xfs_rui_log_format	*src_f, *f = NULL;
+	uint			dst_len;
+	uint			nextents;
+	struct xfs_map_extent	*ex;
+	int			i;
+	int			error = 0;
+	int			core_size;
+
+	core_size = offsetof(struct xfs_rui_log_format, rui_extents);
+
+	/*
+	 * memmove to ensure 8-byte alignment for the long longs in
+	 * struct xfs_rui_log_format structure
+	 */
+	src_f = malloc(src_len);
+	if (src_f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	memmove((char*)src_f, *ptr, src_len);
+	*ptr += src_len;
+
+	/* convert to native format */
+	nextents = src_f->rui_nextents;
+	dst_len = sizeof(struct xfs_rui_log_format) +
+			(nextents - 1) * sizeof(struct xfs_map_extent);
+
+	if (continued && src_len < core_size) {
+		printf(_("RUI: Not enough data to decode further\n"));
+		error = 1;
+		goto error;
+	}
+
+	f = malloc(dst_len);
+	if (f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	if (xfs_rui_copy_format((char *)src_f, src_len, f, continued)) {
+		error = 1;
+		goto error;
+	}
+
+	printf(_("RUI:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
+		f->rui_size, f->rui_nextents, (unsigned long long)f->rui_id);
+
+	if (continued) {
+		printf(_("RUI extent data skipped (CONTINUE set, no space)\n"));
+		goto error;
+	}
+
+	ex = f->rui_extents;
+	for (i=0; i < f->rui_nextents; i++) {
+		printf("(s: 0x%llx, l: %d, own: %lld, off: %llu, f: 0x%x) ",
+			(unsigned long long)ex->me_startblock, ex->me_len,
+			(long long)ex->me_owner,
+			(unsigned long long)ex->me_startoff, ex->me_flags);
+		printf("\n");
+		ex++;
+	}
+error:
+	free(src_f);
+	free(f);
+	return error;
+}
+
+void
+xlog_recover_print_rui(
+	struct xlog_recover_item	*item)
+{
+	char				*src_f;
+	uint				src_len;
+
+	src_f = item->ri_buf[0].i_addr;
+	src_len = item->ri_buf[0].i_len;
+
+	xlog_print_trans_rui(&src_f, src_len, 0);
+}
+
+int
+xlog_print_trans_rud(
+	char				**ptr,
+	uint				len)
+{
+	struct xfs_rud_log_format	*f;
+	struct xfs_rud_log_format	lbuf;
+
+	/* size without extents at end */
+	uint core_size = sizeof(struct xfs_rud_log_format);
+
+	/*
+	 * memmove to ensure 8-byte alignment for the long longs in
+	 * xfs_efd_log_format_t structure
+	 */
+	memmove(&lbuf, *ptr, MIN(core_size, len));
+	f = &lbuf;
+	*ptr += len;
+	if (len >= core_size) {
+		printf(_("RUD:  #regs: %d	                 id: 0x%llx\n"),
+			f->rud_size,
+			(unsigned long long)f->rud_rui_id);
+
+		/* don't print extents as they are not used */
+
+		return 0;
+	} else {
+		printf(_("RUD: Not enough data to decode further\n"));
+		return 1;
+	}
+}
+
+void
+xlog_recover_print_rud(
+	struct xlog_recover_item	*item)
+{
+	char				*f;
+
+	f = item->ri_buf[0].i_addr;
+	xlog_print_trans_rud(&f, sizeof(struct xfs_rud_log_format));
+}

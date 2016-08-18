@@ -408,6 +408,12 @@ xlog_recover_print_logitem(
 	case XFS_LI_EFI:
 		xlog_recover_print_efi(item);
 		break;
+	case XFS_LI_RUD:
+		xlog_recover_print_rud(item);
+		break;
+	case XFS_LI_RUI:
+		xlog_recover_print_rui(item);
+		break;
 	case XFS_LI_DQUOT:
 		xlog_recover_print_dquot(item);
 		break;
@@ -441,6 +447,12 @@ xlog_recover_print_item(
 		break;
 	case XFS_LI_EFI:
 		printf("EFI");
+		break;
+	case XFS_LI_RUD:
+		printf("RUD");
+		break;
+	case XFS_LI_RUI:
+		printf("RUI");
 		break;
 	case XFS_LI_DQUOT:
 		printf("DQ ");
