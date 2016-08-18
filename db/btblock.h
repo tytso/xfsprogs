@@ -54,4 +54,9 @@ extern const struct field	cntbt_crc_hfld[];
 extern const struct field	cntbt_key_flds[];
 extern const struct field	cntbt_rec_flds[];
 
+extern const struct field	rmapbt_crc_flds[];
+extern const struct field	rmapbt_crc_hfld[];
+extern const struct field	rmapbt_key_flds[];
+extern const struct field	rmapbt_rec_flds[];
+
 extern int	btblock_size(void *obj, int startoff, int idx);
