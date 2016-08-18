@@ -372,66 +372,6 @@ xlog_recover_print_inode(
 	}
 }
 
-STATIC void
-xlog_recover_print_efd(
-	xlog_recover_item_t	*item)
-{
-	xfs_efd_log_format_t	*f;
-
-	f = (xfs_efd_log_format_t *)item->ri_buf[0].i_addr;
-	/*
-	 * An xfs_efd_log_format structure contains a variable length array
-	 * as the last field.
-	 * Each element is of size xfs_extent_32_t or xfs_extent_64_t.
-	 * However, the extents are never used and won't be printed.
-	 */
-	printf(_("	EFD:  #regs: %d    num_extents: %d  id: 0x%llx\n"),
-	       f->efd_size, f->efd_nextents, (unsigned long long)f->efd_efi_id);
-}
-
-
-STATIC void
-xlog_recover_print_efi(
-	xlog_recover_item_t	*item)
-{
-	xfs_efi_log_format_t	*f, *src_f;
-	xfs_extent_t		*ex;
-	int			i;
-	uint			src_len, dst_len;
-
-	src_f = (xfs_efi_log_format_t *)item->ri_buf[0].i_addr;
-	src_len = item->ri_buf[0].i_len;
-	/*
-	 * An xfs_efi_log_format structure contains a variable length array
-	 * as the last field.
-	 * Each element is of size xfs_extent_32_t or xfs_extent_64_t.
-	 * Need to convert to native format.
-	 */
-	dst_len = sizeof(xfs_efi_log_format_t) + (src_f->efi_nextents - 1) * sizeof(xfs_extent_t);
-	if ((f = (xfs_efi_log_format_t *)malloc(dst_len)) == NULL) {
-	    fprintf(stderr, _("%s: xlog_recover_print_efi: malloc failed\n"), progname);
-	    exit(1);
-	}
-	if (xfs_efi_copy_format((char*)src_f, src_len, f, 0)) {
-	    free(f);
-	    return;
-	}
-
-	printf(_("	EFI:  #regs:%d    num_extents:%d  id:0x%llx\n"),
-	       f->efi_size, f->efi_nextents, (unsigned long long)f->efi_id);
-	ex = f->efi_extents;
-	printf("	");
-	for (i=0; i< f->efi_nextents; i++) {
-		printf("(s: 0x%llx, l: %d) ",
-			(unsigned long long)ex->ext_start, ex->ext_len);
-		if (i % 4 == 3)
-			printf("\n");
-		ex++;
-	}
-	if (i % 4 != 0)
-		printf("\n");
-	free(f);
-}
 
 STATIC void
 xlog_recover_print_icreate(

@@ -45,6 +45,10 @@ extern void print_stars(void);
 
 extern xfs_inode_log_format_t *
 	xfs_inode_item_format_convert(char *, uint, xfs_inode_log_format_t *);
-extern int xfs_efi_copy_format(char *, uint, xfs_efi_log_format_t *, int);
+
+extern int xlog_print_trans_efi(char **ptr, uint src_len, int continued);
+extern void xlog_recover_print_efi(xlog_recover_item_t *item);
+extern int xlog_print_trans_efd(char **ptr, uint len);
+extern void xlog_recover_print_efd(xlog_recover_item_t *item);
 
 #endif	/* LOGPRINT_H */
