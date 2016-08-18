@@ -51,6 +51,7 @@ HFILES = \
 
 CFILES = cache.c \
 	crc32.c \
+	defer_item.c \
 	init.c \
 	kmem.c \
 	list_sort.c \

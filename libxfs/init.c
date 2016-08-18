@@ -263,6 +263,9 @@ libxfs_init(libxfs_init_t *a)
 	fd = -1;
 	flags = (a->isreadonly | a->isdirect);
 
+	xfs_extent_free_init_defer_op();
+	xfs_rmap_update_init_defer_op();
+
 	radix_tree_init();
 
 	if (a->volname) {
