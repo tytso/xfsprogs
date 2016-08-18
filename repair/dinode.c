@@ -744,6 +744,7 @@ _("%s fork in ino %" PRIu64 " claims dup extent, "
 _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 					forkname, ino, (__uint64_t) b);
 				/* fall through ... */
+			case XR_E_INUSE1:	/* seen by rmap */
 			case XR_E_UNKNOWN:
 				set_bmap_ext(agno, agbno, blen, XR_E_INUSE);
 				break;
@@ -751,6 +752,11 @@ _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 			case XR_E_BAD_STATE:
 				do_error(_("bad state in block map %" PRIu64 "\n"), b);
 
+			case XR_E_FS_MAP1:
+			case XR_E_INO1:
+			case XR_E_INUSE_FS1:
+				do_warn(_("rmap claims metadata use!\n"));
+				/* fall through */
 			case XR_E_FS_MAP:
 			case XR_E_INO:
 			case XR_E_INUSE_FS:

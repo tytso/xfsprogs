@@ -417,6 +417,8 @@ calc_mkfs(xfs_mount_t *mp)
 	fino_bno = inobt_root + (2 * min(2, mp->m_ag_maxlevels)) + 1;
 	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		fino_bno++;
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+		fino_bno++;
 
 	/*
 	 * If the log is allocated in the first allocation group we need to

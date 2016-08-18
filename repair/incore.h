@@ -102,17 +102,11 @@ typedef struct rt_extent_tree_node  {
 #define XR_E_MULT	5	/* extent is multiply referenced */
 #define XR_E_INO	6	/* extent used by inodes (inode blocks) */
 #define XR_E_FS_MAP	7	/* extent used by fs space/inode maps */
-#define XR_E_BAD_STATE	8
-
-/* extent states, in 64 bit word chunks */
-#define	XR_E_UNKNOWN_LL		0x0000000000000000LL
-#define	XR_E_FREE1_LL		0x1111111111111111LL
-#define	XR_E_FREE_LL		0x2222222222222222LL
-#define	XR_E_INUSE_LL		0x3333333333333333LL
-#define	XR_E_INUSE_FS_LL	0x4444444444444444LL
-#define	XR_E_MULT_LL		0x5555555555555555LL
-#define	XR_E_INO_LL		0x6666666666666666LL
-#define	XR_E_FS_MAP_LL		0x7777777777777777LL
+#define XR_E_INUSE1	8	/* used block (marked by rmap btree) */
+#define XR_E_INUSE_FS1	9	/* used by fs ag header or log (rmap btree) */
+#define XR_E_INO1	10	/* used by inodes (marked by rmap btree) */
+#define XR_E_FS_MAP1	11	/* used by fs space/inode maps (rmap btree) */
+#define XR_E_BAD_STATE	12
 
 /* separate state bit, OR'ed into high (4th) bit of ex_state field */
 
