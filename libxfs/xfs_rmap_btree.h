@@ -58,11 +58,4 @@ struct xfs_btree_cur *xfs_rmapbt_init_cursor(struct xfs_mount *mp,
 int xfs_rmapbt_maxrecs(struct xfs_mount *mp, int blocklen, int leaf);
 extern void xfs_rmapbt_compute_maxlevels(struct xfs_mount *mp);
 
-int xfs_rmap_alloc(struct xfs_trans *tp, struct xfs_buf *agbp,
-		   xfs_agnumber_t agno, xfs_agblock_t bno, xfs_extlen_t len,
-		   struct xfs_owner_info *oinfo);
-int xfs_rmap_free(struct xfs_trans *tp, struct xfs_buf *agbp,
-		  xfs_agnumber_t agno, xfs_agblock_t bno, xfs_extlen_t len,
-		  struct xfs_owner_info *oinfo);
-
 #endif /* __XFS_RMAP_BTREE_H__ */
