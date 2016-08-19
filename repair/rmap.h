@@ -28,5 +28,9 @@ extern void init_rmaps(struct xfs_mount *);
 extern void free_rmaps(struct xfs_mount *);
 
 extern int add_rmap(struct xfs_mount *, xfs_ino_t, int, struct xfs_bmbt_irec *);
+extern int add_ag_rmap(struct xfs_mount *, xfs_agnumber_t agno,
+		xfs_agblock_t agbno, xfs_extlen_t len, uint64_t owner);
+extern int fold_raw_rmaps(struct xfs_mount *mp, xfs_agnumber_t agno);
+extern bool mergeable_rmaps(struct xfs_rmap_irec *r1, struct xfs_rmap_irec *r2);
 
 #endif /* RMAP_H_ */
