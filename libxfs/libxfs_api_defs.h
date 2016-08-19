@@ -103,6 +103,7 @@
 #define xfs_rmap_query_range		libxfs_rmap_query_range
 #define xfs_rmap_lookup_le		libxfs_rmap_lookup_le
 #define xfs_rmap_get_rec		libxfs_rmap_get_rec
+#define xfs_rmap_irec_offset_pack	libxfs_rmap_irec_offset_pack
 #define xfs_rmap_irec_offset_unpack	libxfs_rmap_irec_offset_unpack
 #define xfs_rmapbt_init_cursor		libxfs_rmapbt_init_cursor
 #define xfs_btree_del_cursor		libxfs_btree_del_cursor
