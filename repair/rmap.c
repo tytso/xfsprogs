@@ -39,6 +39,8 @@
 struct xfs_ag_rmap {
 	struct xfs_slab	*ar_rmaps;		/* rmap observations, p4 */
 	struct xfs_slab	*ar_raw_rmaps;		/* unmerged rmaps */
+	int		ar_flcount;		/* agfl entries from leftover */
+						/* agbt allocations */
 };
 
 static struct xfs_ag_rmap *ag_rmaps;
@@ -424,6 +426,124 @@ out:
 	return error;
 }
 
+/*
+ * Copy the per-AG btree reverse-mapping data into the rmapbt.
+ *
+ * At rmapbt reconstruction time, the rmapbt will be populated _only_ with
+ * rmaps for file extents, inode chunks, AG headers, and bmbt blocks.  While
+ * building the AG btrees we can record all the blocks allocated for each
+ * btree, but we cannot resolve the conflict between the fact that one has to
+ * finish allocating the space for the rmapbt before building the bnobt and the
+ * fact that allocating blocks for the bnobt requires adding rmapbt entries.
+ * Therefore we record in-core the rmaps for each btree and here use the
+ * libxfs rmap functions to finish building the rmap btree.
+ *
+ * During AGF/AGFL reconstruction in phase 5, rmaps for the AG btrees are
+ * recorded in memory.  The rmapbt has not been set up yet, so we need to be
+ * able to "expand" the AGFL without updating the rmapbt.  After we've written
+ * out the new AGF header the new rmapbt is available, so this function reads
+ * each AGFL to generate rmap entries.  These entries are merged with the AG
+ * btree rmap entries, and then we use libxfs' rmap functions to add them to
+ * the rmapbt, after which it is fully regenerated.
+ */
+int
+store_ag_btree_rmap_data(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	struct xfs_slab_cursor	*rm_cur;
+	struct xfs_rmap_irec	*rm_rec = NULL;
+	struct xfs_buf		*agbp = NULL;
+	struct xfs_buf		*agflbp = NULL;
+	struct xfs_trans	*tp;
+	struct xfs_trans_res tres = {0};
+	__be32			*agfl_bno, *b;
+	int			error = 0;
+	struct xfs_owner_info	oinfo;
+
+	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
+		return 0;
+
+	/* Release the ar_rmaps; they were put into the rmapbt during p5. */
+	free_slab(&ag_rmaps[agno].ar_rmaps);
+	error = init_slab(&ag_rmaps[agno].ar_rmaps,
+				  sizeof(struct xfs_rmap_irec));
+	if (error)
+		goto err;
+
+	/* Add the AGFL blocks to the rmap list */
+	error = libxfs_trans_read_buf(
+			mp, NULL, mp->m_ddev_targp,
+			XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
+			XFS_FSS_TO_BB(mp, 1), 0, &agflbp, &xfs_agfl_buf_ops);
+	if (error)
+		goto err;
+
+	agfl_bno = XFS_BUF_TO_AGFL_BNO(mp, agflbp);
+	agfl_bno += ag_rmaps[agno].ar_flcount;
+	b = agfl_bno;
+	while (*b != NULLAGBLOCK && b - agfl_bno <= XFS_AGFL_SIZE(mp)) {
+		error = add_ag_rmap(mp, agno, be32_to_cpu(*b), 1,
+				XFS_RMAP_OWN_AG);
+		if (error)
+			goto err;
+		b++;
+	}
+	libxfs_putbuf(agflbp);
+	agflbp = NULL;
+
+	/* Merge all the raw rmaps into the main list */
+	error = fold_raw_rmaps(mp, agno);
+	if (error)
+		goto err;
+
+	/* Create cursors to refcount structures */
+	error = init_slab_cursor(ag_rmaps[agno].ar_rmaps, rmap_compare,
+			&rm_cur);
+	if (error)
+		goto err;
+
+	/* Insert rmaps into the btree one at a time */
+	rm_rec = pop_slab_cursor(rm_cur);
+	while (rm_rec) {
+		error = -libxfs_trans_alloc(mp, &tres, 16, 0, 0, &tp);
+		if (error)
+			goto err_slab;
+
+		error = libxfs_alloc_read_agf(mp, tp, agno, 0, &agbp);
+		if (error)
+			goto err_trans;
+
+		ASSERT(XFS_RMAP_NON_INODE_OWNER(rm_rec->rm_owner));
+		libxfs_rmap_ag_owner(&oinfo, rm_rec->rm_owner);
+		error = libxfs_rmap_alloc(tp, agbp, agno, rm_rec->rm_startblock,
+				rm_rec->rm_blockcount, &oinfo);
+		if (error)
+			goto err_trans;
+
+		error = -libxfs_trans_commit(tp);
+		if (error)
+			goto err_slab;
+
+		fix_freelist(mp, agno, false);
+
+		rm_rec = pop_slab_cursor(rm_cur);
+	}
+
+	free_slab_cursor(&rm_cur);
+	return 0;
+
+err_trans:
+	libxfs_trans_cancel(tp);
+err_slab:
+	free_slab_cursor(&rm_cur);
+err:
+	if (agflbp)
+		libxfs_putbuf(agflbp);
+	printf("FAIL err %d\n", error);
+	return error;
+}
+
 #ifdef RMAP_DEBUG
 static void
 dump_rmap(
@@ -697,4 +817,82 @@ rmap_high_key_from_rec(
 	    (rec->rm_flags & XFS_RMAP_BMBT_BLOCK))
 		return;
 	key->rm_offset += adj;
+}
+
+/*
+ * Regenerate the AGFL so that we don't run out of it while rebuilding the
+ * rmap btree.  If skip_rmapbt is true, don't update the rmapbt (most probably
+ * because we're updating the rmapbt).
+ */
+void
+fix_freelist(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	bool			skip_rmapbt)
+{
+	xfs_alloc_arg_t		args;
+	xfs_trans_t		*tp;
+	struct xfs_trans_res	tres = {0};
+	int			flags;
+	int			error;
+
+	memset(&args, 0, sizeof(args));
+	args.mp = mp;
+	args.agno = agno;
+	args.alignment = 1;
+	args.pag = xfs_perag_get(mp, agno);
+	error = -libxfs_trans_alloc(mp, &tres,
+			libxfs_alloc_min_freelist(mp, args.pag), 0, 0, &tp);
+	if (error)
+		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
+				agno, error);
+	args.tp = tp;
+
+	/*
+	 * Prior to rmapbt, all we had to do to fix the freelist is "expand"
+	 * the fresh AGFL header from empty to full.  That hasn't changed.  For
+	 * rmapbt, however, things change a bit.
+	 *
+	 * When we're stuffing the rmapbt with the AG btree rmaps the tree can
+	 * expand, so we need to keep the AGFL well-stocked for the expansion.
+	 * However, this expansion can cause the bnobt/cntbt to shrink, which
+	 * can make the AGFL eligible for shrinking.  Shrinking involves
+	 * freeing rmapbt entries, but since we haven't finished loading the
+	 * rmapbt with the btree rmaps it's possible for the remove operation
+	 * to fail.  The AGFL block is large enough at this point to absorb any
+	 * blocks freed from the bnobt/cntbt, so we can disable shrinking.
+	 *
+	 * During the initial AGFL regeneration during AGF generation in phase5
+	 * we must also disable rmapbt modifications because the AGF that
+	 * libxfs reads does not yet point to the new rmapbt.  These initial
+	 * AGFL entries are added just prior to adding the AG btree block rmaps
+	 * to the rmapbt.  It's ok to pass NOSHRINK here too, since the AGFL is
+	 * empty and cannot shrink.
+	 */
+	flags = XFS_ALLOC_FLAG_NOSHRINK;
+	if (skip_rmapbt)
+		flags |= XFS_ALLOC_FLAG_NORMAP;
+	error = libxfs_alloc_fix_freelist(&args, flags);
+	xfs_perag_put(args.pag);
+	if (error) {
+		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
+				agno, error);
+	}
+	libxfs_trans_commit(tp);
+}
+
+/*
+ * Remember how many AGFL entries came from excess AG btree allocations and
+ * therefore already have rmap entries.
+ */
+void
+rmap_store_agflcount(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	int			count)
+{
+	if (!needs_rmap_work(mp))
+		return;
+
+	ag_rmaps[agno].ar_flcount = count;
 }

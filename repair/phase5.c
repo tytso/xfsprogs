@@ -74,6 +74,7 @@ typedef struct bt_status  {
 	 * per-level status info
 	 */
 	bt_stat_level_t		level[XFS_BTREE_MAXLEVELS];
+	uint64_t		owner;		/* owner */
 } bt_status_t;
 
 /*
@@ -205,6 +206,7 @@ setup_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *curs)
 	extent_tree_node_t	*bno_ext_ptr;
 	xfs_extlen_t		blocks_allocated;
 	xfs_agblock_t		*agb_ptr;
+	int			error;
 
 	/*
 	 * get the number of blocks we need to allocate, then
@@ -248,6 +250,12 @@ setup_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *curs)
 			*agb_ptr++ = ext_ptr->ex_startblock + u;
 			blocks_allocated++;
 		}
+
+		error = add_ag_rmap(mp, agno, ext_ptr->ex_startblock, u,
+				curs->owner);
+		if (error)
+			do_error(_("could not set up btree rmaps: %s\n"),
+				strerror(-error));
 
 		/*
 		 * if we only used part of this last extent, then we
@@ -916,6 +924,7 @@ init_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 
 	lptr = &btree_curs->level[0];
 	btree_curs->init = 1;
+	btree_curs->owner = XFS_RMAP_OWN_INOBT;
 
 	/*
 	 * build up statistics
@@ -1355,6 +1364,7 @@ init_rmapbt_cursor(
 
 	lptr = &btree_curs->level[0];
 	btree_curs->init = 1;
+	btree_curs->owner = XFS_RMAP_OWN_AG;
 
 	/*
 	 * build up statistics
@@ -1836,6 +1846,7 @@ build_agf_agfl(
 		agf->agf_flfirst = 0;
 		agf->agf_fllast = cpu_to_be32(i - 1);
 		agf->agf_flcount = cpu_to_be32(i);
+		rmap_store_agflcount(mp, agno, i);
 
 #ifdef XR_BLD_FREE_TRACE
 		fprintf(stderr, "writing agfl for ag %u\n", agno);
@@ -1860,30 +1871,8 @@ build_agf_agfl(
 
 	/*
 	 * now fix up the free list appropriately
-	 * XXX: code lifted from mkfs, should be shared.
 	 */
-	{
-		xfs_alloc_arg_t	args;
-		xfs_trans_t	*tp;
-		struct xfs_trans_res tres = {0};
-		int		error;
-
-		memset(&args, 0, sizeof(args));
-		args.pag = xfs_perag_get(mp,agno);
-		libxfs_trans_alloc(mp, &tres,
-			xfs_alloc_min_freelist(mp, args.pag), 0, 0, &tp);
-		args.tp = tp;
-		args.mp = mp;
-		args.agno = agno;
-		args.alignment = 1;
-		error = libxfs_alloc_fix_freelist(&args, 0);
-		xfs_perag_put(args.pag);
-		if (error) {
-			do_error(_("failed to fix AGFL on AG %d, error %d\n"),
-					agno, error);
-		}
-		libxfs_trans_commit(tp);
-	}
+	fix_freelist(mp, agno, true);
 
 #ifdef XR_BLD_FREE_TRACE
 	fprintf(stderr, "wrote agf for ag %u\n", agno);
@@ -1955,6 +1944,7 @@ phase5_func(
 	xfs_agblock_t	num_extents;
 	__uint32_t	magic;
 	struct agi_stat	agi_stat = {0,};
+	int		error;
 
 	if (verbose)
 		do_log(_("        - agno = %d\n"), agno);
@@ -2060,6 +2050,8 @@ phase5_func(
 
 		bcnt_btree_curs = bno_btree_curs;
 
+		bno_btree_curs.owner = XFS_RMAP_OWN_AG;
+		bcnt_btree_curs.owner = XFS_RMAP_OWN_AG;
 		setup_cursor(mp, agno, &bno_btree_curs);
 		setup_cursor(mp, agno, &bcnt_btree_curs);
 
@@ -2137,6 +2129,15 @@ phase5_func(
 		if (xfs_sb_version_hasfinobt(&mp->m_sb))
 			finish_cursor(&fino_btree_curs);
 		finish_cursor(&bcnt_btree_curs);
+
+		/*
+		 * Put the per-AG btree rmap data into the rmapbt
+		 */
+		error = store_ag_btree_rmap_data(mp, agno);
+		if (error)
+			do_error(
+_("unable to add AG %u reverse-mapping data to btree.\n"), agno);
+
 		/*
 		 * release the incore per-AG bno/bcnt trees so
 		 * the extent nodes can be recycled
