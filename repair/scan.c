@@ -873,6 +873,7 @@ _("unknown block (%d,%d-%d) mismatch on %s tree, state - %d,%" PRIx64 "\n"),
 struct rmap_priv {
 	struct aghdr_cnts	*agcnts;
 	struct xfs_rmap_irec	high_key;
+	struct xfs_rmap_irec	last_rec;
 	xfs_agblock_t		nr_blocks;
 };
 
@@ -1025,6 +1026,16 @@ advance:
 				else
 					goto advance;
 			}
+
+			/* Is this mergeable with the previous record? */
+			if (mergeable_rmaps(&rmap_priv->last_rec, &key)) {
+				do_warn(
+	_("record %d in block (%u/%u) of %s tree should be merged with previous record\n"),
+					i, agno, bno, name);
+				rmap_priv->last_rec.rm_blockcount +=
+						key.rm_blockcount;
+			} else
+				rmap_priv->last_rec = key;
 
 			/* Check that we don't go past the high key. */
 			key.rm_startblock += key.rm_blockcount - 1;
@@ -1909,6 +1920,7 @@ validate_agf(
 		memset(&priv.high_key, 0xFF, sizeof(priv.high_key));
 		priv.high_key.rm_blockcount = 0;
 		priv.agcnts = agcnts;
+		priv.last_rec.rm_owner = XFS_RMAP_OWN_UNKNOWN;
 		priv.nr_blocks = 0;
 		bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_RMAP]);
 		if (bno != 0 && verify_agbno(mp, agno, bno)) {
