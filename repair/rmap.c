@@ -41,6 +41,7 @@ struct xfs_ag_rmap {
 	struct xfs_slab	*ar_raw_rmaps;		/* unmerged rmaps */
 	int		ar_flcount;		/* agfl entries from leftover */
 						/* agbt allocations */
+	struct xfs_rmap_irec	ar_last_rmap;	/* last rmap seen */
 };
 
 static struct xfs_ag_rmap *ag_rmaps;
@@ -118,6 +119,7 @@ _("Insufficient memory while allocating reverse mapping slabs."));
 		if (error)
 			do_error(
 _("Insufficient memory while allocating raw metadata reverse mapping slabs."));
+		ag_rmaps[i].ar_last_rmap.rm_owner = XFS_RMAP_OWN_UNKNOWN;
 	}
 }
 
@@ -177,10 +179,11 @@ add_rmap(
 	int			whichfork,
 	struct xfs_bmbt_irec	*irec)
 {
-	struct xfs_slab		*rmaps;
 	struct xfs_rmap_irec	rmap;
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
+	struct xfs_rmap_irec	*last_rmap;
+	int			error = 0;
 
 	if (!needs_rmap_work(mp))
 		return 0;
@@ -193,7 +196,6 @@ add_rmap(
 	ASSERT(ino != NULLFSINO);
 	ASSERT(whichfork == XFS_DATA_FORK || whichfork == XFS_ATTR_FORK);
 
-	rmaps = ag_rmaps[agno].ar_rmaps;
 	rmap.rm_owner = ino;
 	rmap.rm_offset = irec->br_startoff;
 	rmap.rm_flags = 0;
@@ -203,7 +205,31 @@ add_rmap(
 	rmap.rm_blockcount = irec->br_blockcount;
 	if (irec->br_state == XFS_EXT_UNWRITTEN)
 		rmap.rm_flags |= XFS_RMAP_UNWRITTEN;
-	return slab_add(rmaps, &rmap);
+	last_rmap = &ag_rmaps[agno].ar_last_rmap;
+	if (last_rmap->rm_owner == XFS_RMAP_OWN_UNKNOWN)
+		*last_rmap = rmap;
+	else if (mergeable_rmaps(last_rmap, &rmap))
+		last_rmap->rm_blockcount += rmap.rm_blockcount;
+	else {
+		error = slab_add(ag_rmaps[agno].ar_rmaps, last_rmap);
+		if (error)
+			return error;
+		*last_rmap = rmap;
+	}
+
+	return error;
+}
+
+/* Finish collecting inode data/attr fork rmaps. */
+int
+finish_collecting_fork_rmaps(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	if (!needs_rmap_work(mp) ||
+	    ag_rmaps[agno].ar_last_rmap.rm_owner == XFS_RMAP_OWN_UNKNOWN)
+		return 0;
+	return slab_add(ag_rmaps[agno].ar_rmaps, &ag_rmaps[agno].ar_last_rmap);
 }
 
 /* add a raw rmap; these will be merged later */

@@ -154,7 +154,17 @@ static void
 process_ags(
 	xfs_mount_t		*mp)
 {
+	xfs_agnumber_t		i;
+	int			error;
+
 	do_inode_prefetch(mp, ag_stride, process_ag_func, true, false);
+	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
+		error = finish_collecting_fork_rmaps(mp, i);
+		if (error)
+			do_error(
+_("unable to finish adding attr/data fork reverse-mapping data for AG %u.\n"),
+				i);
+	}
 }
 
 static void
