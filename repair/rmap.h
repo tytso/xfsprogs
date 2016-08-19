@@ -34,4 +34,6 @@ extern int add_bmbt_rmap(struct xfs_mount *, xfs_ino_t, int, xfs_fsblock_t);
 extern int fold_raw_rmaps(struct xfs_mount *mp, xfs_agnumber_t agno);
 extern bool mergeable_rmaps(struct xfs_rmap_irec *r1, struct xfs_rmap_irec *r2);
 
+extern int add_fixed_ag_rmap_data(struct xfs_mount *, xfs_agnumber_t);
+
 #endif /* RMAP_H_ */

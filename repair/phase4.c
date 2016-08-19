@@ -157,6 +157,40 @@ process_ags(
 	do_inode_prefetch(mp, ag_stride, process_ag_func, true, false);
 }
 
+static void
+check_rmap_btrees(
+	work_queue_t	*wq,
+	xfs_agnumber_t	agno,
+	void		*arg)
+{
+	int		error;
+
+	error = add_fixed_ag_rmap_data(wq->mp, agno);
+	if (error)
+		do_error(
+_("unable to add AG %u metadata reverse-mapping data.\n"), agno);
+
+	error = fold_raw_rmaps(wq->mp, agno);
+	if (error)
+		do_error(
+_("unable to merge AG %u metadata reverse-mapping data.\n"), agno);
+}
+
+static void
+process_rmap_data(
+	struct xfs_mount	*mp)
+{
+	struct work_queue	wq;
+	xfs_agnumber_t		i;
+
+	if (!needs_rmap_work(mp))
+		return;
+
+	create_work_queue(&wq, mp, libxfs_nproc());
+	for (i = 0; i < mp->m_sb.sb_agcount; i++)
+		queue_work(&wq, check_rmap_btrees, i, NULL);
+	destroy_work_queue(&wq);
+}
 
 void
 phase4(xfs_mount_t *mp)
@@ -306,6 +340,13 @@ phase4(xfs_mount_t *mp)
 	 * already in phase 3.
 	 */
 	process_ags(mp);
+
+	/*
+	 * Process all the reverse-mapping data that we collected.  This
+	 * involves checking the rmap data against the btree.
+	 */
+	process_rmap_data(mp);
+
 	print_final_rpt();
 
 	/*

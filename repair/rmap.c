@@ -331,6 +331,98 @@ err:
 	return error;
 }
 
+static int
+find_first_zero_bit(
+	__uint64_t	mask)
+{
+	int		n;
+	int		b = 0;
+
+	for (n = 0; n < sizeof(mask) * NBBY && (mask & 1); n++, mask >>= 1)
+		b++;
+
+	return b;
+}
+
+static int
+popcnt(
+	__uint64_t	mask)
+{
+	int		n;
+	int		b = 0;
+
+	if (mask == 0)
+		return 0;
+
+	for (n = 0; n < sizeof(mask) * NBBY; n++, mask >>= 1)
+		if (mask & 1)
+			b++;
+
+	return b;
+}
+
+/*
+ * Add an allocation group's fixed metadata to the rmap list.  This includes
+ * sb/agi/agf/agfl headers, inode chunks, and the log.
+ */
+int
+add_fixed_ag_rmap_data(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	xfs_fsblock_t		fsbno;
+	xfs_agblock_t		agbno;
+	ino_tree_node_t		*ino_rec;
+	xfs_agino_t		agino;
+	int			error;
+	int			startidx;
+	int			nr;
+
+	if (!needs_rmap_work(mp))
+		return 0;
+
+	/* sb/agi/agf/agfl headers */
+	error = add_ag_rmap(mp, agno, 0, XFS_BNO_BLOCK(mp),
+			XFS_RMAP_OWN_FS);
+	if (error)
+		goto out;
+
+	/* inodes */
+	ino_rec = findfirst_inode_rec(agno);
+	for (; ino_rec != NULL; ino_rec = next_ino_rec(ino_rec)) {
+		if (xfs_sb_version_hassparseinodes(&mp->m_sb)) {
+			startidx = find_first_zero_bit(ino_rec->ir_sparse);
+			nr = XFS_INODES_PER_CHUNK - popcnt(ino_rec->ir_sparse);
+		} else {
+			startidx = 0;
+			nr = XFS_INODES_PER_CHUNK;
+		}
+		nr /= mp->m_sb.sb_inopblock;
+		if (nr == 0)
+			nr = 1;
+		agino = ino_rec->ino_startnum + startidx;
+		agbno = XFS_AGINO_TO_AGBNO(mp, agino);
+		if (XFS_AGINO_TO_OFFSET(mp, agino) == 0) {
+			error = add_ag_rmap(mp, agno, agbno, nr,
+					XFS_RMAP_OWN_INODES);
+			if (error)
+				goto out;
+		}
+	}
+
+	/* log */
+	fsbno = mp->m_sb.sb_logstart;
+	if (fsbno && XFS_FSB_TO_AGNO(mp, fsbno) == agno) {
+		agbno = XFS_FSB_TO_AGBNO(mp, mp->m_sb.sb_logstart);
+		error = add_ag_rmap(mp, agno, agbno, mp->m_sb.sb_logblocks,
+				XFS_RMAP_OWN_LOG);
+		if (error)
+			goto out;
+	}
+out:
+	return error;
+}
+
 #ifdef RMAP_DEBUG
 static void
 dump_rmap(
