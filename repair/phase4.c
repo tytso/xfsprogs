@@ -174,6 +174,12 @@ _("unable to add AG %u metadata reverse-mapping data.\n"), agno);
 	if (error)
 		do_error(
 _("unable to merge AG %u metadata reverse-mapping data.\n"), agno);
+
+	error = check_rmaps(wq->mp, agno);
+	if (error)
+		do_error(
+_("%s while checking reverse-mappings"),
+			 strerror(-error));
 }
 
 static void

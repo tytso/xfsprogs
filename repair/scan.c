@@ -29,6 +29,7 @@
 #include "bmap.h"
 #include "progress.h"
 #include "threads.h"
+#include "slab.h"
 #include "rmap.h"
 
 static xfs_mount_t	*mp = NULL;
@@ -869,6 +870,12 @@ _("unknown block (%d,%d-%d) mismatch on %s tree, state - %d,%" PRIx64 "\n"),
 	}
 }
 
+struct rmap_priv {
+	struct aghdr_cnts	*agcnts;
+	struct xfs_rmap_irec	high_key;
+	xfs_agblock_t		nr_blocks;
+};
+
 static void
 scan_rmapbt(
 	struct xfs_btree_block	*block,
@@ -880,19 +887,23 @@ scan_rmapbt(
 	__uint32_t		magic,
 	void			*priv)
 {
-	struct aghdr_cnts	*agcnts = priv;
 	const char		*name = "rmap";
 	int			i;
 	xfs_rmap_ptr_t		*pp;
 	struct xfs_rmap_rec	*rp;
+	struct rmap_priv	*rmap_priv = priv;
 	int			hdr_errors = 0;
 	int			numrecs;
 	int			state;
 	xfs_agblock_t		lastblock = 0;
+	struct xfs_rmap_key	*kp;
+	struct xfs_rmap_irec	key;
 
 	if (magic != XFS_RMAP_CRC_MAGIC) {
 		name = "(unknown)";
-		assert(0);
+		hdr_errors++;
+		suspect++;
+		goto out;
 	}
 
 	if (be32_to_cpu(block->bb_magic) != magic) {
@@ -900,7 +911,7 @@ scan_rmapbt(
 			be32_to_cpu(block->bb_magic), name, agno, bno);
 		hdr_errors++;
 		if (suspect)
-			return;
+			goto out;
 	}
 
 	/*
@@ -909,16 +920,17 @@ scan_rmapbt(
 	 * free data block counter.
 	 */
 	if (!isroot) {
-		agcnts->agfbtreeblks++;
-		agcnts->fdblocks++;
+		rmap_priv->agcnts->agfbtreeblks++;
+		rmap_priv->agcnts->fdblocks++;
 	}
+	rmap_priv->nr_blocks++;
 
 	if (be16_to_cpu(block->bb_level) != level) {
 		do_warn(_("expected level %d got %d in bt%s block %d/%d\n"),
 			level, be16_to_cpu(block->bb_level), name, agno, bno);
 		hdr_errors++;
 		if (suspect)
-			return;
+			goto out;
 	}
 
 	/* check for btree blocks multiply claimed */
@@ -928,7 +940,7 @@ scan_rmapbt(
 		do_warn(
 _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				name, state, agno, bno, suspect);
-		return;
+		goto out;
 	}
 	set_bmap(agno, bno, XR_E_FS_MAP);
 
@@ -962,7 +974,20 @@ _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			len = be32_to_cpu(rp[i].rm_blockcount);
 			owner = be64_to_cpu(rp[i].rm_owner);
 			offset = be64_to_cpu(rp[i].rm_offset);
-			end = b + len;
+
+			key.rm_flags = 0;
+			key.rm_startblock = b;
+			key.rm_blockcount = len;
+			key.rm_owner = owner;
+			if (libxfs_rmap_irec_offset_unpack(offset, &key)) {
+				/* Look for impossible flags. */
+				do_warn(
+	_("invalid flags in record %u of %s btree block %u/%u\n"),
+					i, name, agno, bno);
+				continue;
+			}
+
+			end = key.rm_startblock + key.rm_blockcount;
 
 			/* Make sure agbno & len make sense. */
 			if (!verify_agbno(mp, agno, b)) {
@@ -1001,6 +1026,18 @@ advance:
 					goto advance;
 			}
 
+			/* Check that we don't go past the high key. */
+			key.rm_startblock += key.rm_blockcount - 1;
+			if (!XFS_RMAP_NON_INODE_OWNER(key.rm_owner) &&
+			    !(key.rm_flags & XFS_RMAP_BMBT_BLOCK))
+				key.rm_offset += key.rm_blockcount - 1;
+			key.rm_blockcount = 0;
+			if (rmap_diffkeys(&key, &rmap_priv->high_key) > 0) {
+				do_warn(
+	_("record %d greater than high key of block (%u/%u) in %s tree\n"),
+					i, agno, bno, name);
+			}
+
 			/* Check for block owner collisions. */
 			for ( ; b < end; b += blen)  {
 				state = get_bmap_ext(agno, b, end, &blen);
@@ -1008,7 +1045,7 @@ advance:
 						state, name);
 			}
 		}
-		return;
+		goto out;
 	}
 
 	/*
@@ -1036,10 +1073,31 @@ advance:
 			mp->m_rmap_mnr[1], mp->m_rmap_mxr[1],
 			name, agno, bno);
 		if (suspect)
-			return;
+			goto out;
 		suspect++;
 	} else if (suspect) {
 		suspect = 0;
+	}
+
+	/* check the node's high keys */
+	for (i = 0; !isroot && i < numrecs; i++) {
+		kp = XFS_RMAP_HIGH_KEY_ADDR(block, i + 1);
+
+		key.rm_flags = 0;
+		key.rm_startblock = be32_to_cpu(kp->rm_startblock);
+		key.rm_owner = be64_to_cpu(kp->rm_owner);
+		if (libxfs_rmap_irec_offset_unpack(be64_to_cpu(kp->rm_offset),
+				&key)) {
+			/* Look for impossible flags. */
+			do_warn(
+	_("invalid flags in key %u of %s btree block %u/%u\n"),
+				i, name, agno, bno);
+			continue;
+		}
+		if (rmap_diffkeys(&key, &rmap_priv->high_key) > 0)
+			do_warn(
+	_("key %d greater than high key of block (%u/%u) in %s tree\n"),
+				i, agno, bno, name);
 	}
 
 	for (i = 0; i < numrecs; i++)  {
@@ -1054,11 +1112,30 @@ advance:
 		 * pointer mismatch, try and extract as much data
 		 * as possible.
 		 */
+		kp = XFS_RMAP_HIGH_KEY_ADDR(block, i + 1);
+		rmap_priv->high_key.rm_flags = 0;
+		rmap_priv->high_key.rm_startblock =
+				be32_to_cpu(kp->rm_startblock);
+		rmap_priv->high_key.rm_owner =
+				be64_to_cpu(kp->rm_owner);
+		if (libxfs_rmap_irec_offset_unpack(be64_to_cpu(kp->rm_offset),
+				&rmap_priv->high_key)) {
+			/* Look for impossible flags. */
+			do_warn(
+	_("invalid flags in high key %u of %s btree block %u/%u\n"),
+				i, name, agno, bno);
+			continue;
+		}
+
 		if (bno != 0 && verify_agbno(mp, agno, bno)) {
 			scan_sbtree(bno, level, agno, suspect, scan_rmapbt, 0,
 				    magic, priv, &xfs_rmapbt_buf_ops);
 		}
 	}
+
+out:
+	if (suspect)
+		rmap_avoid_check();
 }
 
 /*
@@ -1827,15 +1904,26 @@ validate_agf(
 	}
 
 	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+		struct rmap_priv	priv;
+
+		memset(&priv.high_key, 0xFF, sizeof(priv.high_key));
+		priv.high_key.rm_blockcount = 0;
+		priv.agcnts = agcnts;
+		priv.nr_blocks = 0;
 		bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_RMAP]);
 		if (bno != 0 && verify_agbno(mp, agno, bno)) {
 			scan_sbtree(bno,
 				    be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]),
 				    agno, 0, scan_rmapbt, 1, XFS_RMAP_CRC_MAGIC,
-				    agcnts, &xfs_rmapbt_buf_ops);
+				    &priv, &xfs_rmapbt_buf_ops);
+			if (be32_to_cpu(agf->agf_rmap_blocks) != priv.nr_blocks)
+				do_warn(_("bad rmapbt block count %u, saw %u\n"),
+					priv.nr_blocks,
+					be32_to_cpu(agf->agf_rmap_blocks));
 		} else  {
 			do_warn(_("bad agbno %u for rmapbt root, agno %d\n"),
 				bno, agno);
+			rmap_avoid_check();
 		}
 	}
 

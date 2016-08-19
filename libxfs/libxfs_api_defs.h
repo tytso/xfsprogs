@@ -63,6 +63,7 @@
 #define xfs_attr_leaf_newentsize	libxfs_attr_leaf_newentsize
 
 #define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
+#define xfs_alloc_read_agf		libxfs_alloc_read_agf
 #define xfs_bmap_last_offset		libxfs_bmap_last_offset
 #define xfs_bmap_search_extents		libxfs_bmap_search_extents
 #define xfs_bmapi_write			libxfs_bmapi_write
@@ -100,6 +101,12 @@
 #define xfs_idestroy_fork		libxfs_idestroy_fork
 
 #define xfs_rmap_query_range		libxfs_rmap_query_range
+#define xfs_rmap_lookup_le		libxfs_rmap_lookup_le
+#define xfs_rmap_get_rec		libxfs_rmap_get_rec
+#define xfs_rmap_irec_offset_unpack	libxfs_rmap_irec_offset_unpack
+#define xfs_rmapbt_init_cursor		libxfs_rmapbt_init_cursor
+#define xfs_btree_del_cursor		libxfs_btree_del_cursor
+
 
 #define xfs_log_sb			libxfs_log_sb
 #define xfs_sb_from_disk		libxfs_sb_from_disk

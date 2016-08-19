@@ -36,4 +36,14 @@ extern bool mergeable_rmaps(struct xfs_rmap_irec *r1, struct xfs_rmap_irec *r2);
 
 extern int add_fixed_ag_rmap_data(struct xfs_mount *, xfs_agnumber_t);
 
+extern size_t rmap_record_count(struct xfs_mount *, xfs_agnumber_t);
+extern int init_rmap_cursor(xfs_agnumber_t, struct xfs_slab_cursor **);
+extern void rmap_avoid_check(void);
+extern int check_rmaps(struct xfs_mount *, xfs_agnumber_t);
+
+extern __int64_t rmap_diffkeys(struct xfs_rmap_irec *kp1,
+		struct xfs_rmap_irec *kp2);
+extern void rmap_high_key_from_rec(struct xfs_rmap_irec *rec,
+		struct xfs_rmap_irec *key);
+
 #endif /* RMAP_H_ */

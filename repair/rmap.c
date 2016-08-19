@@ -42,6 +42,7 @@ struct xfs_ag_rmap {
 };
 
 static struct xfs_ag_rmap *ag_rmaps;
+static bool rmapbt_suspect;
 
 /*
  * Compare rmap observations for array sorting.
@@ -442,3 +443,258 @@ dump_rmap(
 #else
 # define dump_rmap(m, a, r)
 #endif
+
+/*
+ * Return the number of rmap objects for an AG.
+ */
+size_t
+rmap_record_count(
+	struct xfs_mount		*mp,
+	xfs_agnumber_t		agno)
+{
+	return slab_count(ag_rmaps[agno].ar_rmaps);
+}
+
+/*
+ * Return a slab cursor that will return rmap objects in order.
+ */
+int
+init_rmap_cursor(
+	xfs_agnumber_t		agno,
+	struct xfs_slab_cursor	**cur)
+{
+	return init_slab_cursor(ag_rmaps[agno].ar_rmaps, rmap_compare, cur);
+}
+
+/*
+ * Disable the refcount btree check.
+ */
+void
+rmap_avoid_check(void)
+{
+	rmapbt_suspect = true;
+}
+
+/* Look for an rmap in the rmapbt that matches a given rmap. */
+static int
+lookup_rmap(
+	struct xfs_btree_cur	*bt_cur,
+	struct xfs_rmap_irec	*rm_rec,
+	struct xfs_rmap_irec	*tmp,
+	int			*have)
+{
+	int			error;
+
+	/* Use the regular btree retrieval routine. */
+	error = -libxfs_rmap_lookup_le(bt_cur, rm_rec->rm_startblock,
+				rm_rec->rm_blockcount,
+				rm_rec->rm_owner, rm_rec->rm_offset,
+				rm_rec->rm_flags, have);
+	if (error)
+		return error;
+	if (*have == 0)
+		return error;
+	return -libxfs_rmap_get_rec(bt_cur, tmp, have);
+}
+
+/* Does the btree rmap cover the observed rmap? */
+#define NEXTP(x)	((x)->rm_startblock + (x)->rm_blockcount)
+#define NEXTL(x)	((x)->rm_offset + (x)->rm_blockcount)
+static bool
+is_good_rmap(
+	struct xfs_rmap_irec	*observed,
+	struct xfs_rmap_irec	*btree)
+{
+	/* Can't have mismatches in the flags or the owner. */
+	if (btree->rm_flags != observed->rm_flags ||
+	    btree->rm_owner != observed->rm_owner)
+		return false;
+
+	/*
+	 * Btree record can't physically start after the observed
+	 * record, nor can it end before the observed record.
+	 */
+	if (btree->rm_startblock > observed->rm_startblock ||
+	    NEXTP(btree) < NEXTP(observed))
+		return false;
+
+	/* If this is metadata or bmbt, we're done. */
+	if (XFS_RMAP_NON_INODE_OWNER(observed->rm_owner) ||
+	    (observed->rm_flags & XFS_RMAP_BMBT_BLOCK))
+		return true;
+	/*
+	 * Btree record can't logically start after the observed
+	 * record, nor can it end before the observed record.
+	 */
+	if (btree->rm_offset > observed->rm_offset ||
+	    NEXTL(btree) < NEXTL(observed))
+		return false;
+
+	return true;
+}
+#undef NEXTP
+#undef NEXTL
+
+/*
+ * Compare the observed reverse mappings against what's in the ag btree.
+ */
+int
+check_rmaps(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	struct xfs_slab_cursor	*rm_cur;
+	struct xfs_btree_cur	*bt_cur = NULL;
+	int			error;
+	int			have;
+	struct xfs_buf		*agbp = NULL;
+	struct xfs_rmap_irec	*rm_rec;
+	struct xfs_rmap_irec	tmp;
+	struct xfs_perag	*pag;		/* per allocation group data */
+
+	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
+		return 0;
+	if (rmapbt_suspect) {
+		if (no_modify && agno == 0)
+			do_warn(_("would rebuild corrupt rmap btrees.\n"));
+		return 0;
+	}
+
+	/* Create cursors to refcount structures */
+	error = init_rmap_cursor(agno, &rm_cur);
+	if (error)
+		return error;
+
+	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
+	if (error)
+		goto err;
+
+	/* Leave the per-ag data "uninitialized" since we rewrite it later */
+	pag = xfs_perag_get(mp, agno);
+	pag->pagf_init = 0;
+	xfs_perag_put(pag);
+
+	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
+	if (!bt_cur) {
+		error = -ENOMEM;
+		goto err;
+	}
+
+	rm_rec = pop_slab_cursor(rm_cur);
+	while (rm_rec) {
+		error = lookup_rmap(bt_cur, rm_rec, &tmp, &have);
+		if (error)
+			goto err;
+		if (!have) {
+			do_warn(
+_("Missing reverse-mapping record for (%u/%u) %slen %u owner %"PRId64" \
+%s%soff %"PRIu64"\n"),
+				agno, rm_rec->rm_startblock,
+				(rm_rec->rm_flags & XFS_RMAP_UNWRITTEN) ?
+					_("unwritten ") : "",
+				rm_rec->rm_blockcount,
+				rm_rec->rm_owner,
+				(rm_rec->rm_flags & XFS_RMAP_ATTR_FORK) ?
+					_("attr ") : "",
+				(rm_rec->rm_flags & XFS_RMAP_BMBT_BLOCK) ?
+					_("bmbt ") : "",
+				rm_rec->rm_offset);
+			goto next_loop;
+		}
+
+		/* Compare each refcount observation against the btree's */
+		if (!is_good_rmap(rm_rec, &tmp)) {
+			do_warn(
+_("Incorrect reverse-mapping: saw (%u/%u) %slen %u owner %"PRId64" %s%soff \
+%"PRIu64"; should be (%u/%u) %slen %u owner %"PRId64" %s%soff %"PRIu64"\n"),
+				agno, tmp.rm_startblock,
+				(tmp.rm_flags & XFS_RMAP_UNWRITTEN) ?
+					_("unwritten ") : "",
+				tmp.rm_blockcount,
+				tmp.rm_owner,
+				(tmp.rm_flags & XFS_RMAP_ATTR_FORK) ?
+					_("attr ") : "",
+				(tmp.rm_flags & XFS_RMAP_BMBT_BLOCK) ?
+					_("bmbt ") : "",
+				tmp.rm_offset,
+				agno, rm_rec->rm_startblock,
+				(rm_rec->rm_flags & XFS_RMAP_UNWRITTEN) ?
+					_("unwritten ") : "",
+				rm_rec->rm_blockcount,
+				rm_rec->rm_owner,
+				(rm_rec->rm_flags & XFS_RMAP_ATTR_FORK) ?
+					_("attr ") : "",
+				(rm_rec->rm_flags & XFS_RMAP_BMBT_BLOCK) ?
+					_("bmbt ") : "",
+				rm_rec->rm_offset);
+			goto next_loop;
+		}
+next_loop:
+		rm_rec = pop_slab_cursor(rm_cur);
+	}
+
+err:
+	if (bt_cur)
+		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+	if (agbp)
+		libxfs_putbuf(agbp);
+	free_slab_cursor(&rm_cur);
+	return 0;
+}
+
+/*
+ * Compare the key fields of two rmap records -- positive if key1 > key2,
+ * negative if key1 < key2, and zero if equal.
+ */
+__int64_t
+rmap_diffkeys(
+	struct xfs_rmap_irec	*kp1,
+	struct xfs_rmap_irec	*kp2)
+{
+	__u64			oa;
+	__u64			ob;
+	__int64_t		d;
+	struct xfs_rmap_irec	tmp;
+
+	tmp = *kp1;
+	tmp.rm_flags &= ~XFS_RMAP_REC_FLAGS;
+	oa = xfs_rmap_irec_offset_pack(&tmp);
+	tmp = *kp2;
+	tmp.rm_flags &= ~XFS_RMAP_REC_FLAGS;
+	ob = xfs_rmap_irec_offset_pack(&tmp);
+
+	d = (__int64_t)kp1->rm_startblock - kp2->rm_startblock;
+	if (d)
+		return d;
+
+	if (kp1->rm_owner > kp2->rm_owner)
+		return 1;
+	else if (kp2->rm_owner > kp1->rm_owner)
+		return -1;
+
+	if (oa > ob)
+		return 1;
+	else if (ob > oa)
+		return -1;
+	return 0;
+}
+
+/* Compute the high key of an rmap record. */
+void
+rmap_high_key_from_rec(
+	struct xfs_rmap_irec	*rec,
+	struct xfs_rmap_irec	*key)
+{
+	int			adj;
+
+	adj = rec->rm_blockcount - 1;
+
+	key->rm_startblock = rec->rm_startblock + adj;
+	key->rm_owner = rec->rm_owner;
+	key->rm_offset = rec->rm_offset;
+	key->rm_flags = rec->rm_flags & XFS_RMAP_KEY_FLAGS;
+	if (XFS_RMAP_NON_INODE_OWNER(rec->rm_owner) ||
+	    (rec->rm_flags & XFS_RMAP_BMBT_BLOCK))
+		return;
+	key->rm_offset += adj;
+}
