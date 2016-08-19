@@ -29,6 +29,7 @@
 
 int
 max_trans_res(
+	unsigned long	agsize,
 	int		crcs_enabled,
 	int		dirversion,
 	int		sectorlog,
@@ -50,7 +51,7 @@ max_trans_res(
 	sbp->sb_sectsize = 1 << sbp->sb_sectlog;
 	sbp->sb_blocklog = blocklog;
 	sbp->sb_blocksize = 1 << blocklog;
-	sbp->sb_agblocks = XFS_AG_MIN_BYTES / (1 << blocklog);
+	sbp->sb_agblocks = agsize;
 	sbp->sb_inodelog = inodelog;
 	sbp->sb_inopblog = blocklog - inodelog;
 	sbp->sb_inodesize = 1 << inodelog;

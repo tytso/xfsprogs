@@ -2565,7 +2565,8 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 		lsunit = (32 * 1024) >> blocklog;
 	}
 
-	min_logblocks = max_trans_res(sb_feat.crcs_enabled, sb_feat.dir_version,
+	min_logblocks = max_trans_res(agsize,
+				   sb_feat.crcs_enabled, sb_feat.dir_version,
 				   sectorlog, blocklog, inodelog, dirblocklog,
 				   sb_feat.log_version, lsunit, sb_feat.finobt);
 	ASSERT(min_logblocks);
