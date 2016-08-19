@@ -30,6 +30,8 @@
 #include "attr_repair.h"
 #include "bmap.h"
 #include "threads.h"
+#include "slab.h"
+#include "rmap.h"
 
 /*
  * gettext lookups for translations of strings use mutexes internally to
@@ -778,6 +780,13 @@ _("%s fork in %s inode %" PRIu64 " claims used block %" PRIu64 "\n"),
 _("illegal state %d in block map %" PRIu64 "\n"),
 					state, b);
 			}
+		}
+		if (collect_rmaps) { /* && !check_dups */
+			error = add_rmap(mp, ino, whichfork, &irec);
+			if (error)
+				do_error(
+_("couldn't add reverse mapping\n")
+					);
 		}
 		*tot += irec.br_blockcount;
 	}

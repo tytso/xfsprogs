@@ -30,7 +30,10 @@
 #include "versions.h"
 #include "dir2.h"
 #include "progress.h"
+#include "slab.h"
+#include "rmap.h"
 
+bool collect_rmaps;
 
 /*
  * null out quota inode fields in sb if they point to non-existent inodes.
@@ -170,6 +173,8 @@ phase4(xfs_mount_t *mp)
 	int			ag_hdr_block;
 	int			bstate;
 
+	if (needs_rmap_work(mp))
+		collect_rmaps = true;
 	ag_hdr_block = howmany(ag_hdr_len, mp->m_sb.sb_blocksize);
 
 	do_log(_("Phase 4 - check for duplicate blocks...\n"));
