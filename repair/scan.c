@@ -1011,6 +1011,18 @@ _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	_("invalid owner in rmap btree record %d (%"PRId64" %u) block %u/%u\n"),
 						i, owner, len, agno, bno);
 
+			/* Look for impossible record field combinations. */
+			if (XFS_RMAP_NON_INODE_OWNER(key.rm_owner)) {
+				if (key.rm_flags)
+					do_warn(
+	_("record %d of block (%u/%u) in %s btree cannot have non-inode owner with flags\n"),
+						i, agno, bno, name);
+				if (key.rm_offset)
+					do_warn(
+	_("record %d of block (%u/%u) in %s btree cannot have non-inode owner with offset\n"),
+						i, agno, bno, name);
+			}
+
 			/* Check for out of order records. */
 			if (i == 0) {
 advance:
