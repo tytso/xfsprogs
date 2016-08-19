@@ -230,6 +230,32 @@ __add_raw_rmap(
 }
 
 /*
+ * Add a reverse mapping for an inode fork's block mapping btree block.
+ */
+int
+add_bmbt_rmap(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	int			whichfork,
+	xfs_fsblock_t		fsbno)
+{
+	xfs_agnumber_t		agno;
+	xfs_agblock_t		agbno;
+
+	if (!needs_rmap_work(mp))
+		return 0;
+
+	agno = XFS_FSB_TO_AGNO(mp, fsbno);
+	agbno = XFS_FSB_TO_AGBNO(mp, fsbno);
+	ASSERT(agno != NULLAGNUMBER);
+	ASSERT(agno < mp->m_sb.sb_agcount);
+	ASSERT(agbno + 1 <= mp->m_sb.sb_agblocks);
+
+	return __add_raw_rmap(mp, agno, agbno, 1, ino,
+			whichfork == XFS_ATTR_FORK, true);
+}
+
+/*
  * Add a reverse mapping for a per-AG fixed metadata extent.
  */
 int

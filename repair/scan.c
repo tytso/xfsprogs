@@ -29,6 +29,7 @@
 #include "bmap.h"
 #include "progress.h"
 #include "threads.h"
+#include "rmap.h"
 
 static xfs_mount_t	*mp = NULL;
 
@@ -197,6 +198,7 @@ scan_bmapbt(
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	int			state;
+	int			error;
 
 	/*
 	 * unlike the ag freeblock btrees, if anything looks wrong
@@ -377,6 +379,15 @@ _("bad state %d, inode %" PRIu64 " bmap block 0x%" PRIx64 "\n"),
 	}
 	(*tot)++;
 	numrecs = be16_to_cpu(block->bb_numrecs);
+
+	/* Record BMBT blocks in the reverse-mapping data. */
+	if (check_dups && collect_rmaps) {
+		error = add_bmbt_rmap(mp, ino, whichfork, bno);
+		if (error)
+			do_error(
+_("couldn't add inode %"PRIu64" bmbt block %"PRIu64" reverse-mapping data."),
+				ino, bno);
+	}
 
 	if (level == 0) {
 		if (numrecs > mp->m_bmap_dmxr[0] || (isroot == 0 && numrecs <
@@ -878,8 +889,6 @@ scan_rmapbt(
 	int			numrecs;
 	int			state;
 	xfs_agblock_t		lastblock = 0;
-	int64_t			lastowner = 0;
-	int64_t			lastoffset = 0;
 
 	if (magic != XFS_RMAP_CRC_MAGIC) {
 		name = "(unknown)";
@@ -980,8 +989,6 @@ _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			if (i == 0) {
 advance:
 				lastblock = b;
-				lastowner = owner;
-				lastoffset = offset;
 			} else {
 				bool bad;
 
