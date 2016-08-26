@@ -2186,7 +2186,7 @@ process_btinode(
 		return;
 	}
 	if (be16_to_cpu(dib->bb_numrecs) >
-			xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork),
+			libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork),
 			be16_to_cpu(dib->bb_level) == 0)) {
 		if (!sflag || id->ilist)
 			dbprintf(_("numrecs for ino %lld %s fork bmap root too "
@@ -2204,7 +2204,7 @@ process_btinode(
 		*nex += be16_to_cpu(dib->bb_numrecs);
 		return;
 	} else {
-		pp = XFS_BMDR_PTR_ADDR(dib, 1, xfs_bmdr_maxrecs(
+		pp = XFS_BMDR_PTR_ADDR(dib, 1, libxfs_bmdr_maxrecs(
 				XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 		for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
 			scan_lbtree(get_unaligned_be64(&pp[i]),
@@ -2684,7 +2684,7 @@ process_inode(
 		error++;
 		return;
 	}
-	if (!xfs_dinode_good_version(mp, xino.i_d.di_version)) {
+	if (!libxfs_dinode_good_version(mp, xino.i_d.di_version)) {
 		if (isfree || v)
 			dbprintf(_("bad version number %#x for inode %lld\n"),
 				xino.i_d.di_version, ino);

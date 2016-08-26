@@ -77,7 +77,7 @@ max_trans_res(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_RMAPBT;
 
 	libxfs_mount(&mount, sbp, 0,0,0,0);
-	maxfsb = xfs_log_calc_minimum_size(&mount);
+	maxfsb = libxfs_log_calc_minimum_size(&mount);
 	libxfs_umount(&mount);
 
 #if 0

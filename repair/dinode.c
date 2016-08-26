@@ -131,7 +131,7 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 		dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
 	}
 
-	if (!xfs_dinode_good_version(mp, dinoc->di_version)) {
+	if (!libxfs_dinode_good_version(mp, dinoc->di_version)) {
 		__dirty_no_modify_ret(dirty);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			dinoc->di_version = 3;
@@ -966,7 +966,7 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 	init_bm_cursor(&cursor, level + 1);
 
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
-		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
+		libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	pkey = XFS_BMDR_KEY_ADDR(dib, 1);
 	last_key = NULLFILEOFF;
 
@@ -2240,7 +2240,7 @@ process_dinode_int(xfs_mount_t *mp,
 	 * rewritten, and the CRC is updated automagically.
 	 */
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
-	    !xfs_verify_cksum((char *)dino, mp->m_sb.sb_inodesize,
+	    !libxfs_verify_cksum((char *)dino, mp->m_sb.sb_inodesize,
 				XFS_DINODE_CRC_OFF)) {
 		retval = 1;
 		if (!uncertain)
@@ -2271,7 +2271,7 @@ process_dinode_int(xfs_mount_t *mp,
 		}
 	}
 
-	if (!xfs_dinode_good_version(mp, dino->di_version)) {
+	if (!libxfs_dinode_good_version(mp, dino->di_version)) {
 		retval = 1;
 		if (!uncertain)
 			do_warn(_("bad version number 0x%x on inode %" PRIu64 "%c"),

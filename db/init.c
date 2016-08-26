@@ -164,7 +164,7 @@ init(
 	 */
 	if (sbp->sb_rootino != NULLFSINO &&
 	    xfs_sb_version_haslazysbcount(&mp->m_sb)) {
-		int error = xfs_initialize_perag_data(mp, sbp->sb_agcount);
+		int error = -libxfs_initialize_perag_data(mp, sbp->sb_agcount);
 		if (error) {
 			fprintf(stderr,
 	_("%s: cannot init perag data (%d). Continuing anyway.\n"),

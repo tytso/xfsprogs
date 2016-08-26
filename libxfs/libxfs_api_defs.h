@@ -122,4 +122,19 @@
 
 #define xfs_verify_cksum		libxfs_verify_cksum
 
+#define xfs_alloc_ag_max_usable		libxfs_alloc_ag_max_usable
+#define xfs_allocbt_maxrecs		libxfs_allocbt_maxrecs
+#define xfs_bmbt_maxrecs		libxfs_bmbt_maxrecs
+#define xfs_bmdr_maxrecs		libxfs_bmdr_maxrecs
+#define xfs_btree_init_block		libxfs_btree_init_block
+#define xfs_dir_ino_validate		libxfs_dir_ino_validate
+#define xfs_initialize_perag_data	libxfs_initialize_perag_data
+#define xfs_inobt_maxrecs		libxfs_inobt_maxrecs
+#define xfs_iread_extents		libxfs_iread_extents
+#define xfs_log_calc_minimum_size	libxfs_log_calc_minimum_size
+#define xfs_perag_get			libxfs_perag_get
+#define xfs_perag_put			libxfs_perag_put
+#define xfs_prealloc_blocks		libxfs_prealloc_blocks
+#define xfs_dinode_good_version		libxfs_dinode_good_version
+
 #endif /* __LIBXFS_API_DEFS_H__ */

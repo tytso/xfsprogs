@@ -360,7 +360,7 @@ finish_cursor(bt_status_t *curs)
  * XXX(hch): any reason we don't just look at mp->m_alloc_mxr?
  */
 #define XR_ALLOC_BLOCK_MAXRECS(mp, level) \
-	(xfs_allocbt_maxrecs((mp), (mp)->m_sb.sb_blocksize, (level) == 0) - 2)
+	(libxfs_allocbt_maxrecs((mp), (mp)->m_sb.sb_blocksize, (level) == 0) - 2)
 
 /*
  * this calculates a freespace cursor for an ag.
@@ -693,10 +693,10 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, crc_magic, level,
+			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, level,
 						0, agno, XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, magic, level,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic, level,
 						0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -779,10 +779,10 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, crc_magic, i,
+			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, i,
 						0, agno, XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, magic, i,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic, i,
 						0, agno, 0);
 	}
 	/*
@@ -811,10 +811,10 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, crc_magic, 0,
+			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, 0,
 						0, agno, XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, magic, 0,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic, 0,
 						0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -895,7 +895,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
  * XXX(hch): any reason we don't just look at mp->m_inobt_mxr?
  */
 #define XR_INOBT_BLOCK_MAXRECS(mp, level) \
-			xfs_inobt_maxrecs((mp), (mp)->m_sb.sb_blocksize, \
+			libxfs_inobt_maxrecs((mp), (mp)->m_sb.sb_blocksize, \
 						(level) == 0)
 
 /*
@@ -1073,11 +1073,11 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_CRC_MAGIC,
+			libxfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_CRC_MAGIC,
 						level, 0, agno,
 						XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_MAGIC,
+			libxfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_MAGIC,
 						level, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -1198,11 +1198,11 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, magic,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic,
 						i, 0, agno,
 						XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, magic,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic,
 						i, 0, agno, 0);
 	}
 
@@ -1232,11 +1232,11 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, lptr->buf_p, magic,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic,
 						0, 0, agno,
 						XFS_BTREE_CRC_BLOCKS);
 		else
-			xfs_btree_init_block(mp, lptr->buf_p, magic,
+			libxfs_btree_init_block(mp, lptr->buf_p, magic,
 						0, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -1490,7 +1490,7 @@ prop_rmap_cursor(
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		xfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
 					level, 0, agno,
 					XFS_BTREE_CRC_BLOCKS);
 
@@ -1602,7 +1602,7 @@ build_rmap_tree(
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		xfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
 					i, 0, agno,
 					XFS_BTREE_CRC_BLOCKS);
 	}
@@ -1627,7 +1627,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		xfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
 					0, 0, agno,
 					XFS_BTREE_CRC_BLOCKS);
 
@@ -2159,21 +2159,21 @@ phase5(xfs_mount_t *mp)
 
 #ifdef XR_BLD_FREE_TRACE
 	fprintf(stderr, "inobt level 1, maxrec = %d, minrec = %d\n",
-		xfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
-		xfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
 	fprintf(stderr, "inobt level 0 (leaf), maxrec = %d, minrec = %d\n",
-		xfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
-		xfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
 	fprintf(stderr, "xr inobt level 0 (leaf), maxrec = %d\n",
 		XR_INOBT_BLOCK_MAXRECS(mp, 0));
 	fprintf(stderr, "xr inobt level 1 (int), maxrec = %d\n",
 		XR_INOBT_BLOCK_MAXRECS(mp, 1));
 	fprintf(stderr, "bnobt level 1, maxrec = %d, minrec = %d\n",
-		xfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
-		xfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
 	fprintf(stderr, "bnobt level 0 (leaf), maxrec = %d, minrec = %d\n",
-		xfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
-		xfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
 #endif
 	/*
 	 * make sure the root and realtime inodes show up allocated

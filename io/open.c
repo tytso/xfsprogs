@@ -878,7 +878,7 @@ inode_f(
 
 	lastgrp--;
 	lastino = igroup[lastgrp].xi_startino +
-		  xfs_highbit64(igroup[lastgrp].xi_allocmask);
+		  libxfs_highbit64(igroup[lastgrp].xi_allocmask);
 
 	if (verbose)
 		printf("%llu:%d\n", lastino,

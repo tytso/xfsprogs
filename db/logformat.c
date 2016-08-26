@@ -101,7 +101,7 @@ logformat_f(int argc, char **argv)
 
 	dbprintf("Formatting the log to cycle %d, stripe unit %d bytes.\n",
 		 cycle, lsunit);
-	error = libxfs_log_clear(mp->m_logdev_targp, NULL,
+	error = -libxfs_log_clear(mp->m_logdev_targp, NULL,
 				 mp->m_log->l_logBBstart,
 				 mp->m_log->l_logBBsize,
 				 &mp->m_sb.sb_uuid, logversion, lsunit,

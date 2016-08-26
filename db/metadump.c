@@ -2016,7 +2016,7 @@ process_btinode(
 					    nrecs, itype);
 	}
 
-	maxrecs = xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0);
+	maxrecs = libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0);
 	if (nrecs > maxrecs) {
 		if (show_warnings)
 			print_warning("invalid numrecs (%u) in inode %lld %s "
@@ -2132,7 +2132,7 @@ process_inode(
 
 	/* we only care about crc recalculation if we will modify the inode. */
 	if (obfuscate || zero_stale_data) {
-		crc_was_ok = xfs_verify_cksum((char *)dip,
+		crc_was_ok = libxfs_verify_cksum((char *)dip,
 					mp->m_sb.sb_inodesize,
 					offsetof(struct xfs_dinode, di_crc));
 	}

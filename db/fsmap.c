@@ -81,13 +81,13 @@ fsmap(
 		if (agno == end_ag)
 			high.rm_startblock = XFS_FSB_TO_AGBNO(mp, end_fsb);
 
-		error = xfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
+		error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
 		if (error) {
 			dbprintf(_("Error %d while reading AGF.\n"), error);
 			return;
 		}
 
-		bt_cur = xfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
+		bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
 		if (!bt_cur) {
 			libxfs_putbuf(agbp);
 			dbprintf(_("Not enough memory.\n"));
@@ -98,14 +98,14 @@ fsmap(
 		error = -libxfs_rmap_query_range(bt_cur, &low, &high,
 				fsmap_fn, &info);
 		if (error) {
-			xfs_btree_del_cursor(bt_cur, XFS_BTREE_ERROR);
+			libxfs_btree_del_cursor(bt_cur, XFS_BTREE_ERROR);
 			libxfs_putbuf(agbp);
 			dbprintf(_("Error %d while querying fsmap btree.\n"),
 				error);
 			return;
 		}
 
-		xfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
 		libxfs_putbuf(agbp);
 
 		if (agno == start_ag)

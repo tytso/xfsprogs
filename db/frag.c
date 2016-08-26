@@ -260,7 +260,7 @@ process_btinode(
 		return;
 	}
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
-		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
+		libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
 		scan_lbtree(get_unaligned_be64(&pp[i]),
 			 be16_to_cpu(dib->bb_level), scanfunc_bmap, extmapp,

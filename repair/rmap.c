@@ -61,8 +61,8 @@ rmap_compare(
 	__u64			ob;
 
 	pa = a; pb = b;
-	oa = xfs_rmap_irec_offset_pack(pa);
-	ob = xfs_rmap_irec_offset_pack(pb);
+	oa = libxfs_rmap_irec_offset_pack(pa);
+	ob = libxfs_rmap_irec_offset_pack(pb);
 
 	if (pa->rm_startblock < pb->rm_startblock)
 		return -1;
@@ -498,7 +498,7 @@ store_ag_btree_rmap_data(
 		goto err;
 
 	/* Add the AGFL blocks to the rmap list */
-	error = libxfs_trans_read_buf(
+	error = -libxfs_trans_read_buf(
 			mp, NULL, mp->m_ddev_targp,
 			XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
 			XFS_FSS_TO_BB(mp, 1), 0, &agflbp, &xfs_agfl_buf_ops);
@@ -536,13 +536,13 @@ store_ag_btree_rmap_data(
 		if (error)
 			goto err_slab;
 
-		error = libxfs_alloc_read_agf(mp, tp, agno, 0, &agbp);
+		error = -libxfs_alloc_read_agf(mp, tp, agno, 0, &agbp);
 		if (error)
 			goto err_trans;
 
 		ASSERT(XFS_RMAP_NON_INODE_OWNER(rm_rec->rm_owner));
 		libxfs_rmap_ag_owner(&oinfo, rm_rec->rm_owner);
-		error = libxfs_rmap_alloc(tp, agbp, agno, rm_rec->rm_startblock,
+		error = -libxfs_rmap_alloc(tp, agbp, agno, rm_rec->rm_startblock,
 				rm_rec->rm_blockcount, &oinfo);
 		if (error)
 			goto err_trans;
@@ -716,9 +716,9 @@ check_rmaps(
 		goto err;
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
-	pag = xfs_perag_get(mp, agno);
+	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
-	xfs_perag_put(pag);
+	libxfs_perag_put(pag);
 
 	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
 	if (!bt_cur) {
@@ -804,10 +804,10 @@ rmap_diffkeys(
 
 	tmp = *kp1;
 	tmp.rm_flags &= ~XFS_RMAP_REC_FLAGS;
-	oa = xfs_rmap_irec_offset_pack(&tmp);
+	oa = libxfs_rmap_irec_offset_pack(&tmp);
 	tmp = *kp2;
 	tmp.rm_flags &= ~XFS_RMAP_REC_FLAGS;
-	ob = xfs_rmap_irec_offset_pack(&tmp);
+	ob = libxfs_rmap_irec_offset_pack(&tmp);
 
 	d = (__int64_t)kp1->rm_startblock - kp2->rm_startblock;
 	if (d)
@@ -866,7 +866,7 @@ fix_freelist(
 	args.mp = mp;
 	args.agno = agno;
 	args.alignment = 1;
-	args.pag = xfs_perag_get(mp, agno);
+	args.pag = libxfs_perag_get(mp, agno);
 	error = -libxfs_trans_alloc(mp, &tres,
 			libxfs_alloc_min_freelist(mp, args.pag), 0, 0, &tp);
 	if (error)
@@ -898,8 +898,8 @@ fix_freelist(
 	flags = XFS_ALLOC_FLAG_NOSHRINK;
 	if (skip_rmapbt)
 		flags |= XFS_ALLOC_FLAG_NORMAP;
-	error = libxfs_alloc_fix_freelist(&args, flags);
-	xfs_perag_put(args.pag);
+	error = -libxfs_alloc_fix_freelist(&args, flags);
+	libxfs_perag_put(args.pag);
 	if (error) {
 		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 				agno, error);

@@ -384,7 +384,7 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 
 	/* sector size in range - CRC check time */
 	if (xfs_sb_version_hascrc(sb) &&
-	    !xfs_verify_cksum(sb_buf, sb->sb_sectsize, XFS_SB_CRC_OFF))
+	    !libxfs_verify_cksum(sb_buf, sb->sb_sectsize, XFS_SB_CRC_OFF))
 		return XR_BAD_CRC;
 
 	/* check to ensure blocksize and blocklog are legal */
