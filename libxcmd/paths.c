@@ -113,6 +113,9 @@ fs_table_insert(
 			goto out_nodev;
 	}
 
+	if (!platform_test_xfs_path(dir))
+		flags |= FS_FOREIGN;
+
 	/*
 	 * Make copies of the directory and data device path.
 	 * The log device and real-time device, if non-null,
@@ -308,8 +311,6 @@ fs_table_initialise_mounts(
 			return errno;
 
 	while ((mnt = getmntent(mtp)) != NULL) {
-		if (strcmp(mnt->mnt_type, "xfs") != 0)
-			continue;
 		if (!realpath(mnt->mnt_dir, rmnt_dir))
 			continue;
 		if (!realpath(mnt->mnt_fsname, rmnt_fsname))
@@ -367,8 +368,6 @@ fs_table_initialise_mounts(
 			return errno;
 
 	for (i = 0; i < count; i++) {
-		if (strcmp(stats[i].f_fstypename, "xfs") != 0)
-			continue;
 		if (!realpath(stats[i].f_mntfromname, rmntfromname))
 			continue;
 		if (!realpath(stats[i].f_mntonname, rmntonname))

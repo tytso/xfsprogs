@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <stdbool.h>
 #include <pwd.h>
 #include <grp.h>
 #include <utmp.h>

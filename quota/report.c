@@ -15,7 +15,7 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+#include <stdbool.h>
 #include "command.h"
 #include <sys/types.h>
 #include <pwd.h>
@@ -618,6 +618,8 @@ report_any_type(
 	if (type & XFS_USER_QUOTA) {
 		fs_cursor_initialise(dir, FS_MOUNT_POINT, &cursor);
 		while ((mount = fs_cursor_next_entry(&cursor))) {
+			if (!foreign_allowed && (mount->fs_flags & FS_FOREIGN))
+				continue;
 			if (xfsquotactl(XFS_QSYNC, mount->fs_name,
 						XFS_USER_QUOTA, 0, NULL) < 0
 					&& errno != ENOENT && errno != ENOSYS)
@@ -629,6 +631,8 @@ report_any_type(
 	if (type & XFS_GROUP_QUOTA) {
 		fs_cursor_initialise(dir, FS_MOUNT_POINT, &cursor);
 		while ((mount = fs_cursor_next_entry(&cursor))) {
+			if (!foreign_allowed && (mount->fs_flags & FS_FOREIGN))
+				continue;
 			if (xfsquotactl(XFS_QSYNC, mount->fs_name,
 						XFS_GROUP_QUOTA, 0, NULL) < 0
 					&& errno != ENOENT && errno != ENOSYS)
@@ -640,6 +644,8 @@ report_any_type(
 	if (type & XFS_PROJ_QUOTA) {
 		fs_cursor_initialise(dir, FS_MOUNT_POINT, &cursor);
 		while ((mount = fs_cursor_next_entry(&cursor))) {
+			if (!foreign_allowed && (mount->fs_flags & FS_FOREIGN))
+				continue;
 			if (xfsquotactl(XFS_QSYNC, mount->fs_name,
 						XFS_PROJ_QUOTA, 0, NULL) < 0
 					&& errno != ENOENT && errno != ENOSYS)
@@ -754,16 +760,17 @@ report_init(void)
 	dump_cmd.args = _("[-g|-p|-u] [-f file]");
 	dump_cmd.oneline = _("dump quota information for backup utilities");
 	dump_cmd.help = dump_help;
+	dump_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	report_cmd.name = "report";
 	report_cmd.altname = "repquota";
 	report_cmd.cfunc = report_f;
 	report_cmd.argmin = 0;
 	report_cmd.argmax = -1;
-	report_cmd.flags = CMD_FLAG_GLOBAL;
 	report_cmd.args = _("[-bir] [-gpu] [-ahnt] [-f file]");
 	report_cmd.oneline = _("report filesystem quota information");
 	report_cmd.help = report_help;
+	report_cmd.flags = CMD_FLAG_GLOBAL | CMD_FLAG_FOREIGN_OK;
 
 	if (expert) {
 		add_command(&dump_cmd);

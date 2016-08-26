@@ -29,6 +29,7 @@
 
 #define FS_MOUNT_POINT	(1<<0)
 #define FS_PROJECT_PATH	(1<<1)
+#define FS_FOREIGN	(1<<2)
 
 typedef struct fs_path {
 	char		*fs_name;	/* Data device for filesystem 	*/

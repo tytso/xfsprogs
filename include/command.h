@@ -20,7 +20,8 @@
 
 #include <sys/time.h>
 
-#define CMD_FLAG_GLOBAL	((int)0x80000000)	/* don't iterate "args" */
+#define CMD_FLAG_GLOBAL		(1<<31)	/* don't iterate "args" */
+#define CMD_FLAG_FOREIGN_OK	(1<<30)	/* command not restricted to XFS */
 
 typedef int (*cfunc_t)(int argc, char **argv);
 typedef void (*helpfunc_t)(void);

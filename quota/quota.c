@@ -16,6 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdbool.h>
 #include "command.h"
 #include <ctype.h>
 #include <pwd.h>
@@ -469,6 +470,7 @@ quota_init(void)
 	quota_cmd.args = _("[-bir] [-g|-p|-u] [-hnNv] [-f file] [id|name]...");
 	quota_cmd.oneline = _("show usage and limits");
 	quota_cmd.help = quota_help;
+	quota_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	add_command(&quota_cmd);
 }

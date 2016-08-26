@@ -19,6 +19,7 @@
 extern char	*progname;
 extern int	exitcode;
 extern int	expert;
+extern bool	foreign_allowed;
 
 extern void	edit_init(void);
 extern void	free_init(void);

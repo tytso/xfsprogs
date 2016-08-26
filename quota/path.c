@@ -42,6 +42,7 @@ printpath(
 	if (number) {
 		printf(_("%c%03d%c "), braces? '[':' ', index, braces? ']':' ');
 	}
+	printf("%s ", (path->fs_flags & FS_FOREIGN) ? "(F)" : "   ");
 	printf(_("%-19s %s"), path->fs_dir, path->fs_name);
 	if (path->fs_flags & FS_PROJECT_PATH) {
 		prj = getprprid(path->fs_prid);
@@ -127,7 +128,7 @@ path_init(void)
 	path_cmd.cfunc = path_f;
 	path_cmd.argmin = 0;
 	path_cmd.argmax = 1;
-	path_cmd.flags = CMD_FLAG_GLOBAL;
+	path_cmd.flags = CMD_FLAG_GLOBAL | CMD_FLAG_FOREIGN_OK;
 	path_cmd.oneline = _("set current path, or show the list of paths");
 
 	print_cmd.name = "print";
@@ -135,7 +136,7 @@ path_init(void)
 	print_cmd.cfunc = print_f;
 	print_cmd.argmin = 0;
 	print_cmd.argmax = 0;
-	print_cmd.flags = CMD_FLAG_GLOBAL;
+	print_cmd.flags = CMD_FLAG_GLOBAL | CMD_FLAG_FOREIGN_OK;
 	print_cmd.oneline = _("list known mount points and projects");
 
 	if (expert)

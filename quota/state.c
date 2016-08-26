@@ -15,7 +15,7 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+#include <stdbool.h>
 #include "command.h"
 #include "init.h"
 #include "quota.h"
@@ -584,6 +584,7 @@ state_init(void)
 	off_cmd.args = _("[-gpu] [-v]");
 	off_cmd.oneline = _("permanently switch quota off for a path");
 	off_cmd.help = off_help;
+	off_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	state_cmd.name = "state";
 	state_cmd.cfunc = state_f;
@@ -592,6 +593,7 @@ state_init(void)
 	state_cmd.args = _("[-gpu] [-a] [-v] [-f file]");
 	state_cmd.oneline = _("get overall quota state information");
 	state_cmd.help = state_help;
+	state_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	enable_cmd.name = "enable";
 	enable_cmd.cfunc = enable_f;

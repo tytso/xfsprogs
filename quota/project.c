@@ -355,6 +355,7 @@ project_init(void)
 	project_cmd.argmax = -1;
 	project_cmd.oneline = _("check, setup or clear project quota trees");
 	project_cmd.help = project_help;
+	project_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	if (expert)
 		add_command(&project_cmd);
