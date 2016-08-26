@@ -109,15 +109,26 @@ static int
 init_check_command(
 	const cmdinfo_t	*ct)
 {
-	if (fs_path &&
-	    !(ct->flags & CMD_FLAG_FOREIGN_OK) &&
-	     (fs_path->fs_flags & FS_FOREIGN)) {
-		fprintf(stderr,
-	_("foreign mount active, %s command is for XFS filesystems only\n"),
-			ct->name);
-		return 0;
-	}
-	return 1;
+	if (!fs_path)
+		return 1;
+
+	/* Always run commands that we are told to skip here */
+	if (ct->flags & CMD_ALL_FSTYPES)
+		return 1;
+
+	/* if it's an XFS filesystem, always run the command */
+	if (!(fs_path->fs_flags & FS_FOREIGN))
+		return 1;
+
+	/* If the user specified foreign filesysetms are ok, run it */
+	if (foreign_allowed &&
+	    (ct->flags & CMD_FLAG_FOREIGN_OK))
+		return 1;
+
+	/* foreign filesystem and it's not a valid command! */
+	fprintf(stderr, _("%s command is for XFS filesystems only\n"),
+		ct->name);
+	return 0;
 }
 
 static void
