@@ -55,6 +55,8 @@ xcommand_to_qcommand(
 		return Q_XSETQLIM;
 	case XFS_GETQSTAT:
 		return Q_XGETQSTAT;
+	case XFS_GETQSTATV:
+		return Q_XGETQSTATV;
 	case XFS_QUOTARM:
 		return Q_XQUOTARM;
 	case XFS_QSYNC:
