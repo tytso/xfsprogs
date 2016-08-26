@@ -234,10 +234,17 @@ fs_extract_mount_options(
 {
 	char		*fslog, *fsrt;
 
-	/* Extract log device and realtime device from mount options */
-	if ((fslog = hasmntopt(mnt, "logdev=")))
+	/*
+	 * Extract log device and realtime device from mount options.
+	 *
+	 * Note: the glibc hasmntopt implementation requires that the
+	 * character in mnt_opts immediately after the search string
+	 * must be a NULL ('\0'), a comma (','), or an equals ('=').
+	 * Therefore we cannot search for 'logdev=' directly.
+	 */
+	if ((fslog = hasmntopt(mnt, "logdev")) && fslog[6] == '=')
 		fslog += 7;
-	if ((fsrt = hasmntopt(mnt, "rtdev=")))
+	if ((fsrt = hasmntopt(mnt, "rtdev")) && fsrt[5] == '=')
 		fsrt += 6;
 
 	/* Do this only after we've finished processing mount options */
