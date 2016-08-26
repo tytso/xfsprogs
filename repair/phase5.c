@@ -1464,7 +1464,7 @@ prop_rmap_cursor(
 		 * and set the rightsib pointer of current block
 		 */
 #ifdef XR_BLD_INO_TRACE
-		fprintf(stderr, " ino prop agbno %d ", lptr->prev_agbno);
+		fprintf(stderr, " rmap prop agbno %d ", lptr->prev_agbno);
 #endif
 		if (lptr->prev_agbno != NULLAGBLOCK)  {
 			ASSERT(lptr->prev_buf_p != NULL);
@@ -1502,7 +1502,7 @@ prop_rmap_cursor(
 		prop_rmap_cursor(mp, agno, btree_curs, rm_rec, level);
 	}
 	/*
-	 * add inode info to current block
+	 * add rmap info to current block
 	 */
 	be16_add_cpu(&bt_hdr->bb_numrecs, 1);
 
@@ -1529,13 +1529,12 @@ prop_rmap_highkey(
 	struct xfs_btree_block	*bt_hdr;
 	struct xfs_rmap_key	*bt_key;
 	struct bt_stat_level	*lptr;
-	struct xfs_rmap_irec	key;
+	struct xfs_rmap_irec	key = {0};
 	struct xfs_rmap_irec	high_key;
 	int			level;
 	int			i;
 	int			numrecs;
 
-	key.rm_flags = 0;
 	high_key = *rm_highkey;
 	for (level = 1; level < btree_curs->num_levels; level++) {
 		lptr = &btree_curs->level[level];
@@ -1575,8 +1574,8 @@ build_rmap_tree(
 	struct xfs_rmap_irec	*rm_rec;
 	struct xfs_slab_cursor	*rmap_cur;
 	struct xfs_rmap_rec	*bt_rec;
-	struct xfs_rmap_irec	highest_key;
-	struct xfs_rmap_irec	hi_key;
+	struct xfs_rmap_irec	highest_key = {0};
+	struct xfs_rmap_irec	hi_key = {0};
 	struct bt_stat_level	*lptr;
 	int			level = btree_curs->num_levels;
 	int			error;
@@ -1621,7 +1620,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 	rm_rec = pop_slab_cursor(rmap_cur);
 	lptr = &btree_curs->level[0];
 
-	for (i = 0; i < lptr->num_blocks; i++)  {
+	for (i = 0; i < lptr->num_blocks && rm_rec != NULL; i++)  {
 		/*
 		 * block initialization, lay in block header
 		 */
@@ -1639,8 +1638,10 @@ _("Insufficient memory to construct reverse-map cursor."));
 		if (lptr->modulo > 0)
 			lptr->modulo--;
 
-		if (lptr->num_recs_pb > 0)
+		if (lptr->num_recs_pb > 0) {
+			ASSERT(rm_rec != NULL);
 			prop_rmap_cursor(mp, agno, btree_curs, rm_rec, 0);
+		}
 
 		bt_rec = (struct xfs_rmap_rec *)
 			  ((char *)bt_hdr + XFS_RMAP_BLOCK_LEN);

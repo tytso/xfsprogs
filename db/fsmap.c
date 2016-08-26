@@ -57,8 +57,8 @@ fsmap(
 	xfs_agnumber_t		end_ag;
 	xfs_agnumber_t		agno;
 	xfs_daddr_t		eofs;
-	struct xfs_rmap_irec	low;
-	struct xfs_rmap_irec	high;
+	struct xfs_rmap_irec	low = {0};
+	struct xfs_rmap_irec	high = {0};
 	struct xfs_btree_cur	*bt_cur;
 	struct xfs_buf		*agbp;
 	int			error;
@@ -68,9 +68,6 @@ fsmap(
 		end_fsb = XFS_DADDR_TO_FSB(mp, eofs - 1);
 
 	low.rm_startblock = XFS_FSB_TO_AGBNO(mp, start_fsb);
-	low.rm_owner = 0;
-	low.rm_offset = 0;
-	low.rm_flags = 0;
 	high.rm_startblock = -1U;
 	high.rm_owner = ULLONG_MAX;
 	high.rm_offset = ULLONG_MAX;

@@ -898,7 +898,7 @@ scan_rmapbt(
 	int			state;
 	xfs_agblock_t		lastblock = 0;
 	struct xfs_rmap_key	*kp;
-	struct xfs_rmap_irec	key;
+	struct xfs_rmap_irec	key = {0};
 
 	if (magic != XFS_RMAP_CRC_MAGIC) {
 		name = "(unknown)";
