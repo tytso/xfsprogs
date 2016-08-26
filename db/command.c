@@ -50,6 +50,7 @@
 #include "malloc.h"
 #include "dquot.h"
 #include "fsmap.h"
+#include "crc.h"
 
 cmdinfo_t	*cmdtab;
 int		ncmds;
@@ -125,6 +126,7 @@ init_commands(void)
 	bmap_init();
 	check_init();
 	convert_init();
+	crc_init();
 	debug_init();
 	echo_init();
 	frag_init();

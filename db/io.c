@@ -27,6 +27,7 @@
 #include "output.h"
 #include "init.h"
 #include "malloc.h"
+#include "crc.h"
 
 static int	pop_f(int argc, char **argv);
 static void     pop_help(void);
@@ -473,22 +474,41 @@ xfs_verify_recalc_crc(
 void
 write_cur(void)
 {
+	bool skip_crc = false;
+
 	if (iocur_sp < 0) {
 		dbprintf(_("nothing to write\n"));
 		return;
 	}
 
-	if (xfs_sb_version_hascrc(&mp->m_sb) && iocur_top->ino_buf) {
-		libxfs_dinode_calc_crc(mp, iocur_top->data);
-		iocur_top->ino_crc_ok = 1;
+	if (!xfs_sb_version_hascrc(&mp->m_sb) ||
+	    !iocur_top->bp->b_ops ||
+	    iocur_top->bp->b_ops->verify_write == xfs_dummy_verify)
+		skip_crc = true;
+
+	if (!skip_crc) {
+		if (iocur_top->ino_buf) {
+			libxfs_dinode_calc_crc(mp, iocur_top->data);
+			iocur_top->ino_crc_ok = 1;
+		} else if (iocur_top->dquot_buf) {
+			xfs_update_cksum(iocur_top->data,
+					 sizeof(struct xfs_dqblk),
+					 XFS_DQUOT_CRC_OFF);
+		}
 	}
-	if (iocur_top->dquot_buf)
-		xfs_update_cksum(iocur_top->data, sizeof(struct xfs_dqblk),
-				 XFS_DQUOT_CRC_OFF);
 	if (iocur_top->bbmap)
 		write_cur_bbs();
 	else
 		write_cur_buf();
+
+	/* If we didn't write the crc automatically, re-check inode validity */
+	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    skip_crc && iocur_top->ino_buf) {
+		iocur_top->ino_crc_ok = xfs_verify_cksum(iocur_top->data,
+						mp->m_sb.sb_inodesize,
+						XFS_DINODE_CRC_OFF);
+	}
+
 }
 
 void
@@ -496,7 +516,7 @@ set_cur(
 	const typ_t	*t,
 	__int64_t	d,
 	int		c,
-	int             ring_flag,
+	int		ring_flag,
 	bbmap_t		*bbmap)
 {
 	struct xfs_buf	*bp;

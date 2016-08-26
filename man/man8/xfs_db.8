@@ -87,16 +87,14 @@ or
 .I filename
 read-only. This option is required if the filesystem is mounted.
 It is only necessary to omit this flag if a command that changes data
-.RB ( write ", " blocktrash )
+.RB ( write ", " blocktrash ", " crc )
 is to be used.
 .TP
 .B \-x
 Specifies expert mode.
 This enables the
-.B write
-and
-.B blocktrash
-commands.
+.RB ( write ", " blocktrash ", " crc
+invalidate/revalidate) commands.
 .TP
 .B \-V
 Prints the version number and exits.
@@ -421,6 +419,25 @@ conversions such as
 .B agbno
 .I agb
 .BR fsblock .
+.TP
+.B crc [\-i|\-r|\-v]
+Invalidates, revalidates, or validates the CRC (checksum)
+field of the current structure, if it has one.
+This command is available only on CRC-enabled filesystems.
+With no argument, validation is performed.
+Each command will display the resulting CRC value and state.
+.RS 1.0i
+.TP 0.4i
+.B \-i
+Invalidate the structure's CRC value (incrementing it by one),
+and write it to disk.
+.TP
+.B \-r
+Recalculate the current structure's correct CRC value, and write it to disk.
+.TP
+.B \-v
+Validate and display the current value and state of the structure's CRC.
+.RE
 .TP
 .BI "daddr [" d ]
 Set current address to the daddr (512 byte block) given by
