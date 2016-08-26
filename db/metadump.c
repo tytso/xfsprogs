@@ -2649,12 +2649,14 @@ copy_log(void)
 		break;
 	case 1:
 		/* keep the dirty log */
-		print_warning(
+		if (obfuscate)
+			print_warning(
 _("Filesystem log is dirty; image will contain unobfuscated metadata in log."));
 		break;
 	case -1:
 		/* log detection error */
-		print_warning(
+		if (obfuscate)
+			print_warning(
 _("Could not discern log; image will contain unobfuscated metadata in log."));
 		break;
 	}
