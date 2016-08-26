@@ -251,7 +251,7 @@ setup_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *curs)
 			blocks_allocated++;
 		}
 
-		error = add_ag_rmap(mp, agno, ext_ptr->ex_startblock, u,
+		error = rmap_add_ag_rec(mp, agno, ext_ptr->ex_startblock, u,
 				curs->owner);
 		if (error)
 			do_error(_("could not set up btree rmaps: %s\n"),
@@ -1613,7 +1613,7 @@ build_rmap_tree(
 	 * pointers for the parent.  that can recurse up to the root
 	 * if required.  set the sibling pointers for leaf level here.
 	 */
-	error = init_rmap_cursor(agno, &rmap_cur);
+	error = rmap_init_cursor(agno, &rmap_cur);
 	if (error)
 		do_error(
 _("Insufficient memory to construct reverse-map cursor."));
@@ -2134,7 +2134,7 @@ phase5_func(
 		/*
 		 * Put the per-AG btree rmap data into the rmapbt
 		 */
-		error = store_ag_btree_rmap_data(mp, agno);
+		error = rmap_store_ag_btree_rec(mp, agno);
 		if (error)
 			do_error(
 _("unable to add AG %u reverse-mapping data to btree.\n"), agno);

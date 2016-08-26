@@ -383,7 +383,7 @@ _("bad state %d, inode %" PRIu64 " bmap block 0x%" PRIx64 "\n"),
 
 	/* Record BMBT blocks in the reverse-mapping data. */
 	if (check_dups && collect_rmaps) {
-		error = add_bmbt_rmap(mp, ino, whichfork, bno);
+		error = rmap_add_bmbt_rec(mp, ino, whichfork, bno);
 		if (error)
 			do_error(
 _("couldn't add inode %"PRIu64" bmbt block %"PRIu64" reverse-mapping data."),
@@ -1040,7 +1040,7 @@ advance:
 			}
 
 			/* Is this mergeable with the previous record? */
-			if (mergeable_rmaps(&rmap_priv->last_rec, &key)) {
+			if (rmaps_are_mergeable(&rmap_priv->last_rec, &key)) {
 				do_warn(
 	_("record %d in block (%u/%u) of %s tree should be merged with previous record\n"),
 					i, agno, bno, name);

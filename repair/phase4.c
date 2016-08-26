@@ -159,7 +159,7 @@ process_ags(
 
 	do_inode_prefetch(mp, ag_stride, process_ag_func, true, false);
 	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
-		error = finish_collecting_fork_rmaps(mp, i);
+		error = rmap_finish_collecting_fork_recs(mp, i);
 		if (error)
 			do_error(
 _("unable to finish adding attr/data fork reverse-mapping data for AG %u.\n"),
@@ -175,17 +175,17 @@ check_rmap_btrees(
 {
 	int		error;
 
-	error = add_fixed_ag_rmap_data(wq->mp, agno);
+	error = rmap_add_fixed_ag_rec(wq->mp, agno);
 	if (error)
 		do_error(
 _("unable to add AG %u metadata reverse-mapping data.\n"), agno);
 
-	error = fold_raw_rmaps(wq->mp, agno);
+	error = rmap_fold_raw_recs(wq->mp, agno);
 	if (error)
 		do_error(
 _("unable to merge AG %u metadata reverse-mapping data.\n"), agno);
 
-	error = check_rmaps(wq->mp, agno);
+	error = rmaps_verify_btree(wq->mp, agno);
 	if (error)
 		do_error(
 _("%s while checking reverse-mappings"),
@@ -199,7 +199,7 @@ process_rmap_data(
 	struct work_queue	wq;
 	xfs_agnumber_t		i;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return;
 
 	create_work_queue(&wq, mp, libxfs_nproc());
@@ -223,7 +223,7 @@ phase4(xfs_mount_t *mp)
 	int			ag_hdr_block;
 	int			bstate;
 
-	if (needs_rmap_work(mp))
+	if (rmap_needs_work(mp))
 		collect_rmaps = true;
 	ag_hdr_block = howmany(ag_hdr_len, mp->m_sb.sb_blocksize);
 

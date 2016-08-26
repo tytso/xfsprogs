@@ -85,7 +85,7 @@ rmap_compare(
  * mapping trees.
  */
 bool
-needs_rmap_work(
+rmap_needs_work(
 	struct xfs_mount	*mp)
 {
 	return xfs_sb_version_hasrmapbt(&mp->m_sb);
@@ -95,13 +95,13 @@ needs_rmap_work(
  * Initialize per-AG reverse map data.
  */
 void
-init_rmaps(
+rmaps_init(
 	struct xfs_mount	*mp)
 {
 	xfs_agnumber_t		i;
 	int			error;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return;
 
 	ag_rmaps = calloc(mp->m_sb.sb_agcount, sizeof(struct xfs_ag_rmap));
@@ -127,12 +127,12 @@ _("Insufficient memory while allocating raw metadata reverse mapping slabs."));
  * Free the per-AG reverse-mapping data.
  */
 void
-free_rmaps(
+rmaps_free(
 	struct xfs_mount	*mp)
 {
 	xfs_agnumber_t		i;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return;
 
 	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
@@ -147,7 +147,7 @@ free_rmaps(
  * Decide if two reverse-mapping records can be merged.
  */
 bool
-mergeable_rmaps(
+rmaps_are_mergeable(
 	struct xfs_rmap_irec	*r1,
 	struct xfs_rmap_irec	*r2)
 {
@@ -173,7 +173,7 @@ mergeable_rmaps(
  * fork for later btree reconstruction.
  */
 int
-add_rmap(
+rmap_add_rec(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
 	int			whichfork,
@@ -185,7 +185,7 @@ add_rmap(
 	struct xfs_rmap_irec	*last_rmap;
 	int			error = 0;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return 0;
 
 	agno = XFS_FSB_TO_AGNO(mp, irec->br_startblock);
@@ -208,7 +208,7 @@ add_rmap(
 	last_rmap = &ag_rmaps[agno].ar_last_rmap;
 	if (last_rmap->rm_owner == XFS_RMAP_OWN_UNKNOWN)
 		*last_rmap = rmap;
-	else if (mergeable_rmaps(last_rmap, &rmap))
+	else if (rmaps_are_mergeable(last_rmap, &rmap))
 		last_rmap->rm_blockcount += rmap.rm_blockcount;
 	else {
 		error = slab_add(ag_rmaps[agno].ar_rmaps, last_rmap);
@@ -222,11 +222,11 @@ add_rmap(
 
 /* Finish collecting inode data/attr fork rmaps. */
 int
-finish_collecting_fork_rmaps(
+rmap_finish_collecting_fork_recs(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
-	if (!needs_rmap_work(mp) ||
+	if (!rmap_needs_work(mp) ||
 	    ag_rmaps[agno].ar_last_rmap.rm_owner == XFS_RMAP_OWN_UNKNOWN)
 		return 0;
 	return slab_add(ag_rmaps[agno].ar_rmaps, &ag_rmaps[agno].ar_last_rmap);
@@ -234,7 +234,7 @@ finish_collecting_fork_rmaps(
 
 /* add a raw rmap; these will be merged later */
 static int
-__add_raw_rmap(
+__rmap_add_raw_rec(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agblock_t		agbno,
@@ -262,7 +262,7 @@ __add_raw_rmap(
  * Add a reverse mapping for an inode fork's block mapping btree block.
  */
 int
-add_bmbt_rmap(
+rmap_add_bmbt_rec(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
 	int			whichfork,
@@ -271,7 +271,7 @@ add_bmbt_rmap(
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return 0;
 
 	agno = XFS_FSB_TO_AGNO(mp, fsbno);
@@ -280,7 +280,7 @@ add_bmbt_rmap(
 	ASSERT(agno < mp->m_sb.sb_agcount);
 	ASSERT(agbno + 1 <= mp->m_sb.sb_agblocks);
 
-	return __add_raw_rmap(mp, agno, agbno, 1, ino,
+	return __rmap_add_raw_rec(mp, agno, agbno, 1, ino,
 			whichfork == XFS_ATTR_FORK, true);
 }
 
@@ -288,28 +288,28 @@ add_bmbt_rmap(
  * Add a reverse mapping for a per-AG fixed metadata extent.
  */
 int
-add_ag_rmap(
+rmap_add_ag_rec(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_agblock_t		agbno,
 	xfs_extlen_t		len,
 	uint64_t		owner)
 {
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return 0;
 
 	ASSERT(agno != NULLAGNUMBER);
 	ASSERT(agno < mp->m_sb.sb_agcount);
 	ASSERT(agbno + len <= mp->m_sb.sb_agblocks);
 
-	return __add_raw_rmap(mp, agno, agbno, len, owner, false, false);
+	return __rmap_add_raw_rec(mp, agno, agbno, len, owner, false, false);
 }
 
 /*
  * Merge adjacent raw rmaps and add them to the main rmap list.
  */
 int
-fold_raw_rmaps(
+rmap_fold_raw_recs(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
@@ -330,7 +330,7 @@ fold_raw_rmaps(
 	prev = pop_slab_cursor(cur);
 	rec = pop_slab_cursor(cur);
 	while (prev && rec) {
-		if (mergeable_rmaps(prev, rec)) {
+		if (rmaps_are_mergeable(prev, rec)) {
 			prev->rm_blockcount += rec->rm_blockcount;
 			rec = pop_slab_cursor(cur);
 			continue;
@@ -395,7 +395,7 @@ popcnt(
  * sb/agi/agf/agfl headers, inode chunks, and the log.
  */
 int
-add_fixed_ag_rmap_data(
+rmap_add_fixed_ag_rec(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
@@ -407,11 +407,11 @@ add_fixed_ag_rmap_data(
 	int			startidx;
 	int			nr;
 
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return 0;
 
 	/* sb/agi/agf/agfl headers */
-	error = add_ag_rmap(mp, agno, 0, XFS_BNO_BLOCK(mp),
+	error = rmap_add_ag_rec(mp, agno, 0, XFS_BNO_BLOCK(mp),
 			XFS_RMAP_OWN_FS);
 	if (error)
 		goto out;
@@ -432,7 +432,7 @@ add_fixed_ag_rmap_data(
 		agino = ino_rec->ino_startnum + startidx;
 		agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 		if (XFS_AGINO_TO_OFFSET(mp, agino) == 0) {
-			error = add_ag_rmap(mp, agno, agbno, nr,
+			error = rmap_add_ag_rec(mp, agno, agbno, nr,
 					XFS_RMAP_OWN_INODES);
 			if (error)
 				goto out;
@@ -443,7 +443,7 @@ add_fixed_ag_rmap_data(
 	fsbno = mp->m_sb.sb_logstart;
 	if (fsbno && XFS_FSB_TO_AGNO(mp, fsbno) == agno) {
 		agbno = XFS_FSB_TO_AGBNO(mp, mp->m_sb.sb_logstart);
-		error = add_ag_rmap(mp, agno, agbno, mp->m_sb.sb_logblocks,
+		error = rmap_add_ag_rec(mp, agno, agbno, mp->m_sb.sb_logblocks,
 				XFS_RMAP_OWN_LOG);
 		if (error)
 			goto out;
@@ -473,7 +473,7 @@ out:
  * the rmapbt, after which it is fully regenerated.
  */
 int
-store_ag_btree_rmap_data(
+rmap_store_ag_btree_rec(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
@@ -509,7 +509,7 @@ store_ag_btree_rmap_data(
 	agfl_bno += ag_rmaps[agno].ar_flcount;
 	b = agfl_bno;
 	while (*b != NULLAGBLOCK && b - agfl_bno <= XFS_AGFL_SIZE(mp)) {
-		error = add_ag_rmap(mp, agno, be32_to_cpu(*b), 1,
+		error = rmap_add_ag_rec(mp, agno, be32_to_cpu(*b), 1,
 				XFS_RMAP_OWN_AG);
 		if (error)
 			goto err;
@@ -519,7 +519,7 @@ store_ag_btree_rmap_data(
 	agflbp = NULL;
 
 	/* Merge all the raw rmaps into the main list */
-	error = fold_raw_rmaps(mp, agno);
+	error = rmap_fold_raw_recs(mp, agno);
 	if (error)
 		goto err;
 
@@ -572,7 +572,7 @@ err:
 
 #ifdef RMAP_DEBUG
 static void
-dump_rmap(
+rmap_dump(
 	const char		*msg,
 	xfs_agnumber_t		agno,
 	struct xfs_rmap_irec	*rmap)
@@ -587,7 +587,7 @@ dump_rmap(
 		(unsigned int)rmap->rm_flags);
 }
 #else
-# define dump_rmap(m, a, r)
+# define rmap_dump(m, a, r)
 #endif
 
 /*
@@ -605,7 +605,7 @@ rmap_record_count(
  * Return a slab cursor that will return rmap objects in order.
  */
 int
-init_rmap_cursor(
+rmap_init_cursor(
 	xfs_agnumber_t		agno,
 	struct xfs_slab_cursor	**cur)
 {
@@ -623,7 +623,7 @@ rmap_avoid_check(void)
 
 /* Look for an rmap in the rmapbt that matches a given rmap. */
 static int
-lookup_rmap(
+rmap_lookup(
 	struct xfs_btree_cur	*bt_cur,
 	struct xfs_rmap_irec	*rm_rec,
 	struct xfs_rmap_irec	*tmp,
@@ -647,7 +647,7 @@ lookup_rmap(
 #define NEXTP(x)	((x)->rm_startblock + (x)->rm_blockcount)
 #define NEXTL(x)	((x)->rm_offset + (x)->rm_blockcount)
 static bool
-is_good_rmap(
+rmap_is_good(
 	struct xfs_rmap_irec	*observed,
 	struct xfs_rmap_irec	*btree)
 {
@@ -685,7 +685,7 @@ is_good_rmap(
  * Compare the observed reverse mappings against what's in the ag btree.
  */
 int
-check_rmaps(
+rmaps_verify_btree(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
@@ -707,7 +707,7 @@ check_rmaps(
 	}
 
 	/* Create cursors to refcount structures */
-	error = init_rmap_cursor(agno, &rm_cur);
+	error = rmap_init_cursor(agno, &rm_cur);
 	if (error)
 		return error;
 
@@ -728,7 +728,7 @@ check_rmaps(
 
 	rm_rec = pop_slab_cursor(rm_cur);
 	while (rm_rec) {
-		error = lookup_rmap(bt_cur, rm_rec, &tmp, &have);
+		error = rmap_lookup(bt_cur, rm_rec, &tmp, &have);
 		if (error)
 			goto err;
 		if (!have) {
@@ -749,7 +749,7 @@ _("Missing reverse-mapping record for (%u/%u) %slen %u owner %"PRId64" \
 		}
 
 		/* Compare each refcount observation against the btree's */
-		if (!is_good_rmap(rm_rec, &tmp)) {
+		if (!rmap_is_good(rm_rec, &tmp)) {
 			do_warn(
 _("Incorrect reverse-mapping: saw (%u/%u) %slen %u owner %"PRId64" %s%soff \
 %"PRIu64"; should be (%u/%u) %slen %u owner %"PRId64" %s%soff %"PRIu64"\n"),
@@ -917,7 +917,7 @@ rmap_store_agflcount(
 	xfs_agnumber_t		agno,
 	int			count)
 {
-	if (!needs_rmap_work(mp))
+	if (!rmap_needs_work(mp))
 		return;
 
 	ag_rmaps[agno].ar_flcount = count;

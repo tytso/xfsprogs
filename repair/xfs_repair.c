@@ -900,7 +900,7 @@ main(int argc, char **argv)
 	init_bmaps(mp);
 	incore_ino_init(mp);
 	incore_ext_init(mp);
-	init_rmaps(mp);
+	rmaps_init(mp);
 
 	/* initialize random globals now that we know the fs geometry */
 	inodes_per_block = mp->m_sb.sb_inopblock;
@@ -934,7 +934,7 @@ main(int argc, char **argv)
 	/*
 	 * Done with the block usage maps, toss them...
 	 */
-	free_rmaps(mp);
+	rmaps_free(mp);
 	free_bmaps(mp);
 
 	if (!bad_ino_btree)  {
