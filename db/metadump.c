@@ -2292,7 +2292,7 @@ copy_inode_chunk(
 
 			/* process_inode handles free inodes, too */
 			if (!process_inode(agno, agino + ioff + i, dip,
-			    XFS_INOBT_IS_FREE_DISK(rp, i)))
+			    XFS_INOBT_IS_FREE_DISK(rp, ioff + i)))
 				goto pop_out;
 
 			inodes_copied++;
