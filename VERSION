@@ -2,6 +2,6 @@
 # This file is used by configure to get version information
 #
 PKG_MAJOR=4
-PKG_MINOR=7
-PKG_REVISION=0
+PKG_MINOR=8
+PKG_REVISION=0-rc1
 PKG_BUILD=1

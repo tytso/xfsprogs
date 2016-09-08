@@ -1,3 +1,16 @@
+xfsprogs-4.8-0-rc1 (9 Sep 2016)
+	- change contact emails to linux-xfs@vger.kernel.org
+	- libxfs: kernel sync up to 4.8-rc1
+	- Initial reverse mapping support (Darrick Wong)
+	- buffer lock trace analysis tool (Darrick Wong)
+	- logprint: cleanups and fixes (Darrick Wong)
+	- man page updates (various)
+	- libxcmd: mount option parsing fixes (Darrick Wong)
+	- xfs_quota: use XFS_GETQSTATV (Eric Sandeen)
+	- xfs_quota: allow use on non-XFS filesystems (Bill O'Donnell)
+	- xfs_db: allow direct manipulation of CRCs (Eric Sandeen)
+	- libxfs: get rid of ustat() calls (Felix Janda)
+
 xfsprogs-4.7.0 (5 Aug 2016)
 	- xfs_io: man page for copy_file_range (Anna Schumaker)
 	- xfs_quota: handle XFS_GETNEXTQUOTA failure sanely (Zorro Lang)
