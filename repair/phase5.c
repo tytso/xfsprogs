@@ -231,8 +231,7 @@ setup_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *curs)
 	 * grab the smallest extent and use it up, then get the
 	 * next smallest.  This mimics the init_*_cursor code.
 	 */
-	if ((ext_ptr =  findfirst_bcnt_extent(agno)) == NULL)
-		do_error(_("error - not enough free space in filesystem\n"));
+	ext_ptr =  findfirst_bcnt_extent(agno);
 
 	agb_ptr = curs->btree_blocks;
 
@@ -240,6 +239,9 @@ setup_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *curs)
 	 * set up the free block array
 	 */
 	while (blocks_allocated < big_extent_len)  {
+		if (!ext_ptr)
+			do_error(
+_("error - not enough free space in filesystem\n"));
 		/*
 		 * use up the extent we've got
 		 */
