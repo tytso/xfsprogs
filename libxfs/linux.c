@@ -16,11 +16,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define ustat __kernel_ustat
 #include <mntent.h>
 #include <sys/stat.h>
-#undef ustat
-#include <sys/ustat.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
@@ -51,9 +48,10 @@ static int max_block_alignment;
 int
 platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 {
-	/* Pad ust; pre-2.6.28 linux copies out too much in 32bit compat mode */
-	struct ustat	ust[2];
-	struct stat64	st;
+	FILE		*f;
+	struct stat64	st, mst;
+	struct mntent	*mnt;
+	char		mounts[MAXPATHLEN];
 
 	if (!s) {
 		if (stat64(block, &st) < 0)
@@ -63,14 +61,27 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 		s = &st;
 	}
 
-	if (ustat(s->st_rdev, ust) >= 0) {
+	strcpy(mounts, (!access(PROC_MOUNTED, R_OK)) ? PROC_MOUNTED : MOUNTED);
+	if ((f = setmntent(mounts, "r")) == NULL) {
+		fprintf(stderr,
+		    _("%s: %s possibly contains a mounted filesystem\n"),
+		    progname, name);
+		return 1;
+	}
+	while ((mnt = getmntent(f)) != NULL) {
+		if (stat64(mnt->mnt_dir, &mst) < 0)
+			continue;
+		if (mst.st_dev != s->st_rdev)
+			continue;
+
 		if (verbose)
 			fprintf(stderr,
 				_("%s: %s contains a mounted filesystem\n"),
 				progname, name);
-		return 1;
+		break;
 	}
-	return 0;
+	endmntent(f);
+	return mnt != NULL;
 }
 
 int
