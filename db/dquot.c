@@ -164,6 +164,7 @@ dquot_f(
 	}
 	set_cur(&typtab[TYP_DQBLK], XFS_FSB_TO_DADDR(mp, bm.startblock), blkbb,
 		DB_RING_IGN, NULL);
+	iocur_top->dquot_buf = 1;
 	off_cur(qoff * (int)sizeof(xfs_dqblk_t), sizeof(xfs_dqblk_t));
 	ring_add();
 	return 0;
