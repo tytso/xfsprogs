@@ -153,6 +153,7 @@ init(
 			break;
 		case 'f':
 			foreign_allowed = true;
+			break;
 		case 't':
 			mtab_file = optarg;
 			break;
