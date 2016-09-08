@@ -701,8 +701,24 @@ write_struct(
 		sfl = sfl->child;
 	}
 
+	/*
+	 * For structures, fsize * fcount tells us the size of the region we are
+	 * modifying, which is usually a single structure member and is pointed
+	 * to by the last child in the list.
+	 *
+	 * However, if the base structure is an array and we have a direct index
+	 * into the array (e.g. write bno[5]) then we are returned a single
+	 * flist object with the offset pointing directly at the location we
+	 * need to modify. The length of the object we are modifying is then
+	 * determined by the size of the individual array entry (fsize) and the
+	 * indexes defined in the object, not the overall size of the array
+	 * (which is what fcount returns).
+	 */
 	bit_length = fsize(sfl->fld, iocur_top->data, parentoffset, 0);
-	bit_length *= fcount(sfl->fld, iocur_top->data, parentoffset);
+	if (sfl->fld->flags & FLD_ARRAY)
+		bit_length *= sfl->high - sfl->low + 1;
+	else
+		bit_length *= fcount(sfl->fld, iocur_top->data, parentoffset);
 
 	/* convert this to a generic conversion routine */
 	/* should be able to handle str, num, or even labels */
