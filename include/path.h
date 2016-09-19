@@ -44,6 +44,7 @@ typedef struct fs_path {
 } fs_path_t;
 
 extern int fs_count;		/* number of entries in fs table */
+extern int xfs_fs_count;	/* number of xfs entries in fs table */
 extern fs_path_t *fs_table;	/* array of entries in fs table  */
 extern fs_path_t *fs_path;	/* current entry in the fs table */
 extern char *mtab_file;

@@ -75,9 +75,15 @@ static int
 pathlist_f(void)
 {
 	int		i;
+	struct fs_path	*path;
 
-	for (i = 0; i < fs_count; i++)
-		printpath(&fs_table[i], i, 1, &fs_table[i] == fs_path);
+	for (i = 0; i < fs_count; i++) {
+		path = &fs_table[i];
+		/* Table is ordered xfs first, then foreign */
+		if (path->fs_flags & FS_FOREIGN && !foreign_allowed)
+			break;
+		printpath(path, i, 1, path == fs_path);
+	}
 	return 0;
 }
 
@@ -87,9 +93,14 @@ print_f(
 	char		**argv)
 {
 	int		i;
+	struct fs_path	*path;
 
-	for (i = 0; i < fs_count; i++)
-		printpath(&fs_table[i], i, 0, 0);
+	for (i = 0; i < fs_count; i++) {
+		path = &fs_table[i];
+		if (path->fs_flags & FS_FOREIGN && !foreign_allowed)
+			break;
+		printpath(path, i, 0, 0);
+	}
 	return 0;
 }
 
@@ -99,6 +110,7 @@ path_f(
 	char		**argv)
 {
 	int	i;
+	int	max = foreign_allowed ? fs_count : xfs_fs_count;
 
 	if (fs_count == 0) {
 		printf(_("No paths are available\n"));
@@ -109,9 +121,9 @@ path_f(
 		return pathlist_f();
 
 	i = atoi(argv[1]);
-	if (i < 0 || i >= fs_count) {
+	if (i < 0 || i >= max) {
 		printf(_("value %d is out of range (0-%d)\n"),
-			i, fs_count-1);
+			i, max - 1);
 	} else {
 		fs_path = &fs_table[i];
 		pathlist_f();

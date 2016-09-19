@@ -32,6 +32,7 @@
 extern char *progname;
 
 int fs_count;
+int xfs_fs_count;
 struct fs_path *fs_table;
 struct fs_path *fs_path;
 
@@ -138,7 +139,16 @@ fs_table_insert(
 		goto out_norealloc;
 	fs_table = tmp_fs_table;
 
-	fs_path = &fs_table[fs_count];
+	/* Put foreign filesystems at the end, xfs filesystems at the front */
+	if (flags & FS_FOREIGN || fs_count == 0) {
+		fs_path = &fs_table[fs_count];
+	} else {
+		/* move foreign fs entries down, insert new one just before */
+		memmove(&fs_table[xfs_fs_count + 1], &fs_table[xfs_fs_count],
+			sizeof(fs_path_t)*(fs_count - xfs_fs_count));
+		fs_path = &fs_table[xfs_fs_count];
+		xfs_fs_count++;
+	}
 	fs_path->fs_dir = dir;
 	fs_path->fs_prid = prid;
 	fs_path->fs_flags = flags;
