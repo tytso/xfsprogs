@@ -112,21 +112,29 @@ init_check_command(
 	if (!fs_path)
 		return 1;
 
-	/* Always run commands that we are told to skip here */
+	/* Always run commands that are valid for all fs types. */
 	if (ct->flags & CMD_ALL_FSTYPES)
 		return 1;
 
-	/* if it's an XFS filesystem, always run the command */
+	/* If it's an XFS filesystem, always run the command. */
 	if (!(fs_path->fs_flags & FS_FOREIGN))
 		return 1;
 
-	/* If the user specified foreign filesysetms are ok, run it */
+	/* If the user specified foreign filesystems are ok (-f), run cmd. */
 	if (foreign_allowed &&
 	    (ct->flags & CMD_FLAG_FOREIGN_OK))
 		return 1;
 
-	/* foreign filesystem and it's not a valid command! */
-	fprintf(stderr, _("%s command is for XFS filesystems only\n"),
+	/* If cmd not allowed on foreign fs, regardless of -f flag, skip it. */
+	if (!(ct->flags & CMD_FLAG_FOREIGN_OK)) {
+		fprintf(stderr, _("%s: command is for XFS filesystems only\n"),
+			ct->name);
+		return 0;
+	}
+
+	/* foreign fs, but cmd only allowed via -f flag. Skip it. */
+	fprintf(stderr,
+		_("%s: foreign filesystem. Invoke xfs_quota with -f to enable.\n"),
 		ct->name);
 	return 0;
 }
