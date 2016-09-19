@@ -340,7 +340,7 @@ attr_init(void)
 	chattr_cmd.args = _("[-R|-D] [+/-"CHATTR_XFLAG_LIST"]");
 	chattr_cmd.argmin = 1;
 	chattr_cmd.argmax = -1;
-	chattr_cmd.flags = CMD_NOMAP_OK;
+	chattr_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	chattr_cmd.oneline =
 		_("change extended inode flags on the currently open file");
 	chattr_cmd.help = chattr_help;

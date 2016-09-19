@@ -929,7 +929,7 @@ open_init(void)
 	chproj_cmd.args = _("[-D | -R] projid");
 	chproj_cmd.argmin = 1;
 	chproj_cmd.argmax = -1;
-	chproj_cmd.flags = CMD_NOMAP_OK;
+	chproj_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	chproj_cmd.oneline =
 		_("change project identifier on the currently open file");
 	chproj_cmd.help = chproj_help;
