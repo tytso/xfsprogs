@@ -30,8 +30,6 @@ extern int	print_no_data;
 extern int	print_no_print;
 
 /* exports */
-extern char *trans_type[];
-
 extern void xlog_print_lseek(struct xlog *, int, xfs_daddr_t, int);
 
 extern void xfs_log_copy(struct xlog *, int, char *);

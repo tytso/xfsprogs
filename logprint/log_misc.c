@@ -28,52 +28,6 @@
 #define NO_ERROR	(0)
 
 static int logBBsize;
-char *trans_type[] = {
-	"",
-	"SETATTR",
-	"SETATTR_SIZE",
-	"INACTIVE",
-	"CREATE",
-	"CREATE_TRUNC",
-	"TRUNCATE_FILE",
-	"REMOVE",
-	"LINK",
-	"RENAME",
-	"MKDIR",
-	"RMDIR",
-	"SYMLINK",
-	"SET_DMATTRS",
-	"GROWFS",
-	"STRAT_WRITE",
-	"DIOSTRAT",
-	"WRITE_SYNC",
-	"WRITEID",
-	"ADDAFORK",
-	"ATTRINVAL",
-	"ATRUNCATE",
-	"ATTR_SET",
-	"ATTR_RM",
-	"ATTR_FLAG",
-	"CLEAR_AGI_BUCKET",
-	"QM_SBCHANGE",
-	"DUMMY1",
-	"DUMMY2",
-	"QM_QUOTAOFF",
-	"QM_DQALLOC",
-	"QM_SETQLIM",
-	"QM_DQCLUSTER",
-	"QM_QINOCREATE",
-	"QM_QUOTAOFF_END",
-	"SB_UNIT",
-	"FSYNC_TS",
-	"GROWFSRT_ALLOC",
-	"GROWFSRT_ZERO",
-	"GROWFSRT_FREE",
-	"SWAPEXT",
-	"SB_COUNT",
-	"CHECKPOINT",
-	"ICREATE",
-};
 
 typedef struct xlog_split_item {
 	struct xlog_split_item	*si_next;
@@ -233,8 +187,8 @@ xlog_print_trans_header(char **ptr, int len)
 	return 1;
     }
     h = (xfs_trans_header_t *)cptr;
-    printf(_("    type: %s       tid: %x       num_items: %d\n"),
-	   trans_type[h->th_type], h->th_tid, h->th_num_items);
+    printf(_("     tid: %x  num_items: %d\n"),
+	   h->th_tid, h->th_num_items);
     return 0;
 }	/* xlog_print_trans_header */
 
