@@ -45,8 +45,15 @@ static int max_block_alignment;
 
 #define PROC_MOUNTED	"/proc/mounts"
 
-int
-platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+/*
+ * Check if the filesystem is mounted.  Be verbose if asked, and
+ * optionally restrict check to /writable/ mounts (i.e. RO is OK)
+ */
+#define	CHECK_MOUNT_VERBOSE	0x1
+#define	CHECK_MOUNT_WRITABLE	0x2
+
+static int
+platform_check_mount(char *name, char *block, struct stat64 *s, int flags)
 {
 	FILE		*f;
 	struct stat64	st, mst;
@@ -54,6 +61,7 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 	char		mounts[MAXPATHLEN];
 
 	if (!s) {
+		/* If either fails we are not mounted */
 		if (stat64(block, &st) < 0)
 			return 0;
 		if ((st.st_mode & S_IFMT) != S_IFBLK)
@@ -63,6 +71,7 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 
 	strcpy(mounts, (!access(PROC_MOUNTED, R_OK)) ? PROC_MOUNTED : MOUNTED);
 	if ((f = setmntent(mounts, "r")) == NULL) {
+		/* Unexpected failure, warn unconditionally */
 		fprintf(stderr,
 		    _("%s: %s possibly contains a mounted filesystem\n"),
 		    progname, name);
@@ -73,48 +82,49 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 			continue;
 		if (mst.st_dev != s->st_rdev)
 			continue;
-
-		if (verbose)
-			fprintf(stderr,
-				_("%s: %s contains a mounted filesystem\n"),
-				progname, name);
-		break;
+		/* Found our device, is RO OK? */
+		if ((flags & CHECK_MOUNT_WRITABLE) && hasmntopt(mnt, MNTOPT_RO))
+			continue;
+		else
+			break;
 	}
 	endmntent(f);
-	return mnt != NULL;
+
+	/* No mounts contained the condition we were looking for */
+	if (mnt == NULL)
+		return 0;
+
+	if (flags & CHECK_MOUNT_VERBOSE) {
+		if (flags & CHECK_MOUNT_WRITABLE) {
+			fprintf(stderr,
+_("%s: %s contains a mounted and writable filesystem\n"),
+				progname, name);
+		} else {
+			fprintf(stderr,
+_("%s: %s contains a mounted filesystem\n"),
+				progname, name);
+		}
+	}
+	return 1;
+}
+
+int
+platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+{
+	int flags;
+
+	flags = verbose ? CHECK_MOUNT_VERBOSE : 0;
+	return platform_check_mount(name, block, s, flags);
 }
 
 int
 platform_check_iswritable(char *name, char *block, struct stat64 *s)
 {
-	FILE		*f;
-	struct stat64	mst;
-	struct mntent	*mnt;
-	char		mounts[MAXPATHLEN];
+	int flags;
 
-	strcpy(mounts, (!access(PROC_MOUNTED, R_OK)) ? PROC_MOUNTED : MOUNTED);
-	if ((f = setmntent(mounts, "r")) == NULL) {
-		fprintf(stderr, _("%s: %s contains a possibly writable, "
-				"mounted filesystem\n"), progname, name);
-			return 1;
-	}
-	while ((mnt = getmntent(f)) != NULL) {
-		if (stat64(mnt->mnt_fsname, &mst) < 0)
-			continue;
-		if ((mst.st_mode & S_IFMT) != S_IFBLK)
-			continue;
-		if (mst.st_rdev == s->st_rdev
-		    && hasmntopt(mnt, MNTOPT_RO) != NULL)
-			break;
-	}
-	endmntent(f);
-
-	if (mnt == NULL) {
-		fprintf(stderr, _("%s: %s contains a mounted and writable "
-				"filesystem\n"), progname, name);
-		return 1;
-	}
-	return 0;
+	/* Writable checks are always verbose */
+	flags = CHECK_MOUNT_WRITABLE | CHECK_MOUNT_VERBOSE;
+	return platform_check_mount(name, block, s, flags);
 }
 
 int
