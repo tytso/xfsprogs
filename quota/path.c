@@ -36,13 +36,14 @@ printpath(
 	int		c;
 
 	if (index == 0) {
-		printf(_("%sFilesystem          Pathname\n"),
-			number ? _("      ") : "");
+		printf(_("%s%sFilesystem          Pathname\n"),
+		       number ? _("      ") : "",
+		       foreign_allowed ? _("    ") : "");
 	}
-	if (number) {
+	if (number)
 		printf(_("%c%03d%c "), braces? '[':' ', index, braces? ']':' ');
-	}
-	printf("%s ", (path->fs_flags & FS_FOREIGN) ? "(F)" : "   ");
+	if (foreign_allowed)
+		printf("%s", (path->fs_flags & FS_FOREIGN) ? "(F) " : "    ");
 	printf(_("%-19s %s"), path->fs_dir, path->fs_name);
 	if (path->fs_flags & FS_PROJECT_PATH) {
 		prj = getprprid(path->fs_prid);
@@ -51,7 +52,7 @@ printpath(
 			printf(_(", %s"), prj->pr_name);
 		printf(")");
 	} else if (xfsquotactl(XFS_GETQSTAT, path->fs_name, 0, 0,
-				(void *)&qstat) == 0 && qstat.qs_flags) {
+			       (void *)&qstat) == 0 && qstat.qs_flags) {
 		c = 0;
 		printf(" (");
 		if (qstat.qs_flags & XFS_QUOTA_UDQ_ENFD)
