@@ -85,9 +85,8 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 }
 
 int
-platform_check_iswritable(char *name, char *block, struct stat64 *s, int fatal)
+platform_check_iswritable(char *name, char *block, struct stat64 *s)
 {
-	int		sts = 0;
 	FILE		*f;
 	struct stat64	mst;
 	struct mntent	*mnt;
@@ -97,7 +96,7 @@ platform_check_iswritable(char *name, char *block, struct stat64 *s, int fatal)
 	if ((f = setmntent(mounts, "r")) == NULL) {
 		fprintf(stderr, _("%s: %s contains a possibly writable, "
 				"mounted filesystem\n"), progname, name);
-			return fatal;
+			return 1;
 	}
 	while ((mnt = getmntent(f)) != NULL) {
 		if (stat64(mnt->mnt_fsname, &mst) < 0)
@@ -108,13 +107,14 @@ platform_check_iswritable(char *name, char *block, struct stat64 *s, int fatal)
 		    && hasmntopt(mnt, MNTOPT_RO) != NULL)
 			break;
 	}
+	endmntent(f);
+
 	if (mnt == NULL) {
 		fprintf(stderr, _("%s: %s contains a mounted and writable "
 				"filesystem\n"), progname, name);
-		sts = fatal;
+		return 1;
 	}
-	endmntent(f);
-	return sts;
+	return 0;
 }
 
 int

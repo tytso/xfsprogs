@@ -22,8 +22,7 @@ struct stat64;
 
 extern int platform_check_ismounted (char *path, char *block,
 					struct stat64 *sptr, int verbose);
-extern int platform_check_iswritable (char *path, char *block,
-					struct stat64 *sptr, int fatal);
+extern int platform_check_iswritable (char *path, char *block, struct stat64 *sptr);
 extern int platform_set_blocksize (int fd, char *path, dev_t device, int bsz, int fatal);
 extern void platform_flush_device (int fd, dev_t device);
 extern char *platform_findrawpath(char *path);

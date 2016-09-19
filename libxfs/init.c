@@ -75,7 +75,9 @@ check_isactive(char *name, char *block, int fatal)
 		return 0;
 	if (platform_check_ismounted(name, block, &st, 0) == 0)
 		return 0;
-	return platform_check_iswritable(name, block, &st, fatal);
+	if (platform_check_iswritable(name, block, &st))
+		return fatal ? 1 : 0;
+	return 0;
 }
 
 /* libxfs_device_to_fd:
