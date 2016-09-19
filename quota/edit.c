@@ -709,6 +709,7 @@ edit_init(void)
 	_("[-g|-p|-u] bsoft|bhard|isoft|ihard|rtbsoft|rtbhard=N -d|id|name");
 	limit_cmd.oneline = _("modify quota limits");
 	limit_cmd.help = limit_help;
+	limit_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	restore_cmd.name = "restore";
 	restore_cmd.cfunc = restore_f;
@@ -716,6 +717,7 @@ edit_init(void)
 	restore_cmd.argmax = -1;
 	restore_cmd.args = _("[-g|-p|-u] [-f file]");
 	restore_cmd.oneline = _("restore quota limits from a backup file");
+	restore_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	timer_cmd.name = "timer";
 	timer_cmd.cfunc = timer_f;
@@ -724,6 +726,7 @@ edit_init(void)
 	timer_cmd.args = _("[-bir] [-g|-p|-u] value");
 	timer_cmd.oneline = _("set quota enforcement timeouts");
 	timer_cmd.help = timer_help;
+	timer_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	warn_cmd.name = "warn";
 	warn_cmd.cfunc = warn_f;
