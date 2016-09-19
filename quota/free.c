@@ -372,7 +372,6 @@ free_init(void)
 	free_cmd.args = _("[-bir] [-hn] [-f file]");
 	free_cmd.oneline = _("show free and used counts for blocks and inodes");
 	free_cmd.help = free_help;
-	free_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	add_command(&free_cmd);
 }

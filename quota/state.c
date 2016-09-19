@@ -584,7 +584,6 @@ state_init(void)
 	off_cmd.args = _("[-gpu] [-v]");
 	off_cmd.oneline = _("permanently switch quota off for a path");
 	off_cmd.help = off_help;
-	off_cmd.flags = CMD_FLAG_FOREIGN_OK;
 
 	state_cmd.name = "state";
 	state_cmd.cfunc = state_f;
