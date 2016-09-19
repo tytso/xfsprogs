@@ -79,10 +79,11 @@ zero_log(
 		_("zero_log: cannot find log head/tail (xlog_find_tail=%d)\n"),
 			error);
 		if (!no_modify && !zap_log)
-			do_error(_(
+			do_warn(_(
 "ERROR: The log head and/or tail cannot be discovered. Attempt to mount the\n"
 "filesystem to replay the log or use the -L option to destroy the log and\n"
 "attempt a repair.\n"));
+			exit(2);
 	} else {
 		if (verbose) {
 			do_warn(
