@@ -1092,7 +1092,7 @@ mv_orphanage(
 					irec->ino_startnum;
 		nres = XFS_DIRENTER_SPACE_RES(mp, fnamelen) +
 		       XFS_DIRENTER_SPACE_RES(mp, 2);
-		err = -libxfs_dir_lookup(tp, ino_p, &xfs_name_dotdot,
+		err = -libxfs_dir_lookup(NULL, ino_p, &xfs_name_dotdot,
 					&entry_ino_num, NULL);
 		if (err) {
 			ASSERT(err == ENOENT);
