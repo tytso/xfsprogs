@@ -494,27 +494,29 @@ write_wbuf(void)
 
 void
 sb_update_uuid(
-	xfs_sb_t	*sb,
-	ag_header_t	*ag_hdr,
-	thread_args	*tcarg)
+	xfs_sb_t	*sb,		/* Original fs superblock */
+	ag_header_t	*ag_hdr,	/* AG hdr to update for this copy */
+	thread_args	*tcarg)		/* Args for this thread, with UUID */
 {
 	/*
 	 * If this filesystem has CRCs, the original UUID is stamped into
-	 * all metadata.  If we are changing the UUID in the copy, we need
-	 * to copy the original UUID into the meta_uuid slot and set the
-	 * set the incompat flag if that hasn't already been done.
+	 * all metadata.  If we don't have an existing meta_uuid field in the
+	 * the original filesystem and we are changing the UUID in this copy,
+	 * we must copy the original sb_uuid to the sb_meta_uuid slot and set
+	 * the incompat flag for the feature on this copy.
 	 */
-	if (!uuid_equal(&tcarg->uuid, &ag_hdr->xfs_sb->sb_uuid) &&
-	    xfs_sb_version_hascrc(sb) && !xfs_sb_version_hasmetauuid(sb)) {
+	if (xfs_sb_version_hascrc(sb) && !xfs_sb_version_hasmetauuid(sb) &&
+	    !uuid_equal(&tcarg->uuid, &sb->sb_uuid)) {
 		__be32 feat;
 
 		feat = be32_to_cpu(ag_hdr->xfs_sb->sb_features_incompat);
 		feat |= XFS_SB_FEAT_INCOMPAT_META_UUID;
 		ag_hdr->xfs_sb->sb_features_incompat = cpu_to_be32(feat);
 		platform_uuid_copy(&ag_hdr->xfs_sb->sb_meta_uuid,
-				   &ag_hdr->xfs_sb->sb_uuid);
+				   &sb->sb_uuid);
 	}
 
+	/* Copy the (possibly new) fs-identifier UUID into sb_uuid */
 	platform_uuid_copy(&ag_hdr->xfs_sb->sb_uuid, &tcarg->uuid);
 
 	/* We may have changed the UUID, so update the superblock CRC */
