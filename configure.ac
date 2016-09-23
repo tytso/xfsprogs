@@ -1,4 +1,4 @@
-AC_INIT([xfsprogs], [4.8.0-rc1], [linux-xfs@vger.kernel.org])
+AC_INIT([xfsprogs], [4.8.0-rc2], [linux-xfs@vger.kernel.org])
 AC_PREREQ(2.50)
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])

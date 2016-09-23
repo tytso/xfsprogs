@@ -1,3 +1,13 @@
+xfsprogs-4.8-0-rc2 (23 Sep 2016)
+	- xfs_copy: uuid handling fixes (Eric Sandeen)
+	- xfs_repair: directory rebuild segfault fix (Eric Sandeen)
+	- xfs_repair: report log dirtiness correctly (Eric Sandeen)
+	- libxfs: mounted filesystem detection cleanups (Eric Sandeen)
+	- xfs_logprint: don't print transaction types anymore (Hou Tao)
+	- xfs_quota: allow operation on non-XFS filesystems (Bill O'Donnell)
+	- xfs_io: allow project quota operations on non-XFS (Eric Sandeen)
+	- mkfs.xfs: man page calrification for ftype defaults (Eric Sandeen)
+
 xfsprogs-4.8-0-rc1 (9 Sep 2016)
 	- change contact emails to linux-xfs@vger.kernel.org
 	- libxfs: kernel sync up to 4.8-rc1
