@@ -505,10 +505,18 @@ rmap_store_ag_btree_rec(
 	if (error)
 		goto err;
 
+	/*
+	 * Sometimes, the blocks at the beginning of the AGFL are there
+	 * because we overestimated how many blocks we needed to rebuild
+	 * the freespace btrees.  ar_flcount records the number of
+	 * blocks in this situation.  Since those blocks already have an
+	 * rmap, we only need to add rmap records for AGFL blocks past
+	 * that point in the AGFL because those blocks are a result of a
+	 * no-rmap no-shrink freelist fixup that we did earlier.
+	 */
 	agfl_bno = XFS_BUF_TO_AGFL_BNO(mp, agflbp);
-	agfl_bno += ag_rmaps[agno].ar_flcount;
-	b = agfl_bno;
-	while (*b != NULLAGBLOCK && b - agfl_bno <= XFS_AGFL_SIZE(mp)) {
+	b = agfl_bno + ag_rmaps[agno].ar_flcount;
+	while (*b != NULLAGBLOCK && b - agfl_bno < XFS_AGFL_SIZE(mp)) {
 		error = rmap_add_ag_rec(mp, agno, be32_to_cpu(*b), 1,
 				XFS_RMAP_OWN_AG);
 		if (error)
@@ -566,7 +574,6 @@ err_slab:
 err:
 	if (agflbp)
 		libxfs_putbuf(agflbp);
-	printf("FAIL err %d\n", error);
 	return error;
 }
 
