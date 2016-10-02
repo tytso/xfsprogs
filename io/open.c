@@ -812,7 +812,7 @@ inode_f(
 	  char			**argv)
 {
 	__s32			count = 0;
-	__u64			lastino = 0;
+	__u64			result_ino = 0;
 	__u64			userino = NULLFSINO;
 	char			*p;
 	int			c;
@@ -855,8 +855,14 @@ inode_f(
 	if (ret_next && userino == NULLFSINO)
 		return command_usage(&inode_cmd);
 
-	if (userino != NULLFSINO) {
-
+	if (userino == NULLFSINO) {
+		/* We are finding last inode in use */
+		result_ino = get_last_inode();
+		if (!result_ino) {
+			exitcode = 1;
+			return 0;
+		}
+	} else {
 		if (ret_next)	/* get next inode */
 			cmd = XFS_IOC_FSBULKSTAT;
 		else		/* get this inode */
@@ -868,42 +874,31 @@ inode_f(
 		bulkreq.ocount = &count;
 
 		if (xfsctl(file->name, file->fd, cmd, &bulkreq)) {
-			if (errno == EINVAL) {
-				if (!ret_next)
-					printf("0\n");
+			if (!ret_next && errno == EINVAL) {
+				/* Not in use */
+				result_ino = 0;
 			} else {
 				perror("xfsctl");
+				exitcode = 1;
+				return 0;
 			}
-			exitcode = 1;
-			return 0;
-		}
-
-		if (ret_next)
-			userino = bstat.bs_ino;
-
-		if (verbose)
-			printf("%llu:%d\n",
-			       userino,
-			       userino > XFS_MAXINUMBER_32 ? 64 : 32);
-		else
-			/* Inode in use */
-			printf("%llu\n", userino);
-		return 0;
-
+		} else if (ret_next)	/* The next inode in use */
+			result_ino = bstat.bs_ino;
+		else			/* The inode we asked about */
+			result_ino = userino;
 	}
 
-	/* We are finding last inode in use */
-	lastino = get_last_inode();
-	if (!lastino) {
-		exitcode = 1;
-		return 0;
+	if (verbose && result_ino) {
+		/* Requested verbose and we have an answer */
+		printf("%llu:%d\n", result_ino,
+			result_ino > XFS_MAXINUMBER_32 ? 64 : 32);
+	} else if (userino == NULLFSINO) {
+		/* Just checking 32 or 64 bit presence, non-verbose */
+		printf("%d\n", result_ino > XFS_MAXINUMBER_32 ? 1 : 0);
+	} else {
+		/* We asked about a specific inode, non-verbose */
+		printf("%llu\n", result_ino);
 	}
-
-	if (verbose)
-		printf("%llu:%d\n", lastino,
-			lastino > XFS_MAXINUMBER_32 ? 64 : 32);
-	else
-		printf("%d\n", lastino > XFS_MAXINUMBER_32 ? 1 : 0);
 
 	return 0;
 }
