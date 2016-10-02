@@ -139,7 +139,7 @@ extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 
 /* Inode Cache Interfaces */
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
-				uint, struct xfs_inode **, xfs_daddr_t);
+				uint, struct xfs_inode **);
 extern void	libxfs_iput(struct xfs_inode *);
 
 #define IRELE(ip) libxfs_iput(ip)

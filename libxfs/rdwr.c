@@ -1330,7 +1330,7 @@ extern kmem_zone_t	*xfs_inode_zone;
 
 int
 libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
-		xfs_inode_t **ipp, xfs_daddr_t bno)
+		xfs_inode_t **ipp)
 {
 	xfs_inode_t	*ip;
 	int		error = 0;
@@ -1341,7 +1341,7 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 
 	ip->i_ino = ino;
 	ip->i_mount = mp;
-	error = xfs_iread(mp, tp, ip, bno);
+	error = xfs_iread(mp, tp, ip, 0);
 	if (error) {
 		kmem_zone_free(xfs_inode_zone, ip);
 		*ipp = NULL;

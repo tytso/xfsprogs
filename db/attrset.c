@@ -151,7 +151,7 @@ attr_set_f(
 		value = NULL;
 	}
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip, 0)) {
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;
@@ -226,7 +226,7 @@ attr_remove_f(
 
 	name = argv[optind];
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip, 0)) {
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;

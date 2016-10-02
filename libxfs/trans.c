@@ -224,9 +224,9 @@ libxfs_trans_iget(
 	xfs_inode_log_item_t	*iip;
 
 	if (tp == NULL)
-		return libxfs_iget(mp, tp, ino, lock_flags, ipp, 0);
+		return libxfs_iget(mp, tp, ino, lock_flags, ipp);
 
-	error = libxfs_iget(mp, tp, ino, lock_flags, &ip, 0);
+	error = libxfs_iget(mp, tp, ino, lock_flags, &ip);
 	if (error)
 		return error;
 	ASSERT(ip != NULL);
