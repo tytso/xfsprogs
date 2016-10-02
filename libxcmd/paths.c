@@ -147,7 +147,6 @@ fs_table_insert(
 		memmove(&fs_table[xfs_fs_count + 1], &fs_table[xfs_fs_count],
 			sizeof(fs_path_t)*(fs_count - xfs_fs_count));
 		fs_path = &fs_table[xfs_fs_count];
-		xfs_fs_count++;
 	}
 	fs_path->fs_dir = dir;
 	fs_path->fs_prid = prid;
@@ -159,6 +158,8 @@ fs_table_insert(
 	fs_path->fs_logdev = logdev;
 	fs_path->fs_rtdev = rtdev;
 	fs_count++;
+	if (!(flags & FS_FOREIGN))
+		xfs_fs_count++;
 
 	return 0;
 
