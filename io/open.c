@@ -813,7 +813,7 @@ inode_f(
 {
 	__s32			count = 0;
 	__u64			lastino = 0;
-	__u64			userino = 0;
+	__u64			userino = NULLFSINO;
 	char			*p;
 	int			c;
 	int			verbose = 0;
@@ -835,27 +835,32 @@ inode_f(
 		}
 	}
 
-	/*
-	 * Inode number can be passed with or without extra arguments, so we
-	 * should handle inode numbers passed by user out of getopt()
-	 */
+	/* Last arg (if present) should be an inode number */
 	if (optind < argc) {
-
-		if (ret_next) {
-			cmd = XFS_IOC_FSBULKSTAT;
-		} else {
-			if ((argc > 2) && !verbose)
-				return command_usage(&inode_cmd);
-			else
-				cmd = XFS_IOC_FSBULKSTAT_SINGLE;
-		}
-
 		userino = strtoull(argv[optind], &p, 10);
 		if ((*p != '\0')) {
-			printf(_("[num] must be a numeric value\n"));
+			printf(_("%s is not a numeric inode value\n"),
+				argv[optind]);
 			exitcode = 1;
 			return 0;
 		}
+		optind++;
+	}
+
+	/* Extra junk? */
+	if (optind < argc)
+		return command_usage(&inode_cmd);
+
+	/* -n option requires an inode number */
+	if (ret_next && userino == NULLFSINO)
+		return command_usage(&inode_cmd);
+
+	if (userino != NULLFSINO) {
+
+		if (ret_next)	/* get next inode */
+			cmd = XFS_IOC_FSBULKSTAT;
+		else		/* get this inode */
+			cmd = XFS_IOC_FSBULKSTAT_SINGLE;
 
 		bulkreq.lastip = &userino;
 		bulkreq.icount = 1;
@@ -885,9 +890,6 @@ inode_f(
 			printf("%llu\n", userino);
 		return 0;
 
-	/* -n option must not be used stand alone */
-	} else if (ret_next) {
-		return command_usage(&inode_cmd);
 	}
 
 	/* We are finding last inode in use */
