@@ -882,10 +882,16 @@ inode_f(
 				exitcode = 1;
 				return 0;
 			}
-		} else if (ret_next)	/* The next inode in use */
-			result_ino = bstat.bs_ino;
-		else			/* The inode we asked about */
+		} else if (ret_next) {
+			/* The next inode in use, or 0 if none */
+			if (*bulkreq.ocount)
+				result_ino = bstat.bs_ino;
+			else
+				result_ino = 0;
+		} else {
+			/* The inode we asked about */
 			result_ino = userino;
+		}
 	}
 
 	if (verbose && result_ino) {
