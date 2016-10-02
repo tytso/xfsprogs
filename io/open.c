@@ -757,16 +757,13 @@ inode_help(void)
 {
 	printf(_(
 "\n"
-"Query physical information about the inode"
+"Query physical information about an inode"
 "\n"
-" Default:	-- Return true(1) or false(0) if any inode greater than\n"
-"		   32bits has been found in the filesystem\n"
-"[num]		-- Return inode number [num] or 0 if the inode [num] is in use\n"
-"		   or not\n"
-" -n [num]	-- Return the next valid inode after [num]\n"
-" -v		-- verbose mode\n"
-"		   Display the inode number and its physical size (in bits)\n"
-"		   according to the argument used\n"
+" Default:	-- Return 1 if any inode number greater than 32 bits exists in\n"
+"		   the filesystem, or 0 if none exist\n"
+" num		-- Return inode number [num] if in use, or 0 if not in use\n"
+" -n num	-- Return the next used inode after [num]\n"
+" -v		-- Verbose mode - display returned inode number's size in bits\n"
 "\n"));
 }
 
@@ -956,9 +953,9 @@ open_init(void)
 
 	inode_cmd.name = "inode";
 	inode_cmd.cfunc = inode_f;
-	inode_cmd.args = _("[-n | -v] [num]");
+	inode_cmd.args = _("[-nv] [num]");
 	inode_cmd.argmin = 0;
-	inode_cmd.argmax = 2;
+	inode_cmd.argmax = 3;
 	inode_cmd.flags = CMD_NOMAP_OK;
 	inode_cmd.oneline =
 		_("Query inode number usage in the filesystem");
