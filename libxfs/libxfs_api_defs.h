@@ -136,5 +136,6 @@
 #define xfs_perag_put			libxfs_perag_put
 #define xfs_prealloc_blocks		libxfs_prealloc_blocks
 #define xfs_dinode_good_version		libxfs_dinode_good_version
+#define xfs_free_extent			libxfs_free_extent
 
 #endif /* __LIBXFS_API_DEFS_H__ */
