@@ -1,3 +1,10 @@
+xfsprogs-4.8-0-rc3 (3 Oct 2016)
+	- xfs_io: clean up inode command (Eric Sandeen)
+	- xfs_repair: fix phase 5 btree size overestimation (Darrick Wong)
+	- xfs_repair: fix phase 5 AGFL rmap update (Darrick Wong)
+	- libxfs: libxfs_iget() cleanup (Eric Sandeen)
+	- libxcmd: fix count of XFS filesystems in path table (Eryu Guan)
+
 xfsprogs-4.8-0-rc2 (23 Sep 2016)
 	- xfs_copy: uuid handling fixes (Eric Sandeen)
 	- xfs_repair: directory rebuild segfault fix (Eric Sandeen)
