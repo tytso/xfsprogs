@@ -1,3 +1,6 @@
+xfsprogs-4.8-0 (17 Oct 2016)
+	- no changes from v4.8.0-rc3
+
 xfsprogs-4.8-0-rc3 (3 Oct 2016)
 	- xfs_io: clean up inode command (Eric Sandeen)
 	- xfs_repair: fix phase 5 btree size overestimation (Darrick Wong)
