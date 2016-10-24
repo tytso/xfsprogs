@@ -50,10 +50,14 @@ fi
 # We should see repository contents we recognise, both at the source and
 # destination. Kernel repositorys will have fs/xfs/libxfs, and xfsprogs
 # repositories will have libxcmd.
+SOURCE="kernel"
 check_repo()
 {
 	if [ ! -d "fs/xfs/libxfs" -a ! -d "libxcmd" ]; then
 		usage "$1 repository contents not recognised!"
+	fi
+	if [ -d "$REPO/libxcmd" ]; then
+		SOURCE="xfsprogs"
 	fi
 }
 
@@ -270,7 +274,7 @@ apply_patch()
 	local _source="kernel"
 
 	# filter just the libxfs parts of the patch
-	if [ -d "fs/xfs/libxfs" ]; then
+	if [ $SOURCE == "xfsprogs" ]; then
 
 		[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "[ab]/libxfs/"
 		if [ $? -ne 0 ]; then
@@ -281,7 +285,7 @@ apply_patch()
 
 		filter_kernel_patch $_patch > $_new_patch
 		_source="xfsprogs"
-	elif [ -d "libxfs" -a -d "libxlog" ]; then
+	elif [ $SOURCE == "kernel" ]; then
 
 		[ -n "$VERBOSE" ] || lsdiff $_patch | grep -q "[ab]/fs/xfs/libxfs/"
 		if [ $? -ne 0 ]; then
@@ -291,6 +295,8 @@ apply_patch()
 		fi
 
 		filter_xfsprogs_patch $_patch > $_new_patch
+	else
+		fail "Unknown source repo type: $SOURCE"
 	fi
 
 	# now munge the header to be in the correct format.
@@ -369,10 +375,15 @@ fi
 pushd $REPO > /dev/null
 check_repo Source
 hashr=`munge_hash_range $COMMIT_ID`
+if [ $SOURCE == "kernel" ]; then
+	hashr="$hashr -- fs/xfs/libxfs"
+else
+	hashr="$hashr -- libxfs"
+fi
+
+# grab and echo the list of commits for confirmation
 echo "Commits to apply:"
 commit_list=`git rev-list $hashr | tac`
-
-# echo the list of commits for confirmation
 git log --oneline $hashr |tac
 read -r -p "Proceed [y|N]? " response
 if [ -z "$response" -o "$response" != "y" ]; then
