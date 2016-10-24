@@ -140,13 +140,18 @@ filter_kernel_patch()
 	ls -1 fs/xfs/libxfs/*.[ch] | sed -e "s%.*/\(.*\)%*\1%" > $_libxfs_files
 
 	# Create the new patch
+	# filterdiff will have screwed up files that source/sink /dev/null.
+	# fix that up with some sed magic.
 	filterdiff \
-		--verbose \
-		-I $_libxfs_files \
-		--strip=1 \
-		--addoldprefix=a/fs/xfs/ \
-		--addnewprefix=b/fs/xfs/ \
-		$_patch
+			--verbose \
+			-I $_libxfs_files \
+			--strip=1 \
+			--addoldprefix=a/fs/xfs/ \
+			--addnewprefix=b/fs/xfs/ \
+			$_patch | \
+		sed -e 's, [ab]\/fs\/xfs\/\(\/dev\/null\), \1,' \
+		    -e '/^diff --git/d'
+
 
 	rm -f $_libxfs_files
 }
@@ -164,13 +169,17 @@ filter_xfsprogs_patch()
 	lsdiff $_patch | sed -e "s%.*/\(.*\)%*libxfs/\1%" > $_libxfs_files
 
 	# Create the new patch
+	# filterdiff will have screwed up files that source/sink /dev/null.
+	# fix that up with some sed magic.
 	filterdiff \
-		--verbose \
-		-I $_libxfs_files \
-		--strip=3 \
-		--addoldprefix=a/ \
-		--addnewprefix=b/ \
-		$_patch
+			--verbose \
+			-I $_libxfs_files \
+			--strip=3 \
+			--addoldprefix=a/ \
+			--addnewprefix=b/ \
+			$_patch | \
+		sed -e 's, [ab]\/\(\/dev\/null\), \1,' \
+		    -e '/^diff --git/d'
 
 	rm -f $_libxfs_files
 }
