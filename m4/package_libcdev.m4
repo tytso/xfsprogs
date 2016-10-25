@@ -274,5 +274,15 @@ AC_DEFUN([AC_HAVE_MREMAP],
 #
 AC_DEFUN([AC_NEED_INTERNAL_FSXATTR],
   [
+    AC_CHECK_TYPE(struct fsxattr,
+      [
+        AC_CHECK_MEMBER(struct fsxattr.fsx_cowextsize,
+          ,
+          need_internal_fsxattr=yes,
+          [#include <linux/fs.h>]
+        )
+      ],,
+      [#include <linux/fs.h>]
+    )
     AC_SUBST(need_internal_fsxattr)
   ])

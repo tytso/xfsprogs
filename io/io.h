@@ -169,3 +169,5 @@ extern void		readdir_init(void);
 #endif
 
 extern void		reflink_init(void);
+
+extern void		cowextsize_init(void);

@@ -85,6 +85,7 @@ init_commands(void)
 	sync_range_init();
 	truncate_init();
 	reflink_init();
+	cowextsize_init();
 }
 
 static int
