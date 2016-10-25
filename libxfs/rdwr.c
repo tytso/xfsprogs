@@ -1372,6 +1372,8 @@ libxfs_idestroy(xfs_inode_t *ip)
 	}
 	if (ip->i_afp)
 		libxfs_idestroy_fork(ip, XFS_ATTR_FORK);
+	if (ip->i_cowfp)
+		xfs_idestroy_fork(ip, XFS_COW_FORK);
 }
 
 void
