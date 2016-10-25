@@ -40,6 +40,10 @@
 #define FALLOC_FL_INSERT_RANGE 0x20
 #endif
 
+#ifndef FALLOC_FL_UNSHARE_RANGE
+#define FALLOC_FL_UNSHARE_RANGE 0x40
+#endif
+
 static cmdinfo_t allocsp_cmd;
 static cmdinfo_t freesp_cmd;
 static cmdinfo_t resvsp_cmd;
@@ -181,6 +185,7 @@ falloc_help(void)
 " -i -- inserts a hole into the given range of the file.\n"
 " -k -- do not change file size.\n"
 " -p -- unmap the given range from the file.\n"
+" -u -- unshare shared extents in the given range.\n"
 "\n"));
 }
 
@@ -193,7 +198,7 @@ fallocate_f(
 	int		mode = 0;
 	int		c;
 
-	while ((c = getopt(argc, argv, "cikp")) != EOF) {
+	while ((c = getopt(argc, argv, "cikpu")) != EOF) {
 		switch (c) {
 		case 'c':
 			mode = FALLOC_FL_COLLAPSE_RANGE;
@@ -206,6 +211,9 @@ fallocate_f(
 			break;
 		case 'p':
 			mode = FALLOC_FL_PUNCH_HOLE;
+			break;
+		case 'u':
+			mode = FALLOC_FL_UNSHARE_RANGE;
 			break;
 		default:
 			command_usage(&falloc_cmd);
@@ -306,6 +314,26 @@ fzero_f(
 	}
 	return 0;
 }
+
+static int
+funshare_f(
+	int		argc,
+	char		**argv)
+{
+	xfs_flock64_t	segment;
+	int		mode = FALLOC_FL_UNSHARE_RANGE;
+	int		index = 1;
+
+	if (!offset_length(argv[index], argv[index + 1], &segment))
+		return 0;
+
+	if (fallocate(file->fd, mode,
+			segment.l_start, segment.l_len)) {
+		perror("fallocate");
+		return 0;
+	}
+	return 0;
+}
 #endif	/* HAVE_FALLOCATE */
 
 void
@@ -366,7 +394,7 @@ prealloc_init(void)
 	falloc_cmd.argmin = 2;
 	falloc_cmd.argmax = -1;
 	falloc_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-	falloc_cmd.args = _("[-c] [-k] [-p] off len");
+	falloc_cmd.args = _("[-c] [-k] [-p] [-u] off len");
 	falloc_cmd.oneline =
 	_("allocates space associated with part of a file via fallocate");
 	falloc_cmd.help = falloc_help;
@@ -410,6 +438,16 @@ prealloc_init(void)
 	fzero_cmd.args = _("[-k] off len");
 	fzero_cmd.oneline =
 	_("zeroes space and eliminates holes by preallocating");
+	add_command(&fzero_cmd);
+
+	fzero_cmd.name = "funshare";
+	fzero_cmd.cfunc = funshare_f;
+	fzero_cmd.argmin = 2;
+	fzero_cmd.argmax = 2;
+	fzero_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	fzero_cmd.args = _("off len");
+	fzero_cmd.oneline =
+	_("unshares shared blocks within the range");
 	add_command(&fzero_cmd);
 #endif	/* HAVE_FALLOCATE */
 }
