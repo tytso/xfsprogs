@@ -247,6 +247,27 @@
 #define trace_xfs_refcountbt_free_block(...)	((void) 0)
 #define trace_xfs_refcountbt_alloc_block(...)	((void) 0)
 #define trace_xfs_refcount_rec_order_error(...)	((void) 0)
+#define trace_xfs_refcount_split_extent(...)	((void) 0)
+#define trace_xfs_refcount_split_extent_error(...)		((void) 0)
+#define trace_xfs_refcount_merge_center_extents_error(...)	((void) 0)
+#define trace_xfs_refcount_merge_left_extent_error(...)		((void) 0)
+#define trace_xfs_refcount_merge_right_extent_error(...)	((void) 0)
+#define trace_xfs_refcount_find_left_extent(...)	((void) 0)
+#define trace_xfs_refcount_find_left_extent_error(...)	((void) 0)
+#define trace_xfs_refcount_find_right_extent(...)	((void) 0)
+#define trace_xfs_refcount_find_right_extent_error(...)	((void) 0)
+#define trace_xfs_refcount_merge_center_extents(...)	((void) 0)
+#define trace_xfs_refcount_merge_left_extent(...)	((void) 0)
+#define trace_xfs_refcount_merge_right_extent(...)	((void) 0)
+#define trace_xfs_refcount_modify_extent(...)		((void) 0)
+#define trace_xfs_refcount_modify_extent_error(...)	((void) 0)
+#define trace_xfs_refcount_adjust_error(...)		((void) 0)
+#define trace_xfs_refcount_increase(...)		((void) 0)
+#define trace_xfs_refcount_decrease(...)		((void) 0)
+#define trace_xfs_refcount_deferred(...)		((void) 0)
+#define trace_xfs_refcount_defer(...)			((void) 0)
+#define trace_xfs_refcount_finish_one_leftover(...)	((void) 0)
+
 
 
 /* set c = c to avoid unused var warnings */
