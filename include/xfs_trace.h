@@ -273,6 +273,9 @@
 
 #define trace_xfs_bmap_remap_alloc(...)		((void) 0)
 #define trace_xfs_bmap_remap_alloc_error(...)	((void) 0)
+#define trace_xfs_bmap_deferred(...)		((void) 0)
+#define trace_xfs_bmap_defer(...)		((void) 0)
+
 
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
