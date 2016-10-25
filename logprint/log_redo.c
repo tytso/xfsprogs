@@ -378,3 +378,146 @@ xlog_recover_print_rud(
 	f = item->ri_buf[0].i_addr;
 	xlog_print_trans_rud(&f, sizeof(struct xfs_rud_log_format));
 }
+
+/* Reference Count Update Items */
+
+static int
+xfs_cui_copy_format(
+	struct xfs_cui_log_format *cui,
+	uint			  len,
+	struct xfs_cui_log_format *dst_fmt,
+	int			  continued)
+{
+	uint nextents;
+	uint dst_len;
+
+	nextents = cui->cui_nextents;
+	dst_len = xfs_cui_log_format_sizeof(nextents);
+
+	if (len == dst_len || continued) {
+		memcpy(dst_fmt, cui, len);
+		return 0;
+	}
+	fprintf(stderr, _("%s: bad size of CUI format: %u; expected %u; nextents = %u\n"),
+		progname, len, dst_len, nextents);
+	return 1;
+}
+
+int
+xlog_print_trans_cui(
+	char			**ptr,
+	uint			src_len,
+	int			continued)
+{
+	struct xfs_cui_log_format	*src_f, *f = NULL;
+	uint			dst_len;
+	uint			nextents;
+	struct xfs_phys_extent	*ex;
+	int			i;
+	int			error = 0;
+	int			core_size;
+
+	core_size = offsetof(struct xfs_cui_log_format, cui_extents);
+
+	src_f = malloc(src_len);
+	if (src_f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	memcpy(src_f, *ptr, src_len);
+	*ptr += src_len;
+
+	/* convert to native format */
+	nextents = src_f->cui_nextents;
+	dst_len = xfs_cui_log_format_sizeof(nextents);
+
+	if (continued && src_len < core_size) {
+		printf(_("CUI: Not enough data to decode further\n"));
+		error = 1;
+		goto error;
+	}
+
+	f = malloc(dst_len);
+	if (f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	if (xfs_cui_copy_format(src_f, src_len, f, continued)) {
+		error = 1;
+		goto error;
+	}
+
+	printf(_("CUI:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
+		f->cui_size, f->cui_nextents, (unsigned long long)f->cui_id);
+
+	if (continued) {
+		printf(_("CUI extent data skipped (CONTINUE set, no space)\n"));
+		goto error;
+	}
+
+	ex = f->cui_extents;
+	for (i=0; i < f->cui_nextents; i++) {
+		printf("(s: 0x%llx, l: %d, f: 0x%x) ",
+			(unsigned long long)ex->pe_startblock, ex->pe_len,
+			ex->pe_flags);
+		printf("\n");
+		ex++;
+	}
+error:
+	free(src_f);
+	free(f);
+	return error;
+}
+
+void
+xlog_recover_print_cui(
+	struct xlog_recover_item	*item)
+{
+	char				*src_f;
+	uint				src_len;
+
+	src_f = item->ri_buf[0].i_addr;
+	src_len = item->ri_buf[0].i_len;
+
+	xlog_print_trans_cui(&src_f, src_len, 0);
+}
+
+int
+xlog_print_trans_cud(
+	char				**ptr,
+	uint				len)
+{
+	struct xfs_cud_log_format	*f;
+	struct xfs_cud_log_format	lbuf;
+
+	/* size without extents at end */
+	uint core_size = sizeof(struct xfs_cud_log_format);
+
+	memcpy(&lbuf, *ptr, MIN(core_size, len));
+	f = &lbuf;
+	*ptr += len;
+	if (len >= core_size) {
+		printf(_("CUD:  #regs: %d	                 id: 0x%llx\n"),
+			f->cud_size,
+			(unsigned long long)f->cud_cui_id);
+
+		/* don't print extents as they are not used */
+
+		return 0;
+	} else {
+		printf(_("CUD: Not enough data to decode further\n"));
+		return 1;
+	}
+}
+
+void
+xlog_recover_print_cud(
+	struct xlog_recover_item	*item)
+{
+	char				*f;
+
+	f = item->ri_buf[0].i_addr;
+	xlog_print_trans_cud(&f, sizeof(struct xfs_cud_log_format));
+}

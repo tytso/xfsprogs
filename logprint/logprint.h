@@ -54,4 +54,9 @@ extern void xlog_recover_print_rui(struct xlog_recover_item *item);
 extern int xlog_print_trans_rud(char **ptr, uint len);
 extern void xlog_recover_print_rud(struct xlog_recover_item *item);
 
+extern int xlog_print_trans_cui(char **ptr, uint src_len, int continued);
+extern void xlog_recover_print_cui(struct xlog_recover_item *item);
+extern int xlog_print_trans_cud(char **ptr, uint len);
+extern void xlog_recover_print_cud(struct xlog_recover_item *item);
+
 #endif	/* LOGPRINT_H */
