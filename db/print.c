@@ -197,7 +197,7 @@ print_sarray(
 	     i < count && !seenint();
 	     i++, bitoff += size) {
 		if (array)
-			dbprintf("%d:", i + base);
+			dbprintf("\n%d:", i + base);
 		for (f = flds, first = 1; f->name; f++) {
 			if (f->flags & FLD_SKIPALL)
 				continue;
