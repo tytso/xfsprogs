@@ -39,7 +39,8 @@ max_trans_res(
 	int		logversion,
 	int		log_sunit,
 	int		finobt,
-	int		rmapbt)
+	int		rmapbt,
+	int		reflink)
 {
 	xfs_sb_t	*sbp;
 	xfs_mount_t	mount;
@@ -75,6 +76,8 @@ max_trans_res(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FINOBT;
 	if (rmapbt)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_RMAPBT;
+	if (reflink)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_REFLINK;
 
 	libxfs_mount(&mount, sbp, 0,0,0,0);
 	maxfsb = libxfs_log_calc_minimum_size(&mount);
