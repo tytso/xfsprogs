@@ -1370,6 +1370,8 @@ _("%s btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		}
 	}
 out:
+	if (suspect)
+		refcount_avoid_check();
 	return;
 }
 
@@ -2173,6 +2175,7 @@ validate_agf(
 		} else  {
 			do_warn(_("bad agbno %u for refcntbt root, agno %d\n"),
 				bno, agno);
+			refcount_avoid_check();
 		}
 	}
 

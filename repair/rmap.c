@@ -47,6 +47,7 @@ struct xfs_ag_rmap {
 
 static struct xfs_ag_rmap *ag_rmaps;
 static bool rmapbt_suspect;
+static bool refcbt_suspect;
 
 /*
  * Compare rmap observations for array sorting.
@@ -1240,6 +1241,131 @@ _("Unable to fix reflink flag on inode %"PRIu64".\n"),
 	}
 
 	return error;
+}
+
+/*
+ * Return the number of refcount objects for an AG.
+ */
+size_t
+refcount_record_count(
+	struct xfs_mount		*mp,
+	xfs_agnumber_t		agno)
+{
+	return slab_count(ag_rmaps[agno].ar_refcount_items);
+}
+
+/*
+ * Return a slab cursor that will return refcount objects in order.
+ */
+int
+init_refcount_cursor(
+	xfs_agnumber_t		agno,
+	struct xfs_slab_cursor	**cur)
+{
+	return init_slab_cursor(ag_rmaps[agno].ar_refcount_items, NULL, cur);
+}
+
+/*
+ * Disable the refcount btree check.
+ */
+void
+refcount_avoid_check(void)
+{
+	refcbt_suspect = true;
+}
+
+/*
+ * Compare the observed reference counts against what's in the ag btree.
+ */
+int
+check_refcounts(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	struct xfs_slab_cursor	*rl_cur;
+	struct xfs_btree_cur	*bt_cur = NULL;
+	int			error;
+	int			have;
+	int			i;
+	struct xfs_buf		*agbp = NULL;
+	struct xfs_refcount_irec	*rl_rec;
+	struct xfs_refcount_irec	tmp;
+	struct xfs_perag	*pag;		/* per allocation group data */
+
+	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+		return 0;
+	if (refcbt_suspect) {
+		if (no_modify && agno == 0)
+			do_warn(_("would rebuild corrupt refcount btrees.\n"));
+		return 0;
+	}
+
+	/* Create cursors to refcount structures */
+	error = init_refcount_cursor(agno, &rl_cur);
+	if (error)
+		return error;
+
+	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
+	if (error)
+		goto err;
+
+	/* Leave the per-ag data "uninitialized" since we rewrite it later */
+	pag = libxfs_perag_get(mp, agno);
+	pag->pagf_init = 0;
+	libxfs_perag_put(pag);
+
+	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, agno, NULL);
+	if (!bt_cur) {
+		error = -ENOMEM;
+		goto err;
+	}
+
+	rl_rec = pop_slab_cursor(rl_cur);
+	while (rl_rec) {
+		/* Look for a refcount record in the btree */
+		error = -libxfs_refcount_lookup_le(bt_cur,
+				rl_rec->rc_startblock, &have);
+		if (error)
+			goto err;
+		if (!have) {
+			do_warn(
+_("Missing reference count record for (%u/%u) len %u count %u\n"),
+				agno, rl_rec->rc_startblock,
+				rl_rec->rc_blockcount, rl_rec->rc_refcount);
+			goto next_loop;
+		}
+
+		error = -libxfs_refcount_get_rec(bt_cur, &tmp, &i);
+		if (error)
+			goto err;
+		if (!i) {
+			do_warn(
+_("Missing reference count record for (%u/%u) len %u count %u\n"),
+				agno, rl_rec->rc_startblock,
+				rl_rec->rc_blockcount, rl_rec->rc_refcount);
+			goto next_loop;
+		}
+
+		/* Compare each refcount observation against the btree's */
+		if (tmp.rc_startblock != rl_rec->rc_startblock ||
+		    tmp.rc_blockcount < rl_rec->rc_blockcount ||
+		    tmp.rc_refcount < rl_rec->rc_refcount)
+			do_warn(
+_("Incorrect reference count: saw (%u/%u) len %u nlinks %u; should be (%u/%u) len %u nlinks %u\n"),
+				agno, tmp.rc_startblock, tmp.rc_blockcount,
+				tmp.rc_refcount, agno, rl_rec->rc_startblock,
+				rl_rec->rc_blockcount, rl_rec->rc_refcount);
+next_loop:
+		rl_rec = pop_slab_cursor(rl_cur);
+	}
+
+err:
+	if (bt_cur)
+		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+	if (agbp)
+		libxfs_putbuf(agbp);
+	free_slab_cursor(&rl_cur);
+	return 0;
 }
 
 /*

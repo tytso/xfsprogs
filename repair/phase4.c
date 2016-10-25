@@ -223,6 +223,21 @@ _("%s while fixing inode reflink flags.\n"),
 }
 
 static void
+check_refcount_btrees(
+	work_queue_t	*wq,
+	xfs_agnumber_t	agno,
+	void		*arg)
+{
+	int		error;
+
+	error = check_refcounts(wq->mp, agno);
+	if (error)
+		do_error(
+_("%s while checking reference counts"),
+			 strerror(-error));
+}
+
+static void
 process_rmap_data(
 	struct xfs_mount	*mp)
 {
@@ -246,8 +261,10 @@ process_rmap_data(
 	destroy_work_queue(&wq);
 
 	create_work_queue(&wq, mp, libxfs_nproc());
-	for (i = 0; i < mp->m_sb.sb_agcount; i++)
+	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
 		queue_work(&wq, process_inode_reflink_flags, i, NULL);
+		queue_work(&wq, check_refcount_btrees, i, NULL);
+	}
 	destroy_work_queue(&wq);
 }
 
