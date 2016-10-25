@@ -917,6 +917,20 @@ rmap_lookup(
 	return -libxfs_rmap_get_rec(bt_cur, tmp, have);
 }
 
+/* Look for an rmap in the rmapbt that matches a given rmap. */
+static int
+rmap_lookup_overlapped(
+	struct xfs_btree_cur	*bt_cur,
+	struct xfs_rmap_irec	*rm_rec,
+	struct xfs_rmap_irec	*tmp,
+	int			*have)
+{
+	/* Have to use our fancy version for overlapped */
+	return -libxfs_rmap_lookup_le_range(bt_cur, rm_rec->rm_startblock,
+				rm_rec->rm_owner, rm_rec->rm_offset,
+				rm_rec->rm_flags, tmp, have);
+}
+
 /* Does the btree rmap cover the observed rmap? */
 #define NEXTP(x)	((x)->rm_startblock + (x)->rm_blockcount)
 #define NEXTL(x)	((x)->rm_offset + (x)->rm_blockcount)
@@ -1005,6 +1019,18 @@ rmaps_verify_btree(
 		error = rmap_lookup(bt_cur, rm_rec, &tmp, &have);
 		if (error)
 			goto err;
+		/*
+		 * Using the range query is expensive, so only do it if
+		 * the regular lookup doesn't find anything or if it doesn't
+		 * match the observed rmap.
+		 */
+		if (xfs_sb_version_hasreflink(&bt_cur->bc_mp->m_sb) &&
+				(!have || !rmap_is_good(rm_rec, &tmp))) {
+			error = rmap_lookup_overlapped(bt_cur, rm_rec,
+					&tmp, &have);
+			if (error)
+				goto err;
+		}
 		if (!have) {
 			do_warn(
 _("Missing reverse-mapping record for (%u/%u) %slen %u owner %"PRId64" \

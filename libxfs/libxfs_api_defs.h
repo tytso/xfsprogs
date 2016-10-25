@@ -141,5 +141,6 @@
 #define xfs_refcountbt_init_cursor	libxfs_refcountbt_init_cursor
 #define xfs_refcount_lookup_le		libxfs_refcount_lookup_le
 #define xfs_refcount_get_rec		libxfs_refcount_get_rec
+#define xfs_rmap_lookup_le_range	libxfs_rmap_lookup_le_range
 
 #endif /* __LIBXFS_API_DEFS_H__ */
