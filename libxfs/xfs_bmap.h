@@ -214,4 +214,17 @@ struct xfs_bmbt_rec_host *
 				struct xfs_bmbt_irec *prevp);
 
 
+enum xfs_bmap_intent_type {
+	XFS_BMAP_MAP = 1,
+	XFS_BMAP_UNMAP,
+};
+
+struct xfs_bmap_intent {
+	struct list_head			bi_list;
+	enum xfs_bmap_intent_type		bi_type;
+	struct xfs_inode			*bi_owner;
+	int					bi_whichfork;
+	struct xfs_bmbt_irec			bi_bmap;
+};
+
 #endif	/* __XFS_BMAP_H__ */
