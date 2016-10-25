@@ -122,6 +122,11 @@ xfs_set_projid(struct xfs_icdinode *id, prid_t projid)
 	id->di_projid_lo = (__uint16_t) (projid & 0xffff);
 }
 
+static inline bool xfs_is_reflink_inode(struct xfs_inode *ip)
+{
+	return ip->i_d.di_flags2 & XFS_DIFLAG2_REFLINK;
+}
+
 typedef struct cred {
 	uid_t	cr_uid;
 	gid_t	cr_gid;
