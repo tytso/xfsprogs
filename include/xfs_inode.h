@@ -50,11 +50,16 @@ typedef struct xfs_inode {
 	struct xfs_imap		i_imap;		/* location for xfs_imap() */
 	struct xfs_buftarg	i_dev;		/* dev for this inode */
 	struct xfs_ifork	*i_afp;		/* attribute fork pointer */
+	struct xfs_ifork	*i_cowfp;	/* copy on write extents */
 	struct xfs_ifork	i_df;		/* data fork */
 	struct xfs_trans	*i_transp;	/* ptr to owning transaction */
 	struct xfs_inode_log_item *i_itemp;	/* logging information */
 	unsigned int		i_delayed_blks;	/* count of delay alloc blks */
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */
+
+	xfs_extnum_t		i_cnextents;	/* # of extents in cow fork */
+	unsigned int		i_cformat;	/* format of cow fork */
+
 	xfs_fsize_t		i_size;		/* in-memory size */
 	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
 	struct inode		i_vnode;

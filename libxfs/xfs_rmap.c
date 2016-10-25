@@ -1261,9 +1261,10 @@ out_cur:
  */
 static bool
 xfs_rmap_update_is_needed(
-	struct xfs_mount	*mp)
+	struct xfs_mount	*mp,
+	int			whichfork)
 {
-	return xfs_sb_version_hasrmapbt(&mp->m_sb);
+	return xfs_sb_version_hasrmapbt(&mp->m_sb) && whichfork != XFS_COW_FORK;
 }
 
 /*
@@ -1309,7 +1310,7 @@ xfs_rmap_map_extent(
 	int			whichfork,
 	struct xfs_bmbt_irec	*PREV)
 {
-	if (!xfs_rmap_update_is_needed(mp))
+	if (!xfs_rmap_update_is_needed(mp, whichfork))
 		return 0;
 
 	return __xfs_rmap_add(mp, dfops, XFS_RMAP_MAP, ip->i_ino,
@@ -1325,7 +1326,7 @@ xfs_rmap_unmap_extent(
 	int			whichfork,
 	struct xfs_bmbt_irec	*PREV)
 {
-	if (!xfs_rmap_update_is_needed(mp))
+	if (!xfs_rmap_update_is_needed(mp, whichfork))
 		return 0;
 
 	return __xfs_rmap_add(mp, dfops, XFS_RMAP_UNMAP, ip->i_ino,
@@ -1341,7 +1342,7 @@ xfs_rmap_convert_extent(
 	int			whichfork,
 	struct xfs_bmbt_irec	*PREV)
 {
-	if (!xfs_rmap_update_is_needed(mp))
+	if (!xfs_rmap_update_is_needed(mp, whichfork))
 		return 0;
 
 	return __xfs_rmap_add(mp, dfops, XFS_RMAP_CONVERT, ip->i_ino,
@@ -1360,7 +1361,7 @@ xfs_rmap_alloc_extent(
 {
 	struct xfs_bmbt_irec	bmap;
 
-	if (!xfs_rmap_update_is_needed(mp))
+	if (!xfs_rmap_update_is_needed(mp, XFS_DATA_FORK))
 		return 0;
 
 	bmap.br_startblock = XFS_AGB_TO_FSB(mp, agno, bno);
@@ -1384,7 +1385,7 @@ xfs_rmap_free_extent(
 {
 	struct xfs_bmbt_irec	bmap;
 
-	if (!xfs_rmap_update_is_needed(mp))
+	if (!xfs_rmap_update_is_needed(mp, XFS_DATA_FORK))
 		return 0;
 
 	bmap.br_startblock = XFS_AGB_TO_FSB(mp, agno, bno);
