@@ -164,6 +164,26 @@ zero_f(
 
 
 #if defined (HAVE_FALLOCATE)
+static void
+falloc_help(void)
+{
+	printf(_(
+"\n"
+" modifies space associated with part of a file via fallocate"
+"\n"
+" Example:\n"
+" 'falloc 0 1m' - fills all holes within the first megabyte\n"
+"\n"
+" falloc uses the fallocate system call to alter space allocations in the\n"
+" open file.  The following operations are supported:\n"
+" All the file offsets are in units of bytes.\n"
+" -c -- collapses the given range.\n"
+" -i -- inserts a hole into the given range of the file.\n"
+" -k -- do not change file size.\n"
+" -p -- unmap the given range from the file.\n"
+"\n"));
+}
+
 static int
 fallocate_f(
 	int		argc,
@@ -349,6 +369,7 @@ prealloc_init(void)
 	falloc_cmd.args = _("[-c] [-k] [-p] off len");
 	falloc_cmd.oneline =
 	_("allocates space associated with part of a file via fallocate");
+	falloc_cmd.help = falloc_help;
 	add_command(&falloc_cmd);
 
 	fpunch_cmd.name = "fpunch";
