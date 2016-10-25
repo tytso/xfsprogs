@@ -113,12 +113,12 @@ void
 check_uncertain_aginodes(xfs_mount_t	*mp,
 			xfs_agnumber_t	agno);
 
-xfs_buf_t *
-get_agino_buf(xfs_mount_t	*mp,
-		xfs_agnumber_t	agno,
-		xfs_agino_t	agino,
-		xfs_dinode_t	**dipp);
-
+struct xfs_buf *
+get_agino_buf(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	xfs_agino_t		agino,
+	struct xfs_dinode	**dipp);
 
 void dinode_bmbt_translation_init(void);
 char * get_forkname(int whichfork);

@@ -1038,9 +1038,9 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 	if (!error)
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 #ifdef IO_DEBUG
-	printf("%lx: %s: read %u bytes, error %d, blkno=0x%llx(0x%llx), %p\n",
-		pthread_self(), __FUNCTION__, , error,
-		(long long)LIBXFS_BBTOOFF64(blkno), (long long)blkno, bp);
+	printf("%lx: %s: read %lu bytes, error %d, blkno=%llu(%llu), %p\n",
+		pthread_self(), __FUNCTION__, buf - (char *)bp->b_addr, error,
+		(long long)LIBXFS_BBTOOFF64(bp->b_bn), (long long)bp->b_bn, bp);
 #endif
 	return error;
 }
@@ -1070,7 +1070,7 @@ libxfs_readbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
 	if (!error)
 		libxfs_readbuf_verify(bp, ops);
 
-#ifdef IO_DEBUG
+#ifdef IO_DEBUGX
 	printf("%lx: %s: read %lu bytes, error %d, blkno=%llu(%llu), %p\n",
 		pthread_self(), __FUNCTION__, buf - (char *)bp->b_addr, error,
 		(long long)LIBXFS_BBTOOFF64(bp->b_bn), (long long)bp->b_bn, bp);

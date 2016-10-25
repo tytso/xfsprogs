@@ -847,43 +847,58 @@ scan_bmbt_reclist(
 }
 
 /*
- * these two are meant for routines that read and work with inodes
- * one at a time where the inodes may be in any order (like walking
- * the unlinked lists to look for inodes).  the caller is responsible
- * for writing/releasing the buffer.
+ * Grab the buffer backing an inode.  This is meant for routines that
+ * work with inodes one at a time in any order (like walking the
+ * unlinked lists to look for inodes).  The caller is responsible for
+ * writing/releasing the buffer.
  */
-xfs_buf_t *
-get_agino_buf(xfs_mount_t	 *mp,
-		xfs_agnumber_t	agno,
-		xfs_agino_t	agino,
-		xfs_dinode_t	**dipp)
+struct xfs_buf *
+get_agino_buf(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	xfs_agino_t		agino,
+	struct xfs_dinode	**dipp)
 {
-	ino_tree_node_t *irec;
-	xfs_buf_t *bp;
-	int size;
+	struct xfs_buf		*bp;
+	int			cluster_size;
+	int			ino_per_cluster;
+	xfs_agino_t		cluster_agino;
+	xfs_daddr_t		cluster_daddr;
+	xfs_daddr_t		cluster_blks;
 
-	if ((irec = find_inode_rec(mp, agno, agino)) == NULL)
-		return(NULL);
-
-	size = MAX(1, XFS_FSB_TO_BB(mp,
+	/*
+	 * Inode buffers have been read into memory in inode_cluster_size
+	 * chunks (or one FSB).  To find the correct buffer for an inode,
+	 * we must find the buffer for its cluster, add the appropriate
+	 * offset, and return that.
+	 */
+	cluster_size = MAX(mp->m_inode_cluster_size, mp->m_sb.sb_blocksize);
+	ino_per_cluster = cluster_size / mp->m_sb.sb_inodesize;
+	cluster_agino = agino & ~(ino_per_cluster - 1);
+	cluster_blks = XFS_FSB_TO_DADDR(mp, MAX(1,
 			mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog));
-	bp = libxfs_readbuf(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno,
-		XFS_AGINO_TO_AGBNO(mp, irec->ino_startnum)), size, 0,
-		&xfs_inode_buf_ops);
+	cluster_daddr = XFS_AGB_TO_DADDR(mp, agno,
+			XFS_AGINO_TO_AGBNO(mp, cluster_agino));
+
+#ifdef XR_INODE_TRACE
+	printf("cluster_size %d ipc %d clusagino %d daddr %lld sectors %lld\n",
+		cluster_size, ino_per_cluster, cluster_agino, cluster_daddr,
+		cluster_blks);
+#endif
+
+	bp = libxfs_readbuf(mp->m_dev, cluster_daddr, cluster_blks,
+			0, &xfs_inode_buf_ops);
 	if (!bp) {
 		do_warn(_("cannot read inode (%u/%u), disk block %" PRIu64 "\n"),
-			agno, irec->ino_startnum,
-			XFS_AGB_TO_DADDR(mp, agno,
-				XFS_AGINO_TO_AGBNO(mp, irec->ino_startnum)));
-		return(NULL);
+			agno, cluster_agino, cluster_daddr);
+		return NULL;
 	}
 
-	*dipp = xfs_make_iptr(mp, bp, agino -
-		XFS_OFFBNO_TO_AGINO(mp, XFS_AGINO_TO_AGBNO(mp,
-						irec->ino_startnum),
-		0));
-
-	return(bp);
+	*dipp = xfs_make_iptr(mp, bp, agino - cluster_agino);
+	ASSERT(!xfs_sb_version_hascrc(&mp->m_sb) ||
+			XFS_AGINO_TO_INO(mp, agno, agino) ==
+			be64_to_cpu((*dipp)->di_ino));
+	return bp;
 }
 
 /*
