@@ -43,10 +43,6 @@
 #define __int16_t	short
 #define __uint8_t	unsigned char
 #define __uint16_t	unsigned short
-typedef off64_t		xfs_off_t;
-typedef __int64_t	xfs_ino_t;
-typedef __int32_t	xfs_dev_t;
-typedef __int64_t	xfs_daddr_t;
 
 typedef unsigned char		__u8;
 typedef signed char		__s8;
@@ -56,6 +52,12 @@ typedef unsigned int		__u32;
 typedef signed int		__s32;
 typedef unsigned long long int	__u64;
 typedef signed long long int	__s64;
+
+typedef off64_t		xfs_off_t;
+typedef __int64_t	xfs_ino_t;
+typedef __int32_t	xfs_dev_t;
+typedef __int64_t	xfs_daddr_t;
+typedef __u32		xfs_nlink_t;
 
 #define xfs_flock64	flock64
 #define xfs_flock64_t	struct flock64

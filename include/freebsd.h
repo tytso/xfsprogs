@@ -46,12 +46,6 @@
 #define EFSCORRUPTED	990	/* Filesystem is corrupted */
 #define EFSBADCRC	991	/* Bad CRC detected */
 
-typedef off_t		xfs_off_t;
-typedef off_t		off64_t;
-typedef __uint64_t	xfs_ino_t;
-typedef __uint32_t	xfs_dev_t;
-typedef __int64_t	xfs_daddr_t;
-
 typedef unsigned char		__u8;
 typedef signed char		__s8;
 typedef unsigned short		__u16;
@@ -60,6 +54,13 @@ typedef unsigned int		__u32;
 typedef signed int		__s32;
 typedef unsigned long long int	__u64;
 typedef signed long long int	__s64;
+
+typedef off_t		xfs_off_t;
+typedef off_t		off64_t;
+typedef __uint64_t	xfs_ino_t;
+typedef __uint32_t	xfs_dev_t;
+typedef __int64_t	xfs_daddr_t;
+typedef __u32		xfs_nlink_t;
 
 #define	O_LARGEFILE	0
 

@@ -140,6 +140,7 @@ typedef off_t		xfs_off_t;
 typedef u_int64_t	xfs_ino_t;
 typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
+typedef __u32		xfs_nlink_t;
 
 #define stat64		stat
 #define fstat64		fstat
