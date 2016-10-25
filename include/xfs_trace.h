@@ -281,6 +281,19 @@
 #define trace_xfs_refcount_cow_decrease(...)	((void) 0)
 #define trace_xfs_refcount_recover_extent(...)	((void) 0)
 
+#define trace_xfs_rmap_find_left_neighbor_candidate(...)	((void) 0)
+#define trace_xfs_rmap_find_left_neighbor_query(...)	((void) 0)
+#define trace_xfs_rmap_find_left_neighbor_result(...)	((void) 0)
+#define trace_xfs_rmap_lookup_le_range_candidate(...)	((void) 0)
+#define trace_xfs_rmap_lookup_le_range(...)	((void) 0)
+#define trace_xfs_rmap_unmap(...)		((void) 0)
+#define trace_xfs_rmap_unmap_done(...)		((void) 0)
+#define trace_xfs_rmap_unmap_error(...)		((void) 0)
+#define trace_xfs_rmap_map(...)			((void) 0)
+#define trace_xfs_rmap_map_done(...)		((void) 0)
+#define trace_xfs_rmap_map_error(...)		((void) 0)
+#define trace_xfs_rmap_delete_error(...)	((void) 0)
+
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
 #define trace_xfs_perag_get_tag(a,b,c,d)	((c) = (c))
