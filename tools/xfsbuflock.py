@@ -150,7 +150,10 @@ for line in fileinput.input():
 	if len(toks) < 4:
 		continue
 	pid = toks[0]
-	time = float(toks[2][:-1])
+	try:
+		time = float(toks[2][:-1])
+	except:
+		continue
 	fn = toks[3][:-1]
 
 	if pid in processes:
