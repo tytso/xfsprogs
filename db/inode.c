@@ -172,11 +172,15 @@ const field_t	inode_v3_flds[] = {
 	{ "change_count", FLDT_UINT64D, OI(COFF(changecount)), C1, 0, TYP_NONE },
 	{ "lsn", FLDT_UINT64X, OI(COFF(lsn)), C1, 0, TYP_NONE },
 	{ "flags2", FLDT_UINT64X, OI(COFF(flags2)), C1, 0, TYP_NONE },
+	{ "cowextsize", FLDT_EXTLEN, OI(COFF(cowextsize)), C1, 0, TYP_NONE },
 	{ "crtime", FLDT_TIMESTAMP, OI(COFF(crtime)), C1, 0, TYP_NONE },
 	{ "inumber", FLDT_INO, OI(COFF(ino)), C1, 0, TYP_NONE },
 	{ "uuid", FLDT_UUID, OI(COFF(uuid)), C1, 0, TYP_NONE },
 	{ "reflink", FLDT_UINT1,
 	  OI(COFF(flags2) + bitsz(__uint64_t) - XFS_DIFLAG2_REFLINK_BIT-1), C1,
+	  0, TYP_NONE },
+	{ "cowextsz", FLDT_UINT1,
+	  OI(COFF(flags2) + bitsz(__uint64_t) - XFS_DIFLAG2_COWEXTSIZE_BIT-1), C1,
 	  0, TYP_NONE },
 	{ NULL }
 };
