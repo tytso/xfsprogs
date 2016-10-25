@@ -423,6 +423,8 @@ calc_mkfs(xfs_mount_t *mp)
 		fino_bno += min(2, mp->m_rmap_maxlevels); /* agfl blocks */
 		fino_bno++;
 	}
+	if (xfs_sb_version_hasreflink(&mp->m_sb))
+		fino_bno++;
 
 	/*
 	 * If the log is allocated in the first allocation group we need to

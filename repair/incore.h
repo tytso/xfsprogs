@@ -106,7 +106,8 @@ typedef struct rt_extent_tree_node  {
 #define XR_E_INUSE_FS1	9	/* used by fs ag header or log (rmap btree) */
 #define XR_E_INO1	10	/* used by inodes (marked by rmap btree) */
 #define XR_E_FS_MAP1	11	/* used by fs space/inode maps (rmap btree) */
-#define XR_E_BAD_STATE	12
+#define XR_E_REFC	12	/* used by fs ag reference count btree */
+#define XR_E_BAD_STATE	13
 
 /* separate state bit, OR'ed into high (4th) bit of ex_state field */
 

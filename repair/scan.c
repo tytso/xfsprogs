@@ -810,6 +810,9 @@ process_rmap_rec(
 		case XFS_RMAP_OWN_INODES:
 			set_bmap_ext(agno, b, blen, XR_E_INO1);
 			break;
+		case XFS_RMAP_OWN_REFC:
+			set_bmap_ext(agno, b, blen, XR_E_REFC);
+			break;
 		case XFS_RMAP_OWN_NULL:
 			/* still unknown */
 			break;
@@ -842,6 +845,14 @@ _("AG meta block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
 			break;
 		do_warn(
 _("inode block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
+			agno, b, b + blen - 1,
+			name, state, owner);
+		break;
+	case XR_E_REFC:
+		if (owner == XFS_RMAP_OWN_REFC)
+			break;
+		do_warn(
+_("AG refcount block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
 			agno, b, b + blen - 1,
 			name, state, owner);
 		break;
@@ -1159,6 +1170,167 @@ advance:
 out:
 	if (suspect)
 		rmap_avoid_check();
+}
+
+static void
+scan_refcbt(
+	struct xfs_btree_block	*block,
+	int			level,
+	xfs_agblock_t		bno,
+	xfs_agnumber_t		agno,
+	int			suspect,
+	int			isroot,
+	__uint32_t		magic,
+	void			*priv)
+{
+	const char		*name = "refcount";
+	int			i;
+	xfs_refcount_ptr_t	*pp;
+	struct xfs_refcount_rec	*rp;
+	int			hdr_errors = 0;
+	int			numrecs;
+	int			state;
+	xfs_agblock_t		lastblock = 0;
+
+	if (magic != XFS_REFC_CRC_MAGIC) {
+		name = "(unknown)";
+		hdr_errors++;
+		suspect++;
+		goto out;
+	}
+
+	if (be32_to_cpu(block->bb_magic) != magic) {
+		do_warn(_("bad magic # %#x in %s btree block %d/%d\n"),
+			be32_to_cpu(block->bb_magic), name, agno, bno);
+		hdr_errors++;
+		if (suspect)
+			goto out;
+	}
+
+	if (be16_to_cpu(block->bb_level) != level) {
+		do_warn(_("expected level %d got %d in %s btree block %d/%d\n"),
+			level, be16_to_cpu(block->bb_level), name, agno, bno);
+		hdr_errors++;
+		if (suspect)
+			goto out;
+	}
+
+	/* check for btree blocks multiply claimed */
+	state = get_bmap(agno, bno);
+	if (!(state == XR_E_UNKNOWN || state == XR_E_REFC))  {
+		set_bmap(agno, bno, XR_E_MULT);
+		do_warn(
+_("%s btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
+				name, state, agno, bno, suspect);
+		goto out;
+	}
+	set_bmap(agno, bno, XR_E_FS_MAP);
+
+	numrecs = be16_to_cpu(block->bb_numrecs);
+	if (level == 0) {
+		if (numrecs > mp->m_refc_mxr[0])  {
+			numrecs = mp->m_refc_mxr[0];
+			hdr_errors++;
+		}
+		if (isroot == 0 && numrecs < mp->m_refc_mnr[0])  {
+			numrecs = mp->m_refc_mnr[0];
+			hdr_errors++;
+		}
+
+		if (hdr_errors) {
+			do_warn(
+	_("bad btree nrecs (%u, min=%u, max=%u) in %s btree block %u/%u\n"),
+				be16_to_cpu(block->bb_numrecs),
+				mp->m_refc_mnr[0], mp->m_refc_mxr[0],
+				name, agno, bno);
+			suspect++;
+		}
+
+		rp = XFS_REFCOUNT_REC_ADDR(block, 1);
+		for (i = 0; i < numrecs; i++) {
+			xfs_agblock_t		b, end;
+			xfs_extlen_t		len;
+			xfs_nlink_t		nr;
+
+			b = be32_to_cpu(rp[i].rc_startblock);
+			len = be32_to_cpu(rp[i].rc_blockcount);
+			nr = be32_to_cpu(rp[i].rc_refcount);
+			end = b + len;
+
+			if (!verify_agbno(mp, agno, b)) {
+				do_warn(
+	_("invalid start block %u in record %u of %s btree block %u/%u\n"),
+					b, i, name, agno, bno);
+				continue;
+			}
+			if (len == 0 || !verify_agbno(mp, agno, end - 1)) {
+				do_warn(
+	_("invalid length %u in record %u of %s btree block %u/%u\n"),
+					len, i, name, agno, bno);
+				continue;
+			}
+
+			if (nr < 2 || nr > MAXREFCOUNT) {
+				do_warn(
+	_("invalid reference count %u in record %u of %s btree block %u/%u\n"),
+					nr, i, name, agno, bno);
+				continue;
+			}
+
+			if (b && b <= lastblock) {
+				do_warn(_(
+	"out-of-order %s btree record %d (%u %u) block %u/%u\n"),
+					name, i, b, len, agno, bno);
+			} else {
+				lastblock = b;
+			}
+
+			/* XXX: probably want to mark the reflinked areas? */
+		}
+		goto out;
+	}
+
+	/*
+	 * interior record
+	 */
+	pp = XFS_REFCOUNT_PTR_ADDR(block, 1, mp->m_refc_mxr[1]);
+
+	if (numrecs > mp->m_refc_mxr[1])  {
+		numrecs = mp->m_refc_mxr[1];
+		hdr_errors++;
+	}
+	if (isroot == 0 && numrecs < mp->m_refc_mnr[1])  {
+		numrecs = mp->m_refc_mnr[1];
+		hdr_errors++;
+	}
+
+	/*
+	 * don't pass bogus tree flag down further if this block
+	 * looked ok.  bail out if two levels in a row look bad.
+	 */
+	if (hdr_errors)  {
+		do_warn(
+	_("bad btree nrecs (%u, min=%u, max=%u) in %s btree block %u/%u\n"),
+			be16_to_cpu(block->bb_numrecs),
+			mp->m_refc_mnr[1], mp->m_refc_mxr[1],
+			name, agno, bno);
+		if (suspect)
+			goto out;
+		suspect++;
+	} else if (suspect) {
+		suspect = 0;
+	}
+
+	for (i = 0; i < numrecs; i++)  {
+		xfs_agblock_t		bno = be32_to_cpu(pp[i]);
+
+		if (bno != 0 && verify_agbno(mp, agno, bno)) {
+			scan_sbtree(bno, level, agno, suspect, scan_refcbt, 0,
+				    magic, priv, &xfs_refcountbt_buf_ops);
+		}
+	}
+out:
+	return;
 }
 
 /*
@@ -1948,6 +2120,19 @@ validate_agf(
 			do_warn(_("bad agbno %u for rmapbt root, agno %d\n"),
 				bno, agno);
 			rmap_avoid_check();
+		}
+	}
+
+	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
+		bno = be32_to_cpu(agf->agf_refcount_root);
+		if (bno != 0 && verify_agbno(mp, agno, bno)) {
+			scan_sbtree(bno,
+				    be32_to_cpu(agf->agf_refcount_level),
+				    agno, 0, scan_refcbt, 1, XFS_REFC_CRC_MAGIC,
+				    agcnts, &xfs_refcountbt_buf_ops);
+		} else  {
+			do_warn(_("bad agbno %u for refcntbt root, agno %d\n"),
+				bno, agno);
 		}
 	}
 
