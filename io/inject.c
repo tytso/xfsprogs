@@ -78,7 +78,13 @@ error_tag(char *name)
 		{ XFS_ERRTAG_FREE_EXTENT,		"free_extent" },
 #define XFS_ERRTAG_RMAP_FINISH_ONE			23
 		{ XFS_ERRTAG_RMAP_FINISH_ONE,		"rmap_finish_one" },
-#define XFS_ERRTAG_MAX                                  24
+#define XFS_ERRTAG_REFCOUNT_CONTINUE_UPDATE		24
+		{ XFS_ERRTAG_REFCOUNT_CONTINUE_UPDATE,	"refcount_continue_update" },
+#define XFS_ERRTAG_REFCOUNT_FINISH_ONE			25
+		{ XFS_ERRTAG_REFCOUNT_FINISH_ONE,	"refcount_finish_one" },
+#define XFS_ERRTAG_BMAP_FINISH_ONE			26
+		{ XFS_ERRTAG_BMAP_FINISH_ONE,		"bmap_finish_one" },
+#define XFS_ERRTAG_MAX                                  27
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
