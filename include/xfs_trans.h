@@ -148,5 +148,6 @@ libxfs_trans_read_buf(
 void xfs_extent_free_init_defer_op(void);
 void xfs_rmap_update_init_defer_op(void);
 void xfs_refcount_update_init_defer_op(void);
+void xfs_bmap_update_init_defer_op(void);
 
 #endif	/* __XFS_TRANS_H__ */

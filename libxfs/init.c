@@ -269,6 +269,7 @@ libxfs_init(libxfs_init_t *a)
 	xfs_extent_free_init_defer_op();
 	xfs_rmap_update_init_defer_op();
 	xfs_refcount_update_init_defer_op();
+	xfs_bmap_update_init_defer_op();
 
 	radix_tree_init();
 
