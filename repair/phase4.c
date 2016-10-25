@@ -208,6 +208,21 @@ _("%s while computing reference count records.\n"),
 }
 
 static void
+process_inode_reflink_flags(
+	struct work_queue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
+{
+	int			error;
+
+	error = fix_inode_reflink_flags(wq->mp, agno);
+	if (error)
+		do_error(
+_("%s while fixing inode reflink flags.\n"),
+			 strerror(-error));
+}
+
+static void
 process_rmap_data(
 	struct xfs_mount	*mp)
 {
@@ -228,6 +243,11 @@ process_rmap_data(
 	create_work_queue(&wq, mp, libxfs_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, compute_ag_refcounts, i, NULL);
+	destroy_work_queue(&wq);
+
+	create_work_queue(&wq, mp, libxfs_nproc());
+	for (i = 0; i < mp->m_sb.sb_agcount; i++)
+		queue_work(&wq, process_inode_reflink_flags, i, NULL);
 	destroy_work_queue(&wq);
 }
 

@@ -673,6 +673,39 @@ rmap_dump(
  */
 
 /*
+ * Mark all inodes in the reverse-mapping observation stack as requiring the
+ * reflink inode flag, if the stack depth is greater than 1.
+ */
+static void
+mark_inode_rl(
+	struct xfs_mount		*mp,
+	struct xfs_bag		*rmaps)
+{
+	xfs_agnumber_t		iagno;
+	struct xfs_rmap_irec	*rmap;
+	struct ino_tree_node	*irec;
+	int			off;
+	size_t			idx;
+	xfs_agino_t		ino;
+
+	if (bag_count(rmaps) < 2)
+		return;
+
+	/* Reflink flag accounting */
+	foreach_bag_ptr(rmaps, idx, rmap) {
+		ASSERT(!XFS_RMAP_NON_INODE_OWNER(rmap->rm_owner));
+		iagno = XFS_INO_TO_AGNO(mp, rmap->rm_owner);
+		ino = XFS_INO_TO_AGINO(mp, rmap->rm_owner);
+		pthread_mutex_lock(&ag_locks[iagno].lock);
+		irec = find_inode_rec(mp, iagno, ino);
+		off = get_inode_offset(mp, rmap->rm_owner, irec);
+		/* lock here because we might go outside this ag */
+		set_inode_is_rl(irec, off);
+		pthread_mutex_unlock(&ag_locks[iagno].lock);
+	}
+}
+
+/*
  * Emit a refcount object for refcntbt reconstruction during phase 5.
  */
 #define REFCOUNT_CLAMP(nr)	((nr) > MAXREFCOUNT ? MAXREFCOUNT : (nr))
@@ -753,6 +786,7 @@ compute_refcounts(
 			if (error)
 				goto err;
 		}
+		mark_inode_rl(mp, stack_top);
 
 		/* Set nbno to the bno of the next refcount change */
 		if (n < slab_count(rmaps))
@@ -789,6 +823,7 @@ compute_refcounts(
 				if (error)
 					goto err;
 			}
+			mark_inode_rl(mp, stack_top);
 
 			/* Emit refcount if necessary */
 			ASSERT(nbno > cbno);
@@ -1107,6 +1142,104 @@ record_inode_reflink_flag(
 	set_inode_was_rl(irec, off);
 	dbg_printf("set was_rl lino=%llu was=0x%llx\n",
 		(unsigned long long)lino, (unsigned long long)irec->ino_was_rl);
+}
+
+/*
+ * Fix an inode's reflink flag.
+ */
+static int
+fix_inode_reflink_flag(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	xfs_agino_t		agino,
+	bool			set)
+{
+	struct xfs_dinode	*dino;
+	struct xfs_buf		*buf;
+
+	if (set)
+		do_warn(
+_("setting reflink flag on inode %"PRIu64"\n"),
+			XFS_AGINO_TO_INO(mp, agno, agino));
+	else if (!no_modify) /* && !set */
+		do_warn(
+_("clearing reflink flag on inode %"PRIu64"\n"),
+			XFS_AGINO_TO_INO(mp, agno, agino));
+	if (no_modify)
+		return 0;
+
+	buf = get_agino_buf(mp, agno, agino, &dino);
+	if (!buf)
+		return 1;
+	ASSERT(XFS_AGINO_TO_INO(mp, agno, agino) == be64_to_cpu(dino->di_ino));
+	if (set)
+		dino->di_flags2 |= cpu_to_be64(XFS_DIFLAG2_REFLINK);
+	else
+		dino->di_flags2 &= cpu_to_be64(~XFS_DIFLAG2_REFLINK);
+	libxfs_dinode_calc_crc(mp, dino);
+	libxfs_writebuf(buf, 0);
+
+	return 0;
+}
+
+/*
+ * Fix discrepancies between the state of the inode reflink flag and our
+ * observations as to whether or not the inode really needs it.
+ */
+int
+fix_inode_reflink_flags(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno)
+{
+	struct ino_tree_node	*irec;
+	int			bit;
+	__uint64_t		was;
+	__uint64_t		is;
+	__uint64_t		diff;
+	__uint64_t		mask;
+	int			error = 0;
+	xfs_agino_t		agino;
+
+	/*
+	 * Update the reflink flag for any inode where there's a discrepancy
+	 * between the inode flag and whether or not we found any reflinked
+	 * extents.
+	 */
+	for (irec = findfirst_inode_rec(agno);
+	     irec != NULL;
+	     irec = next_ino_rec(irec)) {
+		ASSERT((irec->ino_was_rl & irec->ir_free) == 0);
+		ASSERT((irec->ino_is_rl & irec->ir_free) == 0);
+		was = irec->ino_was_rl;
+		is = irec->ino_is_rl;
+		if (was == is)
+			continue;
+		diff = was ^ is;
+		dbg_printf("mismatch ino=%llu was=0x%lx is=0x%lx dif=0x%lx\n",
+			(unsigned long long)XFS_AGINO_TO_INO(mp, agno,
+						irec->ino_startnum),
+			was, is, diff);
+
+		for (bit = 0, mask = 1; bit < 64; bit++, mask <<= 1) {
+			agino = bit + irec->ino_startnum;
+			if (!(diff & mask))
+				continue;
+			else if (was & mask)
+				error = fix_inode_reflink_flag(mp, agno, agino,
+						false);
+			else if (is & mask)
+				error = fix_inode_reflink_flag(mp, agno, agino,
+						true);
+			else
+				ASSERT(0);
+			if (error)
+				do_error(
+_("Unable to fix reflink flag on inode %"PRIu64".\n"),
+					XFS_AGINO_TO_INO(mp, agno, agino));
+		}
+	}
+
+	return error;
 }
 
 /*

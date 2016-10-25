@@ -52,6 +52,7 @@ extern void rmap_high_key_from_rec(struct xfs_rmap_irec *rec,
 extern int compute_refcounts(struct xfs_mount *, xfs_agnumber_t);
 extern void record_inode_reflink_flag(struct xfs_mount *, struct xfs_dinode *,
 	xfs_agnumber_t, xfs_agino_t, xfs_ino_t);
+extern int fix_inode_reflink_flags(struct xfs_mount *, xfs_agnumber_t);
 
 extern void fix_freelist(struct xfs_mount *, xfs_agnumber_t, bool);
 extern void rmap_store_agflcount(struct xfs_mount *, xfs_agnumber_t, int);
