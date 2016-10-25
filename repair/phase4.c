@@ -193,6 +193,21 @@ _("%s while checking reverse-mappings"),
 }
 
 static void
+compute_ag_refcounts(
+	work_queue_t	*wq,
+	xfs_agnumber_t	agno,
+	void		*arg)
+{
+	int		error;
+
+	error = compute_refcounts(wq->mp, agno);
+	if (error)
+		do_error(
+_("%s while computing reference count records.\n"),
+			 strerror(-error));
+}
+
+static void
 process_rmap_data(
 	struct xfs_mount	*mp)
 {
@@ -205,6 +220,14 @@ process_rmap_data(
 	create_work_queue(&wq, mp, libxfs_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, check_rmap_btrees, i, NULL);
+	destroy_work_queue(&wq);
+
+	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+		return;
+
+	create_work_queue(&wq, mp, libxfs_nproc());
+	for (i = 0; i < mp->m_sb.sb_agcount; i++)
+		queue_work(&wq, compute_ag_refcounts, i, NULL);
 	destroy_work_queue(&wq);
 }
 
@@ -359,7 +382,9 @@ phase4(xfs_mount_t *mp)
 
 	/*
 	 * Process all the reverse-mapping data that we collected.  This
-	 * involves checking the rmap data against the btree.
+	 * involves checking the rmap data against the btree, computing
+	 * reference counts based on the rmap data, and checking the counts
+	 * against the refcount btree.
 	 */
 	process_rmap_data(mp);
 
