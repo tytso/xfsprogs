@@ -109,6 +109,7 @@ HAVE_MNTENT = @have_mntent@
 HAVE_FLS = @have_fls@
 HAVE_FSETXATTR = @have_fsetxattr@
 HAVE_MREMAP = @have_mremap@
+NEED_INTERNAL_FSXATTR = @need_internal_fsxattr@
 
 GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 #	   -Wbitwise -Wno-transparent-union -Wno-old-initializer -Wno-decl
@@ -147,6 +148,9 @@ PCFLAGS+= -DHAVE_FSETXATTR
 endif
 ifeq ($(ENABLE_BLKID),yes)
 PCFLAGS+= -DENABLE_BLKID
+endif
+ifeq ($(NEED_INTERNAL_FSXATTR),yes)
+PCFLAGS+= -DOVERRIDE_SYSTEM_FSXATTR
 endif
 
 

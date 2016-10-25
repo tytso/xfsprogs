@@ -19,7 +19,6 @@
 #include "platform_defs.h"
 #include "command.h"
 #include <linux/fiemap.h>
-#include <linux/fs.h>
 #include "init.h"
 #include "io.h"
 

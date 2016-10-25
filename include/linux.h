@@ -32,7 +32,13 @@
 #include <stdio.h>
 #include <asm/types.h>
 #include <mntent.h>
+#ifdef OVERRIDE_SYSTEM_FSXATTR
+# define fsxattr sys_fsxattr
+#endif
 #include <linux/fs.h> /* fsxattr defintion for new kernels */
+#ifdef OVERRIDE_SYSTEM_FSXATTR
+# undef fsxattr
+#endif
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {
@@ -175,7 +181,7 @@ static inline void platform_mntent_close(struct mntent_cursor * cursor)
  * are a copy of the definitions moved to linux/uapi/fs.h in the 4.5 kernel,
  * so this is purely for supporting builds against old kernel headers.
  */
-#ifndef FS_IOC_FSGETXATTR
+#if !defined FS_IOC_FSGETXATTR || defined OVERRIDE_SYSTEM_FSXATTR
 struct fsxattr {
 	__u32		fsx_xflags;	/* xflags field value (get/set) */
 	__u32		fsx_extsize;	/* extsize field value (get/set)*/
@@ -184,7 +190,9 @@ struct fsxattr {
 	__u32		fsx_cowextsize;	/* cow extsize field value (get/set) */
 	unsigned char	fsx_pad[8];
 };
+#endif
 
+#ifndef FS_IOC_FSGETXATTR
 /*
  * Flags for the fsx_xflags field
  */

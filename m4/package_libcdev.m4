@@ -265,3 +265,14 @@ AC_DEFUN([AC_HAVE_MREMAP],
        )
     AC_SUBST(have_mremap)
   ])
+
+#
+# Check if we need to override the system struct fsxattr with
+# the internal definition.  This /only/ happens if the system
+# actually defines struct fsxattr /and/ the system definition
+# is missing certain fields.
+#
+AC_DEFUN([AC_NEED_INTERNAL_FSXATTR],
+  [
+    AC_SUBST(need_internal_fsxattr)
+  ])
