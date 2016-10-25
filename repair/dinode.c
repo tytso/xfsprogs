@@ -722,7 +722,9 @@ _("Fatal error: inode %" PRIu64 " - blkmap_set_ext(): %s\n"
 			 * checking each entry without setting the
 			 * block bitmap
 			 */
-			if (search_dup_extent(agno, agbno, ebno)) {
+			if (!(type == XR_INO_DATA &&
+			    xfs_sb_version_hasreflink(&mp->m_sb)) &&
+			    search_dup_extent(agno, agbno, ebno)) {
 				do_warn(
 _("%s fork in ino %" PRIu64 " claims dup extent, "
   "off - %" PRIu64 ", start - %" PRIu64 ", cnt %" PRIu64 "\n"),
@@ -770,6 +772,9 @@ _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 			case XR_E_INUSE:
 			case XR_E_MULT:
 				set_bmap_ext(agno, agbno, blen, XR_E_MULT);
+				if (type == XR_INO_DATA &&
+				    xfs_sb_version_hasreflink(&mp->m_sb))
+					break;
 				do_warn(
 _("%s fork in %s inode %" PRIu64 " claims used block %" PRIu64 "\n"),
 					forkname, ftype, ino, b);
@@ -2472,6 +2477,65 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 				*dirty = 1;
 			} else
 				do_warn(_("would fix bad flags.\n"));
+		}
+	}
+
+	/*
+	 * check that we only have valid flags2 set, and those that are set make
+	 * sense.
+	 */
+	if (dino->di_version >= 3) {
+		uint16_t flags = be16_to_cpu(dino->di_flags);
+		uint64_t flags2 = be64_to_cpu(dino->di_flags2);
+
+		if (flags2 & ~XFS_DIFLAG2_ANY) {
+			if (!uncertain) {
+				do_warn(
+	_("Bad flags2 set in inode %" PRIu64 "\n"),
+					lino);
+			}
+			flags2 &= XFS_DIFLAG2_ANY;
+		}
+
+		if ((flags2 & XFS_DIFLAG2_REFLINK) &&
+		    !xfs_sb_version_hasreflink(&mp->m_sb)) {
+			if (!uncertain) {
+				do_warn(
+	_("inode %" PRIu64 " is marked reflinked but file system does not support reflink\n"),
+					lino);
+			}
+			goto clear_bad_out;
+		}
+
+		if (flags2 & XFS_DIFLAG2_REFLINK) {
+			/* must be a file */
+			if (di_mode && !S_ISREG(di_mode)) {
+				if (!uncertain) {
+					do_warn(
+	_("reflink flag set on non-file inode %" PRIu64 "\n"),
+						lino);
+				}
+				goto clear_bad_out;
+			}
+		}
+
+		if ((flags2 & XFS_DIFLAG2_REFLINK) &&
+		    (flags & (XFS_DIFLAG_REALTIME | XFS_DIFLAG_RTINHERIT))) {
+			if (!uncertain) {
+				do_warn(
+	_("Cannot have a reflinked realtime inode %" PRIu64 "\n"),
+					lino);
+			}
+			goto clear_bad_out;
+		}
+
+		if (!verify_mode && flags2 != be64_to_cpu(dino->di_flags2)) {
+			if (!no_modify) {
+				do_warn(_("fixing bad flags2.\n"));
+				dino->di_flags2 = cpu_to_be64(flags2);
+				*dirty = 1;
+			} else
+				do_warn(_("would fix bad flags2.\n"));
 		}
 	}
 

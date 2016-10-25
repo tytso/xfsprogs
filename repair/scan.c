@@ -872,6 +872,15 @@ _("in use block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
 		 * be caught later.
 		 */
 		break;
+	case XR_E_INUSE1:
+		/*
+		 * multiple inode owners are ok with
+		 * reflink enabled
+		 */
+		if (xfs_sb_version_hasreflink(&mp->m_sb) &&
+		    !XFS_RMAP_NON_INODE_OWNER(owner))
+			break;
+		/* fall through */
 	default:
 		do_warn(
 _("unknown block (%d,%d-%d) mismatch on %s tree, state - %d,%" PRIx64 "\n"),
@@ -887,6 +896,28 @@ struct rmap_priv {
 	struct xfs_rmap_irec	last_rec;
 	xfs_agblock_t		nr_blocks;
 };
+
+static bool
+rmap_in_order(
+	xfs_agblock_t	b,
+	xfs_agblock_t	lastblock,
+	uint64_t	owner,
+	uint64_t	lastowner,
+	uint64_t	offset,
+	uint64_t	lastoffset)
+{
+	if (b > lastblock)
+		return true;
+	else if (b < lastblock)
+		return false;
+
+	if (owner > lastowner)
+		return true;
+	else if (owner < lastowner)
+		return false;
+
+	return offset > lastoffset;
+}
 
 static void
 scan_rmapbt(
@@ -908,6 +939,8 @@ scan_rmapbt(
 	int			numrecs;
 	int			state;
 	xfs_agblock_t		lastblock = 0;
+	uint64_t		lastowner = 0;
+	uint64_t		lastoffset = 0;
 	struct xfs_rmap_key	*kp;
 	struct xfs_rmap_irec	key = {0};
 
@@ -1038,10 +1071,17 @@ _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			if (i == 0) {
 advance:
 				lastblock = b;
+				lastowner = owner;
+				lastoffset = offset;
 			} else {
 				bool bad;
 
-				bad = b <= lastblock;
+				if (xfs_sb_version_hasreflink(&mp->m_sb))
+					bad = !rmap_in_order(b, lastblock,
+							owner, lastowner,
+							offset, lastoffset);
+				else
+					bad = b <= lastblock;
 				if (bad)
 					do_warn(
 	_("out-of-order rmap btree record %d (%u %"PRId64" %"PRIx64" %u) block %u/%u\n"),
