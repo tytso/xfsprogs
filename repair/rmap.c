@@ -1084,6 +1084,32 @@ rmap_high_key_from_rec(
 }
 
 /*
+ * Record that an inode had the reflink flag set when repair started.  The
+ * inode reflink flag will be adjusted as necessary.
+ */
+void
+record_inode_reflink_flag(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino,
+	xfs_agnumber_t		agno,
+	xfs_agino_t		ino,
+	xfs_ino_t		lino)
+{
+	struct ino_tree_node	*irec;
+	int			off;
+
+	ASSERT(XFS_AGINO_TO_INO(mp, agno, ino) == be64_to_cpu(dino->di_ino));
+	if (!(be64_to_cpu(dino->di_flags2) & XFS_DIFLAG2_REFLINK))
+		return;
+	irec = find_inode_rec(mp, agno, ino);
+	off = get_inode_offset(mp, lino, irec);
+	ASSERT(!inode_was_rl(irec, off));
+	set_inode_was_rl(irec, off);
+	dbg_printf("set was_rl lino=%llu was=0x%llx\n",
+		(unsigned long long)lino, (unsigned long long)irec->ino_was_rl);
+}
+
+/*
  * Regenerate the AGFL so that we don't run out of it while rebuilding the
  * rmap btree.  If skip_rmapbt is true, don't update the rmapbt (most probably
  * because we're updating the rmapbt).

@@ -931,6 +931,7 @@ next_readbuf:
 				do_warn(_("would have cleared inode %" PRIu64 "\n"),
 					ino);
 			}
+			clear_inode_was_rl(ino_rec, irec_offset);
 		}
 
 process_next:
