@@ -32,6 +32,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 #include "xfs_rmap_btree.h"
+#include "xfs_refcount_btree.h"
 
 #include "libxfs.h"		/* for now */
 
@@ -689,6 +690,7 @@ libxfs_mount(
 	xfs_bmap_compute_maxlevels(mp, XFS_ATTR_FORK);
 	xfs_ialloc_compute_maxlevels(mp);
 	xfs_rmapbt_compute_maxlevels(mp);
+	xfs_refcountbt_compute_maxlevels(mp);
 
 	if (sbp->sb_imax_pct) {
 		/* Make sure the maximum inode count is a multiple of the
