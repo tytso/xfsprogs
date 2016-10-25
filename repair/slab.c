@@ -201,6 +201,27 @@ slab_add(
 	return 0;
 }
 
+#include "threads.h"
+
+struct qsort_slab {
+	struct xfs_slab		*slab;
+	struct xfs_slab_hdr	*hdr;
+	int			(*compare_fn)(const void *, const void *);
+};
+
+static void
+qsort_slab_helper(
+	struct work_queue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
+{
+	struct qsort_slab	*qs = arg;
+
+	qsort(slab_ptr(qs->slab, qs->hdr, 0), qs->hdr->sh_inuse,
+			qs->slab->s_item_sz, qs->compare_fn);
+	free(qs);
+}
+
 /*
  * Sort the items in the slab.  Do not run this method if there are any
  * cursors holding on to the slab.
@@ -210,14 +231,35 @@ qsort_slab(
 	struct xfs_slab		*slab,
 	int (*compare_fn)(const void *, const void *))
 {
+	struct work_queue	wq;
 	struct xfs_slab_hdr	*hdr;
+	struct qsort_slab	*qs;
 
+	/*
+	 * If we don't have that many slabs, we're probably better
+	 * off skipping all the thread overhead.
+	 */
+	if (slab->s_nr_slabs <= 4) {
+		hdr = slab->s_first;
+		while (hdr) {
+			qsort(slab_ptr(slab, hdr, 0), hdr->sh_inuse,
+					slab->s_item_sz, compare_fn);
+			hdr = hdr->sh_next;
+		}
+		return;
+	}
+
+	create_work_queue(&wq, NULL, libxfs_nproc());
 	hdr = slab->s_first;
 	while (hdr) {
-		qsort(slab_ptr(slab, hdr, 0), hdr->sh_inuse, slab->s_item_sz,
-		      compare_fn);
+		qs = malloc(sizeof(struct qsort_slab));
+		qs->slab = slab;
+		qs->hdr = hdr;
+		qs->compare_fn = compare_fn;
+		queue_work(&wq, qsort_slab_helper, 0, qs);
 		hdr = hdr->sh_next;
 	}
+	destroy_work_queue(&wq);
 }
 
 /*
