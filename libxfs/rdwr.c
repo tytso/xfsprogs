@@ -608,8 +608,8 @@ libxfs_initbuf_map(xfs_buf_t *bp, struct xfs_buftarg *btp,
 	int i;
 
 	bytes = sizeof(struct xfs_buf_map) * nmaps;
-	bp->b_map = malloc(bytes);
-	if (!bp->b_map) {
+	bp->b_maps = malloc(bytes);
+	if (!bp->b_maps) {
 		fprintf(stderr,
 			_("%s: %s can't malloc %u bytes: %s\n"),
 			progname, __FUNCTION__, bytes,
@@ -620,8 +620,8 @@ libxfs_initbuf_map(xfs_buf_t *bp, struct xfs_buftarg *btp,
 
 	bytes = 0;
 	for ( i = 0; i < nmaps; i++) {
-		bp->b_map[i].bm_bn = map[i].bm_bn;
-		bp->b_map[i].bm_len = map[i].bm_len;
+		bp->b_maps[i].bm_bn = map[i].bm_bn;
+		bp->b_maps[i].bm_len = map[i].bm_len;
 		bytes += BBTOB(map[i].bm_len);
 	}
 
@@ -654,8 +654,8 @@ __libxfs_getbufr(int blen)
 			list_del_init(&bp->b_node.cn_mru);
 			free(bp->b_addr);
 			bp->b_addr = NULL;
-			free(bp->b_map);
-			bp->b_map = NULL;
+			free(bp->b_maps);
+			bp->b_maps = NULL;
 		}
 	} else
 		bp = kmem_zone_zalloc(xfs_buf_zone, 0);
@@ -1024,8 +1024,8 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 	fd = libxfs_device_to_fd(btp->dev);
 	buf = bp->b_addr;
 	for (i = 0; i < bp->b_nmaps; i++) {
-		off64_t	offset = LIBXFS_BBTOOFF64(bp->b_map[i].bm_bn);
-		int len = BBTOB(bp->b_map[i].bm_len);
+		off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
+		int len = BBTOB(bp->b_maps[i].bm_len);
 
 		error = __read_buf(fd, buf, len, offset, flags);
 		if (error) {
@@ -1142,8 +1142,8 @@ libxfs_writebufr(xfs_buf_t *bp)
 		char	*buf = bp->b_addr;
 
 		for (i = 0; i < bp->b_nmaps; i++) {
-			off64_t	offset = LIBXFS_BBTOOFF64(bp->b_map[i].bm_bn);
-			int len = BBTOB(bp->b_map[i].bm_len);
+			off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
+			int len = BBTOB(bp->b_maps[i].bm_len);
 
 			bp->b_error = __write_buf(fd, buf, len, offset,
 						  bp->b_flags);
