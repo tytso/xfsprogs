@@ -427,7 +427,8 @@ struct fsxattr {
 	__u32		fsx_extsize;	/* extsize field value (get/set)*/
 	__u32		fsx_nextents;	/* nextents field value (get)	*/
 	__u32		fsx_projid;	/* project identifier (get/set) */
-	unsigned char	fsx_pad[12];
+	__u32		fsx_cowextsize;	/* cow extsize field value (get/set) */
+	unsigned char	fsx_pad[8];
 };
 
 /*
@@ -455,6 +456,9 @@ struct fsxattr {
 
 #endif
 
+#ifndef FS_XFLAG_COWEXTSIZE
+#define FS_XFLAG_COWEXTSIZE	0x00010000	/* CoW extent size allocator hint */
+#endif
 
 /**
  * Abstraction of mountpoints.
