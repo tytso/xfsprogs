@@ -240,8 +240,7 @@ xfs_rui_copy_format(
 	int			  continued)
 {
 	uint nextents = ((struct xfs_rui_log_format *)buf)->rui_nextents;
-	uint dst_len = sizeof(struct xfs_rui_log_format) +
-			(nextents - 1) * sizeof(struct xfs_map_extent);
+	uint dst_len = xfs_rui_log_format_sizeof(nextents);
 
 	if (len == dst_len || continued) {
 		memcpy((char *)dst_fmt, buf, len);
@@ -283,8 +282,7 @@ xlog_print_trans_rui(
 
 	/* convert to native format */
 	nextents = src_f->rui_nextents;
-	dst_len = sizeof(struct xfs_rui_log_format) +
-			(nextents - 1) * sizeof(struct xfs_map_extent);
+	dst_len = xfs_rui_log_format_sizeof(nextents);
 
 	if (continued && src_len < core_size) {
 		printf(_("RUI: Not enough data to decode further\n"));
