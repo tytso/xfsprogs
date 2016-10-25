@@ -1215,6 +1215,12 @@ out:
 		rmap_avoid_check();
 }
 
+struct refc_priv {
+	struct xfs_refcount_irec	last_rec;
+	xfs_agblock_t			nr_blocks;
+};
+
+
 static void
 scan_refcbt(
 	struct xfs_btree_block	*block,
@@ -1234,6 +1240,7 @@ scan_refcbt(
 	int			numrecs;
 	int			state;
 	xfs_agblock_t		lastblock = 0;
+	struct refc_priv	*refc_priv = priv;
 
 	if (magic != XFS_REFC_CRC_MAGIC) {
 		name = "(unknown)";
@@ -1257,6 +1264,8 @@ scan_refcbt(
 		if (suspect)
 			goto out;
 	}
+
+	refc_priv->nr_blocks++;
 
 	/* check for btree blocks multiply claimed */
 	state = get_bmap(agno, bno);
@@ -1358,6 +1367,20 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 					name, i, b, len, agno, bno);
 			} else {
 				lastblock = b;
+			}
+
+			/* Is this record mergeable with the last one? */
+			if (refc_priv->last_rec.rc_startblock +
+			    refc_priv->last_rec.rc_blockcount == b &&
+			    refc_priv->last_rec.rc_refcount == nr) {
+				do_warn(
+	_("record %d in block (%u/%u) of %s tree should be merged with previous record\n"),
+					i, agno, bno, name);
+				refc_priv->last_rec.rc_blockcount += len;
+			} else {
+				refc_priv->last_rec.rc_startblock = b;
+				refc_priv->last_rec.rc_blockcount = len;
+				refc_priv->last_rec.rc_refcount = nr;
 			}
 
 			/* XXX: probably want to mark the reflinked areas? */
@@ -2203,10 +2226,17 @@ validate_agf(
 	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
 		bno = be32_to_cpu(agf->agf_refcount_root);
 		if (bno != 0 && verify_agbno(mp, agno, bno)) {
+			struct refc_priv	priv;
+
+			memset(&priv, 0, sizeof(priv));
 			scan_sbtree(bno,
 				    be32_to_cpu(agf->agf_refcount_level),
 				    agno, 0, scan_refcbt, 1, XFS_REFC_CRC_MAGIC,
-				    agcnts, &xfs_refcountbt_buf_ops);
+				    &priv, &xfs_refcountbt_buf_ops);
+			if (be32_to_cpu(agf->agf_refcount_blocks) != priv.nr_blocks)
+				do_warn(_("bad refcountbt block count %u, saw %u\n"),
+					priv.nr_blocks,
+					be32_to_cpu(agf->agf_refcount_blocks));
 		} else  {
 			do_warn(_("bad agbno %u for refcntbt root, agno %d\n"),
 				bno, agno);
