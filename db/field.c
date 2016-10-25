@@ -163,6 +163,10 @@ const ftattr_t	ftattrtab[] = {
 	  NULL, NULL },
 	{ FLDT_RBMBTFLG, "rbmbtflag", fp_num, "%u", SI(RMAPBT_BMBTFLAG_BITLEN), 0,
 	  NULL, NULL },
+	{ FLDT_CAGBLOCK, "cagblock", fp_num, "%u", SI(REFCNTBT_AGBLOCK_BITLEN),
+	  FTARG_DONULL, fa_agblock, NULL },
+	{ FLDT_CCOWFLG, "ccowflag", fp_num, "%u", SI(REFCNTBT_COWFLAG_BITLEN), 0,
+	  NULL, NULL },
 	{ FLDT_CNTBT, "cntbt", NULL, (char *)cntbt_flds, btblock_size, FTARG_SIZE,
 	  NULL, cntbt_flds },
 	{ FLDT_CNTBT_CRC, "cntbt", NULL, (char *)cntbt_crc_flds, btblock_size,
@@ -182,6 +186,15 @@ const ftattr_t	ftattrtab[] = {
 	  SI(bitsz(xfs_rmap_ptr_t)), 0, fa_agblock, NULL },
 	{ FLDT_RMAPBTREC, "rmapbtrec", fp_sarray, (char *)rmapbt_rec_flds,
 	  SI(bitsz(struct xfs_rmap_rec)), 0, NULL, rmapbt_rec_flds },
+
+	{ FLDT_REFCBT_CRC, "refcntbt", NULL, (char *)refcbt_crc_flds, btblock_size,
+	  FTARG_SIZE, NULL, refcbt_crc_flds },
+	{ FLDT_REFCBTKEY, "refcntbtkey", fp_sarray, (char *)refcbt_key_flds,
+	  SI(bitsz(struct xfs_refcount_key)), 0, NULL, refcbt_key_flds },
+	{ FLDT_REFCBTPTR, "refcntbtptr", fp_num, "%u", SI(bitsz(xfs_refcount_ptr_t)),
+	  0, fa_agblock, NULL },
+	{ FLDT_REFCBTREC, "refcntbtrec", fp_sarray, (char *)refcbt_rec_flds,
+	  SI(bitsz(struct xfs_refcount_rec)), 0, NULL, refcbt_rec_flds },
 
 /* CRC field */
 	{ FLDT_CRC, "crc", fp_crc, "%#x (%s)", SI(bitsz(__uint32_t)),

@@ -694,6 +694,8 @@ version_string(
 		strcat(s, ",SPARSE_INODES");
 	if (xfs_sb_version_hasmetauuid(sbp))
 		strcat(s, ",META_UUID");
+	if (xfs_sb_version_hasreflink(sbp))
+		strcat(s, ",REFLINK");
 	return s;
 }
 
