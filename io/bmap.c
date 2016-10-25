@@ -41,7 +41,9 @@ bmap_help(void)
 " Holes are marked by replacing the startblock..endblock with 'hole'.\n"
 " All the file offsets and disk blocks are in units of 512-byte blocks.\n"
 " -a -- prints the attribute fork map instead of the data fork.\n"
+" -c -- prints the copy-on-write fork map instead of the data fork.\n"
 " -d -- suppresses a DMAPI read event, offline portions shown as holes.\n"
+" -e -- print delayed allocation extents.\n"
 " -l -- also displays the length of each extent in 512-byte blocks.\n"
 " -n -- query n extents.\n"
 " -p -- obtain all unwritten extents as well (w/ -v show which are unwritten.)\n"
@@ -75,6 +77,7 @@ bmap_f(
 	int			loop = 0;
 	int			flg = 0;
 	int			aflag = 0;
+	int			cflag = 0;
 	int			lflag = 0;
 	int			nflag = 0;
 	int			pflag = 0;
@@ -85,11 +88,18 @@ bmap_f(
 	int			c;
 	int			egcnt;
 
-	while ((c = getopt(argc, argv, "adln:pv")) != EOF) {
+	while ((c = getopt(argc, argv, "acdeln:pv")) != EOF) {
 		switch (c) {
 		case 'a':	/* Attribute fork. */
 			bmv_iflags |= BMV_IF_ATTRFORK;
 			aflag = 1;
+			break;
+		case 'c':	/* CoW fork. */
+			bmv_iflags |= BMV_IF_COWFORK | BMV_IF_DELALLOC;
+			cflag = 1;
+			break;
+		case 'e':
+			bmv_iflags |= BMV_IF_DELALLOC;
 			break;
 		case 'l':	/* list number of blocks with each extent */
 			lflag = 1;
@@ -113,7 +123,7 @@ bmap_f(
 			return command_usage(&bmap_cmd);
 		}
 	}
-	if (aflag)
+	if (aflag || cflag)
 		bmv_iflags &= ~(BMV_IF_PREALLOC|BMV_IF_NO_DMAPI_READ);
 
 	if (vflag) {
@@ -273,13 +283,14 @@ bmap_f(
 #define MINRANGE_WIDTH	16
 #define MINAG_WIDTH	2
 #define MINTOT_WIDTH	5
-#define NFLG		5	/* count of flags */
-#define	FLG_NULL	000000	/* Null flag */
-#define	FLG_PRE		010000	/* Unwritten extent */
-#define	FLG_BSU		001000	/* Not on begin of stripe unit  */
-#define	FLG_ESU		000100	/* Not on end   of stripe unit  */
-#define	FLG_BSW		000010	/* Not on begin of stripe width */
-#define	FLG_ESW		000001	/* Not on end   of stripe width */
+#define NFLG		6	/* count of flags */
+#define	FLG_NULL	0000000	/* Null flag */
+#define	FLG_SHARED	0100000	/* shared extent */
+#define	FLG_PRE		0010000	/* Unwritten extent */
+#define	FLG_BSU		0001000	/* Not on begin of stripe unit  */
+#define	FLG_ESU		0000100	/* Not on end   of stripe unit  */
+#define	FLG_BSW		0000010	/* Not on begin of stripe width */
+#define	FLG_ESW		0000001	/* Not on end   of stripe width */
 		int	agno;
 		off64_t agoff, bbperag;
 		int	foff_w, boff_w, aoff_w, tot_w, agno_w;
@@ -350,6 +361,10 @@ bmap_f(
 			if (map[i + 1].bmv_oflags & BMV_OF_PREALLOC) {
 				flg |= FLG_PRE;
 			}
+			if (map[i + 1].bmv_oflags & BMV_OF_SHARED)
+				flg |= FLG_SHARED;
+			if (map[i + 1].bmv_oflags & BMV_OF_DELALLOC)
+				map[i + 1].bmv_block = -2;
 			/*
 			 * If striping enabled, determine if extent starts/ends
 			 * on a stripe unit boundary.
@@ -379,6 +394,14 @@ bmap_f(
 					i,
 					foff_w, rbuf,
 					boff_w, _("hole"),
+					agno_w, "",
+					aoff_w, "",
+					tot_w, (long long)map[i+1].bmv_length);
+			} else if (map[i + 1].bmv_block == -2) {
+				printf("%4d: %-*s %-*s %*s %-*s %*lld\n",
+					i,
+					foff_w, rbuf,
+					boff_w, _("delalloc"),
 					agno_w, "",
 					aoff_w, "",
 					tot_w, (long long)map[i+1].bmv_length);
@@ -413,6 +436,8 @@ bmap_f(
 		}
 		if ((flg || pflag) && vflag > 1) {
 			printf(_(" FLAG Values:\n"));
+			printf(_("    %*.*o Shared extent\n"),
+				NFLG+1, NFLG+1, FLG_SHARED);
 			printf(_("    %*.*o Unwritten preallocated extent\n"),
 				NFLG+1, NFLG+1, FLG_PRE);
 			printf(_("    %*.*o Doesn't begin on stripe unit\n"),
