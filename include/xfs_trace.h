@@ -224,6 +224,31 @@
 #define trace_xfs_ag_resv_alloc_extent(...)	((void) 0)
 #define trace_xfs_ag_resv_free_extent(...)	((void) 0)
 
+#define trace_xfs_refcount_lookup(...)		((void) 0)
+#define trace_xfs_refcount_get(...)		((void) 0)
+#define trace_xfs_refcount_update(...)		((void) 0)
+#define trace_xfs_refcount_update_error(...)	((void) 0)
+#define trace_xfs_refcount_insert(...)		((void) 0)
+#define trace_xfs_refcount_insert_error(...)	((void) 0)
+#define trace_xfs_refcount_delete(...)		((void) 0)
+#define trace_xfs_refcount_delete_error(...)	((void) 0)
+#define trace_xfs_refcountbt_free_block(...)	((void) 0)
+#define trace_xfs_refcountbt_alloc_block(...)	((void) 0)
+#define trace_xfs_refcount_rec_order_error(...)	((void) 0)
+
+#define trace_xfs_refcount_lookup(...)		((void) 0)
+#define trace_xfs_refcount_get(...)		((void) 0)
+#define trace_xfs_refcount_update(...)		((void) 0)
+#define trace_xfs_refcount_update_error(...)	((void) 0)
+#define trace_xfs_refcount_insert(...)		((void) 0)
+#define trace_xfs_refcount_insert_error(...)	((void) 0)
+#define trace_xfs_refcount_delete(...)		((void) 0)
+#define trace_xfs_refcount_delete_error(...)	((void) 0)
+#define trace_xfs_refcountbt_free_block(...)	((void) 0)
+#define trace_xfs_refcountbt_alloc_block(...)	((void) 0)
+#define trace_xfs_refcount_rec_order_error(...)	((void) 0)
+
+
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
 #define trace_xfs_perag_get_tag(a,b,c,d)	((c) = (c))
