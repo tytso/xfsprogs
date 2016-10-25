@@ -95,7 +95,8 @@ xfs_extent_free_finish_item(
 
 	free = container_of(item, struct xfs_extent_free_item, xefi_list);
 	error = xfs_free_extent(tp, free->xefi_startblock,
-			free->xefi_blockcount, &free->xefi_oinfo);
+			free->xefi_blockcount, &free->xefi_oinfo,
+			XFS_AG_RESV_NONE);
 	kmem_free(free);
 	return error;
 }

@@ -2171,7 +2171,8 @@ inject_lost_blocks(
 		if (error)
 			goto out_cancel;
 
-		error = -libxfs_free_extent(tp, *fsb, 1, &oinfo);
+		error = -libxfs_free_extent(tp, *fsb, 1, &oinfo,
+					    XFS_AG_RESV_NONE);
 		if (error)
 			goto out_cancel;
 
