@@ -267,8 +267,9 @@
 #define trace_xfs_refcount_deferred(...)		((void) 0)
 #define trace_xfs_refcount_defer(...)			((void) 0)
 #define trace_xfs_refcount_finish_one_leftover(...)	((void) 0)
-
-
+#define trace_xfs_refcount_find_shared(...)		((void) 0)
+#define trace_xfs_refcount_find_shared_result(...)	((void) 0)
+#define trace_xfs_refcount_find_shared_error(...)	((void) 0)
 
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
