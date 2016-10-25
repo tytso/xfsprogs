@@ -84,7 +84,9 @@ error_tag(char *name)
 		{ XFS_ERRTAG_REFCOUNT_FINISH_ONE,	"refcount_finish_one" },
 #define XFS_ERRTAG_BMAP_FINISH_ONE			26
 		{ XFS_ERRTAG_BMAP_FINISH_ONE,		"bmap_finish_one" },
-#define XFS_ERRTAG_MAX                                  27
+#define XFS_ERRTAG_AG_RESV_CRITICAL			27
+		{ XFS_ERRTAG_AG_RESV_CRITICAL,		"ag_resv_critical" },
+#define XFS_ERRTAG_MAX                                  28
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
