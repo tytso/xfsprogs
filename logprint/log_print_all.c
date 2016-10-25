@@ -272,6 +272,10 @@ xlog_recover_print_inode_core(
 	     "gen:%d\n"),
 	       (int)di->di_forkoff, di->di_dmevmask, (int)di->di_dmstate,
 	       (int)di->di_flags, di->di_gen);
+	if (di->di_version == 3) {
+		printf(_("flags2 0x%llx cowextsize 0x%x\n"),
+			(unsigned long long)di->di_flags2, di->di_cowextsize);
+	}
 }
 
 STATIC void
