@@ -45,7 +45,7 @@ typedef enum {
 	DBM_LOG,	DBM_MISSING,	DBM_QUOTA,	DBM_RTBITMAP,
 	DBM_RTDATA,	DBM_RTFREE,	DBM_RTSUM,	DBM_SB,
 	DBM_SYMLINK,	DBM_BTFINO,	DBM_BTRMAP,	DBM_BTREFC,
-	DBM_RLDATA,
+	DBM_RLDATA,	DBM_COWDATA,
 	DBM_NDBM
 } dbm_t;
 
@@ -4731,9 +4731,22 @@ scanfunc_refcnt(
 		rp = XFS_REFCOUNT_REC_ADDR(block, 1);
 		lastblock = 0;
 		for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++) {
-			set_dbmap(seqno, be32_to_cpu(rp[i].rc_startblock),
-				be32_to_cpu(rp[i].rc_blockcount), DBM_RLDATA,
-				seqno, bno);
+			if (be32_to_cpu(rp[i].rc_refcount) == 1) {
+				dbprintf(_(
+		"leftover CoW extent (%u/%u) len %u\n"),
+					seqno,
+					be32_to_cpu(rp[i].rc_startblock),
+					be32_to_cpu(rp[i].rc_blockcount));
+				set_dbmap(seqno,
+					be32_to_cpu(rp[i].rc_startblock),
+					be32_to_cpu(rp[i].rc_blockcount),
+					DBM_COWDATA, seqno, bno);
+			} else {
+				set_dbmap(seqno,
+					be32_to_cpu(rp[i].rc_startblock),
+					be32_to_cpu(rp[i].rc_blockcount),
+					DBM_RLDATA, seqno, bno);
+			}
 			if (be32_to_cpu(rp[i].rc_startblock) < lastblock) {
 				dbprintf(_(
 		"out-of-order refcnt btree record %d (%u %u) block %u/%u\n"),
