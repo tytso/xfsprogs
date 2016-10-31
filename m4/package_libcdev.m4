@@ -5,7 +5,6 @@ AC_DEFUN([AC_HAVE_FADVISE],
   [ AC_MSG_CHECKING([for fadvise ])
     AC_TRY_COMPILE([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <fcntl.h>
     ], [
 	posix_fadvise(0, 1, 0, POSIX_FADV_NORMAL);
@@ -22,7 +21,6 @@ AC_DEFUN([AC_HAVE_MADVISE],
   [ AC_MSG_CHECKING([for madvise ])
     AC_TRY_COMPILE([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <sys/mman.h>
     ], [
 	posix_madvise(0, 0, MADV_NORMAL);
@@ -39,7 +37,6 @@ AC_DEFUN([AC_HAVE_MINCORE],
   [ AC_MSG_CHECKING([for mincore ])
     AC_TRY_COMPILE([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <sys/mman.h>
     ], [
 	mincore(0, 0, 0);
@@ -56,7 +53,6 @@ AC_DEFUN([AC_HAVE_SENDFILE],
   [ AC_MSG_CHECKING([for sendfile ])
     AC_TRY_COMPILE([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <sys/sendfile.h>
     ], [
          sendfile(0, 0, 0, 0);
@@ -106,7 +102,6 @@ AC_DEFUN([AC_HAVE_FALLOCATE],
   [ AC_MSG_CHECKING([for fallocate])
     AC_TRY_LINK([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <fcntl.h>
 #include <linux/falloc.h>
     ], [
@@ -124,7 +119,6 @@ AC_DEFUN([AC_HAVE_FIEMAP],
   [ AC_MSG_CHECKING([for fiemap])
     AC_TRY_LINK([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <linux/fs.h>
 #include <linux/fiemap.h>
     ], [
@@ -142,7 +136,6 @@ AC_DEFUN([AC_HAVE_FIEMAP],
 AC_DEFUN([AC_HAVE_PREADV],
   [ AC_MSG_CHECKING([for preadv])
     AC_TRY_LINK([
-#define _FILE_OFFSET_BITS 64
 #define _BSD_SOURCE
 #include <sys/uio.h>
     ], [
@@ -177,7 +170,6 @@ AC_DEFUN([AC_HAVE_SYNC_FILE_RANGE],
   [ AC_MSG_CHECKING([for sync_file_range])
     AC_TRY_LINK([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <fcntl.h>
     ], [
          sync_file_range(0, 0, 0, 0);
@@ -194,7 +186,6 @@ AC_DEFUN([AC_HAVE_SYNCFS],
   [ AC_MSG_CHECKING([for syncfs])
     AC_TRY_LINK([
 #define _GNU_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <unistd.h>
     ], [
          syncfs(0);
