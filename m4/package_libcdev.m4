@@ -267,6 +267,22 @@ AC_DEFUN([AC_HAVE_MREMAP],
   ])
 
 #
+# Check if transparent LFS is enabled
+#
+AC_DEFUN([AC_NEED_LFS],
+  [ AC_MSG_CHECKING([whether large file support works])
+    AC_TRY_COMPILE([
+#include <unistd.h>
+    ], [
+         int i[sizeof(off_t)-8];
+    ], AC_MSG_RESULT(yes),
+       [AC_MSG_RESULT(no)
+       echo
+       echo 'FATAL ERROR: C library does not support transparent LFS.'
+       exit 1])
+  ])
+
+#
 # Check if we need to override the system struct fsxattr with
 # the internal definition.  This /only/ happens if the system
 # actually defines struct fsxattr /and/ the system definition
