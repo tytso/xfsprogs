@@ -16,6 +16,7 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <pthread.h>
 #include "platform_defs.h"
 #include "command.h"
 #include "input.h"
@@ -25,6 +26,7 @@
 char	*progname;
 int	exitcode;
 int	expert;
+int	idlethread;
 size_t	pagesize;
 struct timeval stopwatch;
 
@@ -32,7 +34,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-		_("Usage: %s [-adfmnrRstVx] [-p prog] [-c cmd]... file\n"),
+		_("Usage: %s [-adfimnrRstTVx] [-p prog] [-c cmd]... file\n"),
 		progname);
 	exit(1);
 }
@@ -141,7 +143,7 @@ init(
 	pagesize = getpagesize();
 	gettimeofday(&stopwatch, NULL);
 
-	while ((c = getopt(argc, argv, "ac:dFfmp:nrRstTVx")) != EOF) {
+	while ((c = getopt(argc, argv, "ac:dFfimp:nrRstTVx")) != EOF) {
 		switch (c) {
 		case 'a':
 			flags |= IO_APPEND;
@@ -157,6 +159,9 @@ init(
 			break;
 		case 'f':
 			flags |= IO_CREAT;
+			break;
+		case 'i':
+			idlethread = 1;
 			break;
 		case 'm':
 			mode = strtoul(optarg, &sp, 0);
@@ -213,12 +218,38 @@ init(
 	add_check_command(init_check_command);
 }
 
+/*
+ * The purpose of this idle thread is to test io from a multi threaded process.
+ * With single threaded process, the file table is not shared and file structs
+ * are not reference counted. Spawning an idle thread can help detecting file
+ * struct reference leaks.
+ */
+void *
+idle_loop(void *arg)
+{
+	for (;;)
+		pause();
+}
+
+void
+start_idle_thread()
+{
+	pthread_t t;
+
+	if (pthread_create(&t, NULL, idle_loop, NULL)) {
+		fprintf(stderr, "Error creating idle thread\n");
+		exit(1);
+	}
+}
+
 int
 main(
 	int	argc,
 	char	**argv)
 {
 	init(argc, argv);
+	if (idlethread)
+		start_idle_thread();
 	command_loop();
 	return exitcode;
 }

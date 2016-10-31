@@ -13,7 +13,7 @@ CFILES = init.c \
 	mmap.c open.c parent.c pread.c prealloc.c pwrite.c seek.c shutdown.c \
 	sync.c truncate.c reflink.c cowextsize.c
 
-LLDLIBS = $(LIBXCMD) $(LIBHANDLE)
+LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBPTHREAD)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE)
 LLDFLAGS = -static-libtool-libs
 
