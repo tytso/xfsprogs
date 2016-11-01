@@ -103,7 +103,7 @@ fadvise_f(
 		return command_usage(&fadvise_cmd);
 	}
 
-	if (posix_fadvise64(file->fd, offset, length, advise) < 0) {
+	if (posix_fadvise(file->fd, offset, length, advise) < 0) {
 		perror("fadvise");
 		return 0;
 	}
