@@ -89,7 +89,7 @@ static void fsrallfs(char *mtab, int howlong, char *leftofffile);
 static void fsrall_cleanup(int timeout);
 static int  getnextents(int);
 int xfsrtextsize(int fd);
-int xfs_getrt(int fd, struct statvfs64 *sfbp);
+int xfs_getrt(int fd, struct statvfs *sfbp);
 char * gettmpname(char *fname);
 char * getparent(char *fname);
 int fsrprintf(const char *fmt, ...);
@@ -888,7 +888,7 @@ fsrfile_common(
 	xfs_bstat_t	*statp)
 {
 	int		error;
-	struct statvfs64 vfss;
+	struct statvfs  vfss;
 	struct fsxattr	fsx;
 	unsigned long	bsize;
 
@@ -940,7 +940,7 @@ fsrfile_common(
 	 * Note that xfs_bstat.bs_blksize returns the filesystem blocksize,
 	 * not the optimal I/O size as struct stat.
 	 */
-	if (statvfs64(fsname ? fsname : fname, &vfss) < 0) {
+	if (statvfs(fsname ? fsname : fname, &vfss) < 0) {
 		fsrprintf(_("unable to get fs stat on %s: %s\n"),
 			fname, strerror(errno));
 		return -1;
@@ -1700,7 +1700,7 @@ xfs_getgeom(int fd, xfs_fsop_geom_v1_t * fsgeom)
  * Get xfs realtime space information
  */
 int
-xfs_getrt(int fd, struct statvfs64 *sfbp)
+xfs_getrt(int fd, struct statvfs *sfbp)
 {
 	unsigned long	bsize;
 	unsigned long	factor;

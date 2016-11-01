@@ -217,7 +217,6 @@ static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
 #  include <sys/param.h>
 #include <sys/ucred.h>
 #include <errno.h>
-#define statvfs64	statfs
 #define		_PATH_MOUNTED   "/etc/mtab"
 
 struct mntent
