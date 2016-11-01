@@ -53,7 +53,7 @@ typedef signed int		__s32;
 typedef unsigned long long int	__u64;
 typedef signed long long int	__s64;
 
-typedef off64_t		xfs_off_t;
+typedef off_t		xfs_off_t;
 typedef __int64_t	xfs_ino_t;
 typedef __int32_t	xfs_dev_t;
 typedef __int64_t	xfs_daddr_t;
