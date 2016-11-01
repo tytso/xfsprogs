@@ -52,10 +52,10 @@ static long extsize;
 off64_t
 filesize(void)
 {
-	struct stat64	st;
+	struct stat	st;
 
-	if (fstat64(file->fd, &st) < 0) {
-		perror("fstat64");
+	if (fstat(file->fd, &st) < 0) {
+		perror("fstat");
 		return -1;
 	}
 	return st.st_size;
@@ -90,7 +90,7 @@ stat_f(
 {
 	struct dioattr	dio;
 	struct fsxattr	fsx, fsxa;
-	struct stat64	st;
+	struct stat	st;
 	int		verbose = (argc == 2 && !strcmp(argv[1], "-v"));
 
 	printf(_("fd.path = \"%s\"\n"), file->name);
@@ -102,8 +102,8 @@ stat_f(
 		file->flags & IO_APPEND ? _(",append-only") : "",
 		file->flags & IO_NONBLOCK ? _(",non-block") : "",
 		file->flags & IO_TMPFILE ? _(",tmpfile") : "");
-	if (fstat64(file->fd, &st) < 0) {
-		perror("fstat64");
+	if (fstat(file->fd, &st) < 0) {
+		perror("fstat");
 	} else {
 		printf(_("stat.ino = %lld\n"), (long long)st.st_ino);
 		printf(_("stat.type = %s\n"), filetype(st.st_mode));
@@ -575,10 +575,10 @@ static int
 set_extsize(const char *path, int fd, long extsz)
 {
 	struct fsxattr	fsx;
-	struct stat64	stat;
+	struct stat	stat;
 
-	if (fstat64(fd, &stat) < 0) {
-		perror("fstat64");
+	if (fstat(fd, &stat) < 0) {
+		perror("fstat");
 		return 0;
 	}
 	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {

@@ -810,7 +810,7 @@ check_device_type(
 	bool		force_overwrite,
 	const char	*optname)
 {
-	struct stat64 statbuf;
+	struct stat statbuf;
 
 	if (*isfile && (no_size || no_name)) {
 		fprintf(stderr,
@@ -824,7 +824,7 @@ check_device_type(
 		usage();
 	}
 
-	if (stat64(name, &statbuf)) {
+	if (stat(name, &statbuf)) {
 		if (errno == ENOENT && *isfile) {
 			if (create)
 				*create = 1;

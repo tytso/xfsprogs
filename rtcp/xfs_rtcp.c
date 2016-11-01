@@ -35,7 +35,7 @@ int
 main(int argc, char **argv)
 {
 	int	c, i, r, errflg = 0;
-	struct stat64	s2;
+	struct stat	s2;
 	int		extsize = - 1;
 
 	progname = basename(argv[0]);
@@ -80,8 +80,8 @@ main(int argc, char **argv)
 	 * which really exists.
 	 */
 	if (argc > 2) {
-		if (stat64(argv[argc-1], &s2) < 0) {
-			fprintf(stderr, _("%s: stat64 of %s failed\n"),
+		if (stat(argv[argc-1], &s2) < 0) {
+			fprintf(stderr, _("%s: stat of %s failed\n"),
 				progname, argv[argc-1]);
 			exit(2);
 		}
@@ -115,7 +115,7 @@ rtcp( char *source, char *target, int fextsize)
 	int		remove = 0, rtextsize;
 	char		*sp, *fbuf, *ptr;
 	char		tbuf[ PATH_MAX ];
-	struct stat64	s1, s2;
+	struct stat	s1, s2;
 	struct fsxattr	fsxattr;
 	struct dioattr	dioattr;
 
@@ -134,8 +134,8 @@ rtcp( char *source, char *target, int fextsize)
 			*sp = '\0';
 	}
 
-	if ( stat64(source, &s1) ) {
-		fprintf(stderr, _("%s: failed stat64 on %s: %s\n"),
+	if ( stat(source, &s1) ) {
+		fprintf(stderr, _("%s: failed stat on %s: %s\n"),
 			progname, source, strerror(errno));
 		return( -1);
 	}
@@ -144,7 +144,7 @@ rtcp( char *source, char *target, int fextsize)
 	 * check for a realtime partition
 	 */
 	snprintf(tbuf, sizeof(tbuf), "%s", target);
-	if ( stat64(target, &s2) ) {
+	if ( stat(target, &s2) ) {
 		if (!S_ISDIR(s2.st_mode)) {
 			/* take out target file name */
 			if ((ptr = strrchr(tbuf, '/')) != NULL)
@@ -165,14 +165,14 @@ rtcp( char *source, char *target, int fextsize)
 	 * check if target is a directory
 	 */
 	snprintf(tbuf, sizeof(tbuf), "%s", target);
-	if ( !stat64(target, &s2) ) {
+	if ( !stat(target, &s2) ) {
 		if (S_ISDIR(s2.st_mode)) {
 			snprintf(tbuf, sizeof(tbuf), "%s/%s", target,
 				basename(source));
 		}
 	}
 
-	if ( stat64(tbuf, &s2) ) {
+	if ( stat(tbuf, &s2) ) {
 		/*
 		 * create the file if it does not exist
 		 */

@@ -13873,8 +13873,8 @@ msgstr "%s: Dateien zum Kopieren müssen angegeben werden\n"
 
 #: .././rtcp/xfs_rtcp.c:86
 #, c-format
-msgid "%s: stat64 of %s failed\n"
-msgstr "%s: stat64 von %s fehlgeschlagen\n"
+msgid "%s: stat of %s failed\n"
+msgstr "%s: stat von %s fehlgeschlagen\n"
 
 #: .././rtcp/xfs_rtcp.c:93
 #, c-format
@@ -13883,8 +13883,8 @@ msgstr "%s: letztes Argument ist kein Verzeichnis\n"
 
 #: .././rtcp/xfs_rtcp.c:140
 #, c-format
-msgid "%s: failed stat64 on %s: %s\n"
-msgstr "%s: stat64 auf %s fehlgeschlagen: %s\n"
+msgid "%s: failed stat on %s: %s\n"
+msgstr "%s: stat auf %s fehlgeschlagen: %s\n"
 
 #: .././rtcp/xfs_rtcp.c:161
 #, c-format

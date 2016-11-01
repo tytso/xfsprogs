@@ -28,7 +28,7 @@
 #define	rounddown(x, y)	(((x)/(y))*(y))
 #define uuid_equal(s,d) (platform_uuid_compare((s),(d)) == 0)
 
-extern int	platform_check_ismounted(char *, char *, struct stat64 *, int);
+extern int	platform_check_ismounted(char *, char *, struct stat *, int);
 
 int		logfd;
 char 		*logfile_name;
@@ -562,7 +562,7 @@ main(int argc, char **argv)
 	extern int	optind;
 	libxfs_init_t	xargs;
 	thread_args	*tcarg;
-	struct stat64	statbuf;
+	struct stat	statbuf;
 
 	progname = basename(argv[0]);
 
@@ -643,7 +643,7 @@ main(int argc, char **argv)
 		die_perror();
 	}
 
-	if (fstat64(source_fd, &statbuf) < 0)  {
+	if (fstat(source_fd, &statbuf) < 0)  {
 		do_log(_("%s:  couldn't stat source \"%s\"\n"),
 			progname, source_name);
 		die_perror();
@@ -794,7 +794,7 @@ main(int argc, char **argv)
 	for (i = 0; i < num_targets; i++)  {
 		int	write_last_block = 0;
 
-		if (stat64(target[i].name, &statbuf) < 0)  {
+		if (stat(target[i].name, &statbuf) < 0)  {
 			/* ok, assume it's a file and create it */
 
 			do_out(_("Creating file %s\n"), target[i].name);

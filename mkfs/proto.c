@@ -782,9 +782,9 @@ static long
 filesize(
 	int		fd)
 {
-	struct stat64	stb;
+	struct stat	stb;
 
-	if (fstat64(fd, &stb) < 0)
+	if (fstat(fd, &stb) < 0)
 		return -1;
 	return (long)stb.st_size;
 }

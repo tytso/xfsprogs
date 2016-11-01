@@ -676,9 +676,9 @@ main(int argc, char **argv)
 	/* -f forces this, but let's be nice and autodetect it, as well. */
 	if (!isa_file) {
 		int		fd = libxfs_device_to_fd(x.ddev);
-		struct stat64	statbuf;
+		struct stat	statbuf;
 
-		if (fstat64(fd, &statbuf) < 0)
+		if (fstat(fd, &statbuf) < 0)
 			do_warn(_("%s: couldn't stat \"%s\"\n"),
 				progname, fs_name);
 		else if (S_ISREG(statbuf.st_mode))

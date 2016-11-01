@@ -133,10 +133,10 @@ sendfile_f(
 			goto done;
 		}
 	} else {
-		struct stat64	stat;
+		struct stat	stat;
 
-		if (fstat64(fd, &stat) < 0) {
-			perror("fstat64");
+		if (fstat(fd, &stat) < 0) {
+			perror("fstat");
 			goto done;
 		}
 		count = stat.st_size;

@@ -25,13 +25,13 @@ extern char *progname;
 extern __int64_t findsize(char *);
 
 int
-platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+platform_check_ismounted(char *name, char *block, struct stat *s, int verbose)
 {
 	return 0;
 }
 
 int
-platform_check_iswritable(char *name, char *block, struct stat64 *s)
+platform_check_iswritable(char *name, char *block, struct stat *s)
 {
 	return 1;
 }
@@ -51,9 +51,9 @@ platform_flush_device(int fd, dev_t device)
 void
 platform_findsizes(char *path, int fd, long long *sz, int *bsz)
 {
-	struct stat64		st;
+	struct stat		st;
 
-	if (fstat64(fd, &st) < 0) {
+	if (fstat(fd, &st) < 0) {
 		fprintf(stderr,
 			_("%s: cannot stat the device file \"%s\": %s\n"),
 			progname, path, strerror(errno));

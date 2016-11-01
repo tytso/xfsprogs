@@ -34,10 +34,8 @@
 #define __LITTLE_ENDIAN	LITTLE_ENDIAN
 
 /* FreeBSD file API is 64-bit aware */
-#define fstat64		fstat
 #define ftruncate64	ftruncate
 #define lseek64		lseek
-#define stat64		stat
 #define pwrite64	pwrite
 #define pread64		pread
 #define fdatasync	fsync

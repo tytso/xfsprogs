@@ -27,13 +27,13 @@ int platform_has_uuid = 1;
 extern char *progname;
 
 int
-platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+platform_check_ismounted(char *name, char *block, struct stat *s, int verbose)
 {
 	return 0;
 }
 
 int
-platform_check_iswritable(char *name, char *block, struct stat64 *s)
+platform_check_iswritable(char *name, char *block, struct stat *s)
 {
 	int	fd, writable;
 
@@ -69,9 +69,9 @@ void
 platform_findsizes(char *path, int fd, long long *sz, int *bsz)
 {
 	__uint64_t	size;
-	struct stat64	st;
+	struct stat	st;
 
-	if (fstat64(fd, &st) < 0) {
+	if (fstat(fd, &st) < 0) {
 		fprintf(stderr,
 			_("%s: cannot stat the device file \"%s\": %s\n"),
 			progname, path, strerror(errno));

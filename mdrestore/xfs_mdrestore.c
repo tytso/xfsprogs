@@ -197,7 +197,7 @@ usage(void)
 	exit(1);
 }
 
-extern int	platform_check_ismounted(char *, char *, struct stat64 *, int);
+extern int	platform_check_ismounted(char *, char *, struct stat *, int);
 
 int
 main(
@@ -208,7 +208,7 @@ main(
 	int		dst_fd;
 	int		c;
 	int		open_flags;
-	struct stat64	statbuf;
+	struct stat	statbuf;
 	int		is_target_file;
 
 	progname = basename(argv[0]);
@@ -244,7 +244,7 @@ main(
 	/* check and open target */
 	open_flags = O_RDWR;
 	is_target_file = 0;
-	if (stat64(argv[optind], &statbuf) < 0)  {
+	if (stat(argv[optind], &statbuf) < 0)  {
 		/* ok, assume it's a file and create it */
 		open_flags |= O_CREAT;
 		is_target_file = 1;

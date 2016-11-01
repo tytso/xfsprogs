@@ -68,9 +68,9 @@ static struct dev_to_fd {
 static int
 check_isactive(char *name, char *block, int fatal)
 {
-	struct stat64	st;
+	struct stat	st;
 
-	if (stat64(block, &st) < 0)
+	if (stat(block, &st) < 0)
 		return 0;
 	if ((st.st_mode & S_IFMT) != S_IFBLK)
 		return 0;
@@ -109,7 +109,7 @@ libxfs_device_open(char *path, int creat, int xflags, int setblksize)
 	dev_t		dev;
 	int		fd, d, flags;
 	int		readonly, dio, excl;
-	struct stat64	statb;
+	struct stat	statb;
 
 	readonly = (xflags & LIBXFS_ISREADONLY);
 	excl = (xflags & LIBXFS_EXCLUSIVELY) && !creat;
@@ -129,7 +129,7 @@ retry:
 		exit(1);
 	}
 
-	if (fstat64(fd, &statb) < 0) {
+	if (fstat(fd, &statb) < 0) {
 		fprintf(stderr, _("%s: cannot stat %s: %s\n"),
 			progname, path, strerror(errno));
 		exit(1);
@@ -204,9 +204,9 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
 	int readonly = (flags & LIBXFS_ISREADONLY);
 	int inactive = (flags & LIBXFS_ISINACTIVE);
 	int dangerously = (flags & LIBXFS_DANGEROUSLY);
-	struct stat64	stbuf;
+	struct stat	stbuf;
 
-	if (stat64(path, &stbuf) < 0) {
+	if (stat(path, &stbuf) < 0) {
 		perror(path);
 		return 0;
 	}

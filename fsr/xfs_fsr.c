@@ -174,12 +174,12 @@ aborter(int unused)
  * of that.
  */
 static char *
-find_mountpoint_check(struct stat64 *sb, struct mntent *t)
+find_mountpoint_check(struct stat *sb, struct mntent *t)
 {
-	struct stat64 ms;
+	struct stat ms;
 
 	if (S_ISDIR(sb->st_mode)) {		/* mount point */
-		if (stat64(t->mnt_dir, &ms) < 0)
+		if (stat(t->mnt_dir, &ms) < 0)
 			return NULL;
 		if (sb->st_ino != ms.st_ino)
 			return NULL;
@@ -188,7 +188,7 @@ find_mountpoint_check(struct stat64 *sb, struct mntent *t)
 		if (strcmp(t->mnt_type, MNTTYPE_XFS) != 0)
 			return NULL;
 	} else {				/* device */
-		if (stat64(t->mnt_fsname, &ms) < 0)
+		if (stat(t->mnt_fsname, &ms) < 0)
 			return NULL;
 		if (sb->st_rdev != ms.st_rdev)
 			return NULL;
@@ -198,7 +198,7 @@ find_mountpoint_check(struct stat64 *sb, struct mntent *t)
 		 * Make sure the mountpoint given by mtab is accessible
 		 * before using it.
 		 */
-		if (stat64(t->mnt_dir, &ms) < 0)
+		if (stat(t->mnt_dir, &ms) < 0)
 			return NULL;
 	}
 
@@ -206,7 +206,7 @@ find_mountpoint_check(struct stat64 *sb, struct mntent *t)
 }
 
 static char *
-find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
+find_mountpoint(char *mtab, char *argname, struct stat *sb)
 {
 	struct mntent_cursor cursor;
 	struct mntent *t = NULL;
@@ -230,7 +230,7 @@ find_mountpoint(char *mtab, char *argname, struct stat64 *sb)
 int
 main(int argc, char **argv)
 {
-	struct stat64 sb;
+	struct stat sb;
 	char *argname;
 	int c;
 	char *mntp;
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 		for (; optind < argc; optind++) {
 			argname = argv[optind];
 
-			if (lstat64(argname, &sb) < 0) {
+			if (lstat(argname, &sb) < 0) {
 				fprintf(stderr,
 					_("%s: could not stat: %s: %s\n"),
 					progname, argname, strerror(errno));
@@ -335,9 +335,9 @@ main(int argc, char **argv)
 			}
 
 			if (S_ISLNK(sb.st_mode)) {
-				struct stat64 sb2;
+				struct stat sb2;
 
-				if (stat64(argname, &sb2) == 0 &&
+				if (stat(argname, &sb2) == 0 &&
 				    (S_ISBLK(sb2.st_mode) ||
 				     S_ISCHR(sb2.st_mode)))
 				sb = sb2;
@@ -405,7 +405,7 @@ initallfs(char *mtab)
 	struct mntent *mnt= NULL;
 	int mi;
 	char *cp;
-	struct stat64 sb;
+	struct stat sb;
 
 	/* malloc a number of descriptors, increased later if needed */
 	if (!(fsbase = (fsdesc_t *)malloc(fsbufsize * sizeof(fsdesc_t)))) {
@@ -427,7 +427,7 @@ initallfs(char *mtab)
 		int rw = 0;
 
 		if (strcmp(mnt->mnt_type, MNTTYPE_XFS ) != 0 ||
-		    stat64(mnt->mnt_fsname, &sb) == -1 ||
+		    stat(mnt->mnt_fsname, &sb) == -1 ||
 		    !S_ISBLK(sb.st_mode))
 			continue;
 
@@ -502,7 +502,7 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 	char *ptr;
 	xfs_ino_t startino = 0;
 	fsdesc_t *fsp;
-	struct stat64 sb, sb2;
+	struct stat sb, sb2;
 
 	fsrprintf("xfs_fsr -m %s -t %d -f %s ...\n", mtab, howlong, leftofffile);
 
@@ -510,11 +510,11 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 	fs = fsbase;
 
 	/* where'd we leave off last time? */
-	if (lstat64(leftofffile, &sb) == 0) {
+	if (lstat(leftofffile, &sb) == 0) {
 		if ( (fd = open(leftofffile, O_RDONLY)) == -1 ) {
 			fsrprintf(_("%s: open failed\n"), leftofffile);
 		}
-		else if ( fstat64(fd, &sb2) == 0) {
+		else if ( fstat(fd, &sb2) == 0) {
 			/*
 			 * Verify that lstat & fstat point to the
 			 * same regular file (no links/no quick spoofs)
@@ -1027,7 +1027,7 @@ fsr_setup_attr_fork(
 	xfs_bstat_t	*bstatp)
 {
 #ifdef HAVE_FSETXATTR
-	struct stat64	tstatbuf;
+	struct stat	tstatbuf;
 	int		i;
 	int		diff = 0;
 	int		last_forkoff = 0;
@@ -1054,7 +1054,7 @@ fsr_setup_attr_fork(
 
 	/* attr2 w/ fork offsets */
 
-	if (fstat64(tfd, &tstatbuf) < 0) {
+	if (fstat(tfd, &tstatbuf) < 0) {
 		fsrprintf(_("unable to stat temp file: %s\n"),
 					strerror(errno));
 		return -1;

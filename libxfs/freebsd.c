@@ -27,14 +27,14 @@ int platform_has_uuid = 1;
 extern char *progname;
 
 int
-platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+platform_check_ismounted(char *name, char *block, struct stat *s, int verbose)
 {
-	struct stat64	st;
+	struct stat	st;
         int cnt, i;
         struct statfs *fsinfo;
 
 	if (!s) {
-		if (stat64(block, &st) < 0)
+		if (stat(block, &st) < 0)
 			return 0;
 		s = &st;
 	}
@@ -66,7 +66,7 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 }
 
 int
-platform_check_iswritable(char *name, char *block, struct stat64 *s)
+platform_check_iswritable(char *name, char *block, struct stat *s)
 {
         int cnt, i;
         struct statfs *fsinfo;

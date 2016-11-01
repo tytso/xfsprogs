@@ -44,9 +44,9 @@ fs_device_number(
 	const char	*name,
 	dev_t		*devnum)
 {
-	struct stat64	sbuf;
+	struct stat	sbuf;
 
-	if (stat64(name, &sbuf) < 0)
+	if (stat(name, &sbuf) < 0)
 		return errno;
 	/*
 	 * We want to match st_rdev if the path provided is a device

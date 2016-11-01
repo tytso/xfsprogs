@@ -13005,8 +13005,8 @@ msgstr "%s: trzeba podać pliki do skopiowania\n"
 
 #: .././rtcp/xfs_rtcp.c:84
 #, c-format
-msgid "%s: stat64 of %s failed\n"
-msgstr "%s: stat64 na %s nie powiodło się\n"
+msgid "%s: stat of %s failed\n"
+msgstr "%s: stat na %s nie powiodło się\n"
 
 #: .././rtcp/xfs_rtcp.c:91
 #, c-format
@@ -13015,8 +13015,8 @@ msgstr "%s: ostatni argument nie jest katalogiem\n"
 
 #: .././rtcp/xfs_rtcp.c:138
 #, c-format
-msgid "%s: failed stat64 on %s: %s\n"
-msgstr "%s: nie udało się wykonać stat64 na %s: %s\n"
+msgid "%s: failed stat on %s: %s\n"
+msgstr "%s: nie udało się wykonać stat na %s: %s\n"
 
 #: .././rtcp/xfs_rtcp.c:159
 #, c-format

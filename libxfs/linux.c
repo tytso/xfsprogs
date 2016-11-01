@@ -53,16 +53,16 @@ static int max_block_alignment;
 #define	CHECK_MOUNT_WRITABLE	0x2
 
 static int
-platform_check_mount(char *name, char *block, struct stat64 *s, int flags)
+platform_check_mount(char *name, char *block, struct stat *s, int flags)
 {
 	FILE		*f;
-	struct stat64	st, mst;
+	struct stat	st, mst;
 	struct mntent	*mnt;
 	char		mounts[MAXPATHLEN];
 
 	if (!s) {
 		/* If either fails we are not mounted */
-		if (stat64(block, &st) < 0)
+		if (stat(block, &st) < 0)
 			return 0;
 		if ((st.st_mode & S_IFMT) != S_IFBLK)
 			return 0;
@@ -78,7 +78,7 @@ platform_check_mount(char *name, char *block, struct stat64 *s, int flags)
 		return 1;
 	}
 	while ((mnt = getmntent(f)) != NULL) {
-		if (stat64(mnt->mnt_dir, &mst) < 0)
+		if (stat(mnt->mnt_dir, &mst) < 0)
 			continue;
 		if (mst.st_dev != s->st_rdev)
 			continue;
@@ -109,7 +109,7 @@ _("%s: %s contains a mounted filesystem\n"),
 }
 
 int
-platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
+platform_check_ismounted(char *name, char *block, struct stat *s, int verbose)
 {
 	int flags;
 
@@ -118,7 +118,7 @@ platform_check_ismounted(char *name, char *block, struct stat64 *s, int verbose)
 }
 
 int
-platform_check_iswritable(char *name, char *block, struct stat64 *s)
+platform_check_iswritable(char *name, char *block, struct stat *s)
 {
 	int flags;
 
@@ -146,11 +146,11 @@ platform_set_blocksize(int fd, char *path, dev_t device, int blocksize, int fata
 void
 platform_flush_device(int fd, dev_t device)
 {
-	struct stat64	st;
+	struct stat	st;
 	if (major(device) == RAMDISK_MAJOR)
 		return;
 
-	if (fstat64(fd, &st) < 0)
+	if (fstat(fd, &st) < 0)
 		return;
 
 	if (S_ISREG(st.st_mode))
@@ -162,11 +162,11 @@ platform_flush_device(int fd, dev_t device)
 void
 platform_findsizes(char *path, int fd, long long *sz, int *bsz)
 {
-	struct stat64	st;
+	struct stat	st;
 	__uint64_t	size;
 	int		error;
 
-	if (fstat64(fd, &st) < 0) {
+	if (fstat(fd, &st) < 0) {
 		fprintf(stderr, _("%s: "
 			"cannot stat the device file \"%s\": %s\n"),
 			progname, path, strerror(errno));

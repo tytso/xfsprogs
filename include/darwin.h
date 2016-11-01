@@ -142,8 +142,6 @@ typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
 typedef __u32		xfs_nlink_t;
 
-#define stat64		stat
-#define fstat64		fstat
 #define lseek64		lseek
 #define pread64		pread
 #define pwrite64	pwrite
@@ -223,8 +221,7 @@ static inline int timer_gettime (timer_t timerid, struct itimerspec *value)
 #  include <sys/param.h>
 #include <sys/ucred.h>
 #include <errno.h>
-#define statvfs64 statfs
-#define lstat64 lstat
+#define statvfs64	statfs
 #define		_PATH_MOUNTED   "/etc/mtab"
 
 struct mntent

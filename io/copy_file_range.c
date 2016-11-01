@@ -60,10 +60,10 @@ copy_file_range(int fd, loff_t *src, loff_t *dst, size_t len)
 static off64_t
 copy_src_filesize(int fd)
 {
-	struct stat64 st;
+	struct stat st;
 
-	if (fstat64(fd, &st) < 0) {
-		perror("fstat64");
+	if (fstat(fd, &st) < 0) {
+		perror("fstat");
 		return -1;
 	};
 	return st.st_size;
