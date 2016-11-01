@@ -5893,8 +5893,8 @@ msgstr "%s: lesen fehlgeschlagen: %s\n"
 
 #: .././libxfs/rdwr.c:502
 #, c-format
-msgid "%s: pwrite64 failed: %s\n"
-msgstr "%s: pwrite64 fehlgeschlagen: %s\n"
+msgid "%s: pwrite failed: %s\n"
+msgstr "%s: pwrite fehlgeschlagen: %s\n"
 
 #: .././libxfs/rdwr.c:509
 #, c-format

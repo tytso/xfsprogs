@@ -214,7 +214,7 @@ do_pread(
 	ssize_t		buffer_size)
 {
 	if (!vectors)
-		return pread64(fd, buffer, min(count, buffer_size), offset);
+		return pread(fd, buffer, min(count, buffer_size), offset);
 
 	return do_preadv(fd, offset, count, buffer_size);
 }
@@ -254,7 +254,7 @@ read_random(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pread64");
+			perror("pread");
 			return -1;
 		}
 		ops++;
@@ -296,7 +296,7 @@ read_backward(
 		if (bytes == 0)
 			return ops;
 		if (bytes < 0) {
-			perror("pread64");
+			perror("pread");
 			return -1;
 		}
 		ops++;
@@ -314,7 +314,7 @@ read_backward(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pread64");
+			perror("pread");
 			return -1;
 		}
 		ops++;
@@ -345,7 +345,7 @@ read_forward(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pread64");
+			perror("pread");
 			return -1;
 		}
 		ops++;

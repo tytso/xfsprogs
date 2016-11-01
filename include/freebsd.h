@@ -34,8 +34,6 @@
 #define __LITTLE_ENDIAN	LITTLE_ENDIAN
 
 /* FreeBSD file API is 64-bit aware */
-#define pwrite64	pwrite
-#define pread64		pread
 #define fdatasync	fsync
 #define memalign(a,sz)	valloc(sz)
 

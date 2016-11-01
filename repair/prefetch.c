@@ -565,7 +565,7 @@ pf_batch_read(
 		/*
 		 * now read the data and put into the xfs_but_t's
 		 */
-		len = pread64(mp_fd, buf, (int)(last_off - first_off), first_off);
+		len = pread(mp_fd, buf, (int)(last_off - first_off), first_off);
 
 		/*
 		 * Check the last buffer on the list to see if we need to

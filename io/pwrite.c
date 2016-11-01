@@ -101,7 +101,7 @@ do_pwrite(
 	ssize_t		buffer_size)
 {
 	if (!vectors)
-		return pwrite64(fd, buffer, min(count, buffer_size), offset);
+		return pwrite(fd, buffer, min(count, buffer_size), offset);
 
 	return do_pwritev(fd, offset, count, buffer_size);
 }
@@ -137,7 +137,7 @@ write_random(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pwrite64");
+			perror("pwrite");
 			return -1;
 		}
 		ops++;
@@ -175,7 +175,7 @@ write_backward(
 		if (bytes == 0)
 			return ops;
 		if (bytes < 0) {
-			perror("pwrite64");
+			perror("pwrite");
 			return -1;
 		}
 		ops++;
@@ -193,7 +193,7 @@ write_backward(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pwrite64");
+			perror("pwrite");
 			return -1;
 		}
 		ops++;
@@ -228,7 +228,7 @@ write_buffer(
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("pwrite64");
+			perror("pwrite");
 			return -1;
 		}
 		ops++;

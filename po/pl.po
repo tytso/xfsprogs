@@ -5940,13 +5940,13 @@ msgstr "%s: błąd - odczytano tylko %d z %d bajtów\n"
 
 #: .././libxfs/rdwr.c:878
 #, c-format
-msgid "%s: pwrite64 failed: %s\n"
-msgstr "%s: pwrite64 nie powiodło się: %s\n"
+msgid "%s: pwrite failed: %s\n"
+msgstr "%s: pwrite nie powiodło się: %s\n"
 
 #: .././libxfs/rdwr.c:884
 #, c-format
-msgid "%s: error - pwrite64 only %d of %d bytes\n"
-msgstr "%s: błąd - wykonano pwrite64 tylko %d z %d bajtów\n"
+msgid "%s: error - pwrite only %d of %d bytes\n"
+msgstr "%s: błąd - wykonano pwrite tylko %d z %d bajtów\n"
 
 #: .././libxfs/rdwr.c:920
 #, c-format

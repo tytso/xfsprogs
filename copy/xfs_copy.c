@@ -862,7 +862,7 @@ main(int argc, char **argv)
 
 			off = mp->m_sb.sb_dblocks * source_blocksize;
 			off -= sizeof(lb);
-			if (pwrite64(target[i].fd, lb, sizeof(lb), off) < 0)  {
+			if (pwrite(target[i].fd, lb, sizeof(lb), off) < 0)  {
 				do_log(_("%s:  failed to write last block\n"),
 					progname);
 				do_log(_("\tIs target \"%s\" too small?\n"),
