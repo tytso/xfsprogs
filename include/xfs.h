@@ -48,6 +48,11 @@
 #endif
 
 /*
+ * make sure that any user of the xfs headers has a 64bit off_t type
+ */
+extern int xfs_assert_largefile[sizeof(off_t)-8];
+
+/*
  * sparse kernel source annotations
  */
 #ifndef __user
