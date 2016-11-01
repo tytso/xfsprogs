@@ -124,7 +124,7 @@ perform_restore(
 	if (is_target_file)  {
 		/* ensure regular files are correctly sized */
 
-		if (ftruncate64(dst_fd, sb.sb_dblocks * sb.sb_blocksize))
+		if (ftruncate(dst_fd, sb.sb_dblocks * sb.sb_blocksize))
 			fatal("cannot set filesystem image size: %s\n",
 				strerror(errno));
 	} else  {

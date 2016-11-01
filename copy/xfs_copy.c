@@ -834,7 +834,7 @@ main(int argc, char **argv)
 		if (write_last_block)  {
 			/* ensure regular files are correctly sized */
 
-			if (ftruncate64(target[i].fd, mp->m_sb.sb_dblocks *
+			if (ftruncate(target[i].fd, mp->m_sb.sb_dblocks *
 						source_blocksize))  {
 				do_log(_("%s:  cannot grow data section.\n"),
 					progname);

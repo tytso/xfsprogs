@@ -1451,7 +1451,7 @@ packfile(char *fname, char *tname, int fd,
 			}
 		}
 	}
-	if (ftruncate64(tfd, statp->bs_size) < 0) {
+	if (ftruncate(tfd, statp->bs_size) < 0) {
 		fsrprintf(_("could not truncate tmpfile: %s : %s\n"),
 				fname, strerror(errno));
 		goto out;

@@ -2871,7 +2871,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	 * code will succeed.
 	 */
 	if (xi.disfile && xi.dsize * xi.dbsize < dblocks * blocksize) {
-		if (ftruncate64(xi.dfd, dblocks * blocksize) < 0) {
+		if (ftruncate(xi.dfd, dblocks * blocksize) < 0) {
 			fprintf(stderr,
 				_("%s: Growing the data section failed\n"),
 				progname);

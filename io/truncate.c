@@ -38,7 +38,7 @@ truncate_f(
 		return 0;
 	}
 
-	if (ftruncate64(file->fd, offset) < 0) {
+	if (ftruncate(file->fd, offset) < 0) {
 		perror("ftruncate");
 		return 0;
 	}

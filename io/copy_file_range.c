@@ -72,9 +72,9 @@ copy_src_filesize(int fd)
 static int
 copy_dst_truncate(void)
 {
-	int ret = ftruncate64(file->fd, 0);
+	int ret = ftruncate(file->fd, 0);
 	if (ret < 0)
-		perror("ftruncate64");
+		perror("ftruncate");
 	return ret;
 }
 

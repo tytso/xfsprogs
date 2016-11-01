@@ -145,7 +145,6 @@ typedef __u32		xfs_nlink_t;
 #define lseek64		lseek
 #define pread64		pread
 #define pwrite64	pwrite
-#define ftruncate64	ftruncate
 #define fdatasync	fsync
 #define memalign(a,sz)	valloc(sz)
 
