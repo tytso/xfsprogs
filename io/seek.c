@@ -147,7 +147,7 @@ seek_f(
 	 * decide if we want to display that type of entry.
 	 */
 	if (flag & SEEK_HFLAG) {
-		offset = lseek64(file->fd, start, SEEK_HOLE);
+		offset = lseek(file->fd, start, SEEK_HOLE);
 		if ((start == offset) || !(flag & SEEK_DFLAG)) {
 			/*
 			 * this offset is a hole or are only displaying holes.
@@ -162,7 +162,7 @@ seek_f(
 
 	/* The offset is not a hole, or we are looking just for data */
 	current = DATA;
-	offset = lseek64(file->fd, start, SEEK_DATA);
+	offset = lseek(file->fd, start, SEEK_DATA);
 
 found_hole:
 	/*
@@ -202,7 +202,7 @@ found_hole:
 
 		current ^= 1;		/* alternate between data and hole */
 		start = offset;
-		offset = lseek64(file->fd, start, seekinfo[current].seektype);
+		offset = lseek(file->fd, start, seekinfo[current].seektype);
 	}
 	return 0;
 }

@@ -142,7 +142,6 @@ typedef u_int32_t	xfs_dev_t;
 typedef int64_t		xfs_daddr_t;
 typedef __u32		xfs_nlink_t;
 
-#define lseek64		lseek
 #define pread64		pread
 #define pwrite64	pwrite
 #define fdatasync	fsync

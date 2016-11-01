@@ -45,8 +45,8 @@ msgid "write error"
 msgstr "Schreibfehler"
 
 #: .././copy/xfs_copy.c:146
-msgid "lseek64 error"
-msgstr "lseek64-Fehler"
+msgid "lseek error"
+msgstr "lseek-Fehler"
 
 #: .././copy/xfs_copy.c:147
 #, c-format
@@ -70,8 +70,8 @@ msgstr "%s: Schreibfehler auf Ziel %d »%s« bei Versatz %lld\n"
 
 #: .././copy/xfs_copy.c:260
 #, c-format
-msgid "%s:  lseek64 error on target %d \"%s\" at offset %lld\n"
-msgstr "%s: lseek64-Fehler auf Ziel %d »%s« bei Versatz %lld\n"
+msgid "%s:  lseek error on target %d \"%s\" at offset %lld\n"
+msgstr "%s: lseek-Fehler auf Ziel %d »%s« bei Versatz %lld\n"
 
 #: .././copy/xfs_copy.c:266
 #, c-format
@@ -104,8 +104,8 @@ msgstr "Aufruf: %s [-bd] [-L Protokolldatei] Quelle Ziel [Ziel ...]\n"
 
 #: .././copy/xfs_copy.c:386
 #, c-format
-msgid "%s:  lseek64 failure at offset %lld\n"
-msgstr "%s:  lseek64-Fehlschlag bei Versatz %lld\n"
+msgid "%s:  lseek failure at offset %lld\n"
+msgstr "%s:  lseek-Fehlschlag bei Versatz %lld\n"
 
 #: .././copy/xfs_copy.c:401
 #, c-format
@@ -6472,8 +6472,8 @@ msgstr "DQUOT: Magische 0x%hx Markierungen 0%ho\n"
 
 #: .././logprint/log_misc.c:821
 #, c-format
-msgid "%s: lseek64 to %lld failed: %s\n"
-msgstr "%s: lseek64 auf %lld fehlgeschlagen: %s\n"
+msgid "%s: lseek to %lld failed: %s\n"
+msgstr "%s: lseek auf %lld fehlgeschlagen: %s\n"
 
 #: .././logprint/log_misc.c:864
 #, c-format

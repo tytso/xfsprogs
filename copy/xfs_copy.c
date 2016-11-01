@@ -162,7 +162,7 @@ check_errors(void)
 			if (target[i].err_type == 0)
 				do_log(_("write error"));
 			else
-				do_log(_("lseek64 error"));
+				do_log(_("lseek error"));
 			do_log(_(" at offset %lld\n"), target[i].position);
 		}
 	}
@@ -192,7 +192,7 @@ do_write(
 		buf = &w_buf;
 
 	if (target[args->id].position != buf->position)  {
-		if (lseek64(args->fd, buf->position, SEEK_SET) < 0)  {
+		if (lseek(args->fd, buf->position, SEEK_SET) < 0)  {
 			error = target[args->id].err_type = 1;
 		} else  {
 			target[args->id].position = buf->position;
@@ -263,7 +263,7 @@ handler(int sig)
 						target[i].position);
 				} else  {
 					do_warn(
-		_("%s:  lseek64 error on target %d \"%s\" at offset %lld\n"),
+		_("%s:  lseek error on target %d \"%s\" at offset %lld\n"),
 						progname, i, target[i].name,
 						target[i].position);
 				}
@@ -388,9 +388,9 @@ read_wbuf(int fd, wbuf *buf, xfs_mount_t *mp)
 	}
 
 	if (source_position != buf->position)  {
-		lres = lseek64(fd, buf->position, SEEK_SET);
+		lres = lseek(fd, buf->position, SEEK_SET);
 		if (lres < 0LL)  {
-			do_warn(_("%s:  lseek64 failure at offset %lld\n"),
+			do_warn(_("%s:  lseek failure at offset %lld\n"),
 				progname, source_position);
 			die_perror();
 		}

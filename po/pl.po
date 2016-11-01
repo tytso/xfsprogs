@@ -44,8 +44,8 @@ msgid "write error"
 msgstr "błąd zapisu"
 
 #: .././copy/xfs_copy.c:146
-msgid "lseek64 error"
-msgstr "błąd lseek64"
+msgid "lseek error"
+msgstr "błąd lseek"
 
 #: .././copy/xfs_copy.c:147
 #, c-format
@@ -69,8 +69,8 @@ msgstr "%s: błąd zapisu przy celu %d \"%s\" pod offsetem %lld\n"
 
 #: .././copy/xfs_copy.c:241
 #, c-format
-msgid "%s:  lseek64 error on target %d \"%s\" at offset %lld\n"
-msgstr "%s: błąd lseek64 przy celu %d \"%s\" pod offsetem %lld\n"
+msgid "%s:  lseek error on target %d \"%s\" at offset %lld\n"
+msgstr "%s: błąd lseek przy celu %d \"%s\" pod offsetem %lld\n"
 
 #: .././copy/xfs_copy.c:247
 #, c-format
@@ -103,8 +103,8 @@ msgstr "Składnia: %s [-bdV] [-L plik_logu] źródło cel [cel ...]\n"
 
 #: .././copy/xfs_copy.c:367
 #, c-format
-msgid "%s:  lseek64 failure at offset %lld\n"
-msgstr "%s: niepowodzenie lseek64 pod offsetem %lld\n"
+msgid "%s:  lseek failure at offset %lld\n"
+msgstr "%s: niepowodzenie lseek pod offsetem %lld\n"
 
 #: .././copy/xfs_copy.c:382
 #, c-format
@@ -6394,8 +6394,8 @@ msgstr ""
 
 #: .././logprint/log_misc.c:863
 #, c-format
-msgid "%s: lseek64 to %lld failed: %s\n"
-msgstr "%s: lseek64 na %lld nie powiodło się: %s\n"
+msgid "%s: lseek to %lld failed: %s\n"
+msgstr "%s: lseek na %lld nie powiodło się: %s\n"
 
 #: .././logprint/log_misc.c:909
 #, c-format

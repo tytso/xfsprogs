@@ -751,8 +751,8 @@ xlog_print_lseek(struct xlog *log, int fd, xfs_daddr_t blkno, int whence)
 		offset = BBTOOFF64(blkno+log->l_logBBstart);
 	else
 		offset = BBTOOFF64(blkno);
-	if (lseek64(fd, offset, whence) < 0) {
-		fprintf(stderr, _("%s: lseek64 to %lld failed: %s\n"),
+	if (lseek(fd, offset, whence) < 0) {
+		fprintf(stderr, _("%s: lseek to %lld failed: %s\n"),
 			progname, (long long)offset, strerror(errno));
 		exit(1);
 	}

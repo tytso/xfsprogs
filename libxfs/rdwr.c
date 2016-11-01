@@ -88,7 +88,7 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 	fd = libxfs_device_to_fd(btp->dev);
 	start_offset = LIBXFS_BBTOOFF64(start);
 
-	if ((lseek64(fd, start_offset, SEEK_SET)) < 0) {
+	if ((lseek(fd, start_offset, SEEK_SET)) < 0) {
 		fprintf(stderr, _("%s: %s seek to offset %llu failed: %s\n"),
 			progname, __FUNCTION__,
 			(unsigned long long)start_offset, strerror(errno));

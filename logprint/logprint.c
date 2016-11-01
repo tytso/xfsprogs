@@ -80,7 +80,7 @@ logstat(xfs_mount_t *mp)
 			x.dname, strerror(errno));
 		exit(1);
 	}
-	lseek64(fd, 0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 	if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
 		fprintf(stderr, _("    read of XFS superblock failed\n"));
 		exit(1);

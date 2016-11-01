@@ -1318,7 +1318,7 @@ packfile(char *fname, char *tname, int fd,
 				fsrprintf(_("could not trunc tmp %s\n"),
 					   tname);
 			}
-			if (lseek64(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
+			if (lseek(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
 				fsrprintf(_("could not lseek in tmpfile: %s : %s\n"),
 				   tname, strerror(errno));
 				goto out;
@@ -1338,7 +1338,7 @@ packfile(char *fname, char *tname, int fd,
 					" %s\n"), tname);
 				goto out;
 			}
-			if (lseek64(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
+			if (lseek(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
 				fsrprintf(_("could not lseek in tmpfile: %s : %s\n"),
 				   tname, strerror(errno));
 				goto out;
@@ -1346,7 +1346,7 @@ packfile(char *fname, char *tname, int fd,
 		}
 	} /* end of space allocation loop */
 
-	if (lseek64(tfd, 0, SEEK_SET)) {
+	if (lseek(tfd, 0, SEEK_SET)) {
 		fsrprintf(_("Couldn't rewind on temporary file\n"));
 		goto out;
 	}
@@ -1366,12 +1366,12 @@ packfile(char *fname, char *tname, int fd,
 	for (extent = 0; extent < nextents; extent++) {
 		pos = outmap[extent].bmv_offset;
 		if (outmap[extent].bmv_block == -1) {
-			if (lseek64(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
+			if (lseek(tfd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
 				fsrprintf(_("could not lseek in tmpfile: %s : %s\n"),
 				   tname, strerror(errno));
 				goto out;
 			}
-			if (lseek64(fd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
+			if (lseek(fd, outmap[extent].bmv_length, SEEK_CUR) < 0) {
 				fsrprintf(_("could not lseek in file: %s : %s\n"),
 				   fname, strerror(errno));
 				goto out;

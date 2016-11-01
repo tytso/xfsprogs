@@ -138,7 +138,7 @@ __find_secondary_sb(
 		/*
 		 * read disk 1 MByte at a time.
 		 */
-		if (lseek64(x.dfd, off, SEEK_SET) != off)  {
+		if (lseek(x.dfd, off, SEEK_SET) != off)  {
 			done = 1;
 		}
 
@@ -512,7 +512,7 @@ write_primary_sb(xfs_sb_t *sbp, int size)
 	}
 	memset(buf, 0, size);
 
-	if (lseek64(x.dfd, 0LL, SEEK_SET) != 0LL) {
+	if (lseek(x.dfd, 0LL, SEEK_SET) != 0LL) {
 		free(buf);
 		do_error(_("couldn't seek to offset 0 in filesystem\n"));
 	}
@@ -551,7 +551,7 @@ get_sb(xfs_sb_t *sbp, xfs_off_t off, int size, xfs_agnumber_t agno)
 
 	/* try and read it first */
 
-	if (lseek64(x.dfd, off, SEEK_SET) != off)  {
+	if (lseek(x.dfd, off, SEEK_SET) != off)  {
 		do_warn(
 	_("error reading superblock %u -- seek to offset %" PRId64 " failed\n"),
 			agno, off);

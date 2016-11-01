@@ -233,7 +233,7 @@ read_random(
 	int		ops = 0;
 
 	srandom(seed);
-	end = lseek64(fd, 0, SEEK_END);
+	end = lseek(fd, 0, SEEK_END);
 	offset = (eof || offset > end) ? end : offset;
 	if ((bytes = (offset % buffersize)))
 		offset -= bytes;
@@ -279,8 +279,8 @@ read_backward(
 	long long	cnt = *count;
 	int		ops = 0;
 
-	end = lseek64(fd, 0, SEEK_END);
-	off = eof ? end : min(end, lseek64(fd, off, SEEK_SET));
+	end = lseek(fd, 0, SEEK_END);
+	off = eof ? end : min(end, lseek(fd, off, SEEK_SET));
 	if ((end = off - cnt) < 0) {
 		cnt += end;	/* subtraction, end is negative */
 		end = 0;
