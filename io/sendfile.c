@@ -56,11 +56,11 @@ send_buffer(
 
 	*total = 0;
 	while (count > 0) {
-		bytes = sendfile64(file->fd, fd, &off, bytes_remaining);
+		bytes = sendfile(file->fd, fd, &off, bytes_remaining);
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
-			perror("sendfile64");
+			perror("sendfile");
 			return -1;
 		}
 		ops++;
