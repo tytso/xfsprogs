@@ -890,6 +890,33 @@ verbose output will be printed.
 .IP
 .B [NOTE: Not currently operational on Linux.]
 .PD
+.TP
+.BI "set_encpolicy [ \-c " mode " ] [ \-n " mode " ] [ \-f " flags " ] [ \-v " version " ] [ " keydesc " ]
+On filesystems that support encryption, assign an encryption policy to the
+current file.
+.I keydesc
+is a 16-byte hex string which identifies the encryption key to use.
+If not specified, a "default" key descriptor of all 0's will be used.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.BI \-c " mode
+contents encryption mode (e.g. AES-256-XTS)
+.TP
+.BI \-n " mode
+filenames encryption mode (e.g. AES-256-CTS)
+.TP
+.BI \-f " flags
+policy flags (numeric)
+.TP
+.BI \-v " version
+version of policy structure (numeric)
+.RE
+.PD
+.TP
+.BR get_encpolicy
+On filesystems that support encryption, display the encryption policy of the
+current file.
 
 .SH SEE ALSO
 .BR mkfs.xfs (8),
