@@ -1052,8 +1052,12 @@ _("%s rmap btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			}
 
 			/* Look for impossible owners. */
-			if (!(owner > 0 || (owner > XFS_RMAP_OWN_MIN &&
-					    owner <= XFS_RMAP_OWN_FS)))
+			if (!((owner > XFS_RMAP_OWN_MIN &&
+			       owner <= XFS_RMAP_OWN_FS) ||
+			      (XFS_INO_TO_AGNO(mp, owner) < mp->m_sb.sb_agcount &&
+			       XFS_AGINO_TO_AGBNO(mp,
+					XFS_INO_TO_AGINO(mp, owner)) <
+					mp->m_sb.sb_agblocks)))
 				do_warn(
 	_("invalid owner in rmap btree record %d (%"PRId64" %u) block %u/%u\n"),
 						i, owner, len, agno, bno);
