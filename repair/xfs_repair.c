@@ -696,7 +696,7 @@ main(int argc, char **argv)
 		struct xfs_fsop_geom_v1 geom = { 0 };
 
 		if (ioctl(fd, XFS_IOC_FSGEOMETRY_V1, &geom) < 0) {
-			do_warn(_("Cannot get host filesystem geometry.\n"
+			do_log(_("Cannot get host filesystem geometry.\n"
 		"Repair may fail if there is a sector size mismatch between\n"
 		"the image and the host filesystem.\n"));
 			geom.sectsize = BBSIZE;
