@@ -593,7 +593,8 @@ process_leaf_attr_block(
 	stop = xfs_attr3_leaf_hdr_size(leaf);
 
 	/* does the count look sorta valid? */
-	if (leafhdr.count * sizeof(xfs_attr_leaf_entry_t) + stop >
+	if (!leafhdr.count ||
+	    leafhdr.count * sizeof(xfs_attr_leaf_entry_t) + stop >
 						mp->m_sb.sb_blocksize) {
 		do_warn(
 	_("bad attribute count %d in attr block %u, inode %" PRIu64 "\n"),
