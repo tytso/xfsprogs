@@ -1579,6 +1579,7 @@ build_rmap_tree(
 	struct xfs_rmap_irec	highest_key = {0};
 	struct xfs_rmap_irec	hi_key = {0};
 	struct bt_stat_level	*lptr;
+	int			numrecs;
 	int			level = btree_curs->num_levels;
 	int			error;
 
@@ -1622,7 +1623,10 @@ _("Insufficient memory to construct reverse-map cursor."));
 	rm_rec = pop_slab_cursor(rmap_cur);
 	lptr = &btree_curs->level[0];
 
-	for (i = 0; i < lptr->num_blocks && rm_rec != NULL; i++)  {
+	for (i = 0; i < lptr->num_blocks; i++)  {
+		numrecs = lptr->num_recs_pb + (lptr->modulo > 0);
+		ASSERT(rm_rec != NULL || numrecs == 0);
+
 		/*
 		 * block initialization, lay in block header
 		 */
@@ -1634,8 +1638,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 					XFS_BTREE_CRC_BLOCKS);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
-		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
-							(lptr->modulo > 0));
+		bt_hdr->bb_numrecs = cpu_to_be16(numrecs);
 
 		if (lptr->modulo > 0)
 			lptr->modulo--;
@@ -1883,6 +1886,7 @@ build_refcount_tree(
 	struct xfs_slab_cursor	*refc_cur;
 	struct xfs_refcount_rec	*bt_rec;
 	struct bt_stat_level	*lptr;
+	int			numrecs;
 	int			level = btree_curs->num_levels;
 	int			error;
 
@@ -1925,7 +1929,10 @@ _("Insufficient memory to construct refcount cursor."));
 	refc_rec = pop_slab_cursor(refc_cur);
 	lptr = &btree_curs->level[0];
 
-	for (i = 0; i < lptr->num_blocks && refc_rec != NULL; i++)  {
+	for (i = 0; i < lptr->num_blocks; i++)  {
+		numrecs = lptr->num_recs_pb + (lptr->modulo > 0);
+		ASSERT(refc_rec != NULL || numrecs == 0);
+
 		/*
 		 * block initialization, lay in block header
 		 */
@@ -1937,8 +1944,7 @@ _("Insufficient memory to construct refcount cursor."));
 					XFS_BTREE_CRC_BLOCKS);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
-		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
-							(lptr->modulo > 0));
+		bt_hdr->bb_numrecs = cpu_to_be16(numrecs);
 
 		if (lptr->modulo > 0)
 			lptr->modulo--;
