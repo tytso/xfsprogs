@@ -54,7 +54,7 @@ extern void *bag_item(struct xfs_bag *, size_t);
 
 #define foreach_bag_ptr_reverse(bag, idx, ptr) \
 	for ((idx) = bag_count(bag) - 1, (ptr) = bag_item((bag), (idx)); \
-	     (idx) >= 0 && (ptr) != NULL; \
+	     (ptr) != NULL; \
 	     (idx)--, (ptr) = bag_item((bag), (idx)))
 
 #endif /* SLAB_H_ */

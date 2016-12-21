@@ -790,7 +790,7 @@ compute_refcounts(
 		mark_inode_rl(mp, stack_top);
 
 		/* Set nbno to the bno of the next refcount change */
-		if (n < slab_count(rmaps))
+		if (n < slab_count(rmaps) && array_cur)
 			nbno = array_cur->rm_startblock;
 		else
 			nbno = NULLAGBLOCK;

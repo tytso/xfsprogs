@@ -1925,7 +1925,7 @@ _("Insufficient memory to construct refcount cursor."));
 	refc_rec = pop_slab_cursor(refc_cur);
 	lptr = &btree_curs->level[0];
 
-	for (i = 0; i < lptr->num_blocks; i++)  {
+	for (i = 0; i < lptr->num_blocks && refc_rec != NULL; i++)  {
 		/*
 		 * block initialization, lay in block header
 		 */
