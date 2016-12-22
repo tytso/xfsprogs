@@ -1,3 +1,12 @@
+xfsprogs-4.9-rc1 (22 Dec 2016)
+	- add reflink and dedupe support (Darrick Wong)
+	- Convert from off64_t to off_t (Felix Janda)
+	- xfs_io: add command line option to start an idle thread (Amir Goldstein)
+	- xfs_repair: junk leaf attribute if count == 0 (Eric Sandeen)
+	- xfs_quota: handle wrapped id from GETNEXTQUOTA (Eric Sandeen)
+	- xfs_repair: fix some potential null pointer deferences (Darrick Wong)
+	- libxfs_apply: filtering fixes (Dave Chinner)
+
 xfsprogs-4.8-0 (17 Oct 2016)
 	- no changes from v4.8.0-rc3
 
