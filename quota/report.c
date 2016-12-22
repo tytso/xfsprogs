@@ -98,12 +98,12 @@ dump_file(
 		return 0;
 	}
 
-	if (oid)
+	if (oid) {
 		*oid = d.d_id;
-
-	/* Did kernelspace wrap? */
-	if (*oid < id)
-		return 0;
+		/* Did kernelspace wrap? */
+		if (*oid < id)
+			return 0;
+	}
 
 	if (!d.d_blk_softlimit && !d.d_blk_hardlimit &&
 	    !d.d_ino_softlimit && !d.d_ino_hardlimit &&
@@ -361,12 +361,12 @@ report_mount(
 		return 0;
 	}
 
-	if (oid)
+	if (oid) {
 		*oid = d.d_id;
-
-	/* Did kernelspace wrap? */
-	if (*oid < id)
-		return 0;
+		/* Did kernelspace wrap? */
+		if (* oid < id)
+			return 0;
+	}
 
 	if (flags & TERSE_FLAG) {
 		count = 0;
