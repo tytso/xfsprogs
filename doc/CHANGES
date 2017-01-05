@@ -1,4 +1,7 @@
-xfsprogs-4.9-rc1 (22 Dec 2016)
+xfsprogs-4.9.0 (5 Jan 2017)
+	- no changes from v4.9.0-rc1
+
+xfsprogs-4.9.0-rc1 (22 Dec 2016)
 	- add reflink and dedupe support (Darrick Wong)
 	- Convert from off64_t to off_t (Felix Janda)
 	- xfs_io: add command line option to start an idle thread (Amir Goldstein)
@@ -7,17 +10,17 @@ xfsprogs-4.9-rc1 (22 Dec 2016)
 	- xfs_repair: fix some potential null pointer deferences (Darrick Wong)
 	- libxfs_apply: filtering fixes (Dave Chinner)
 
-xfsprogs-4.8-0 (17 Oct 2016)
+xfsprogs-4.8.0 (17 Oct 2016)
 	- no changes from v4.8.0-rc3
 
-xfsprogs-4.8-0-rc3 (3 Oct 2016)
+xfsprogs-4.8.0-rc3 (3 Oct 2016)
 	- xfs_io: clean up inode command (Eric Sandeen)
 	- xfs_repair: fix phase 5 btree size overestimation (Darrick Wong)
 	- xfs_repair: fix phase 5 AGFL rmap update (Darrick Wong)
 	- libxfs: libxfs_iget() cleanup (Eric Sandeen)
 	- libxcmd: fix count of XFS filesystems in path table (Eryu Guan)
 
-xfsprogs-4.8-0-rc2 (23 Sep 2016)
+xfsprogs-4.8.0-rc2 (23 Sep 2016)
 	- xfs_copy: uuid handling fixes (Eric Sandeen)
 	- xfs_repair: directory rebuild segfault fix (Eric Sandeen)
 	- xfs_repair: report log dirtiness correctly (Eric Sandeen)
@@ -27,7 +30,7 @@ xfsprogs-4.8-0-rc2 (23 Sep 2016)
 	- xfs_io: allow project quota operations on non-XFS (Eric Sandeen)
 	- mkfs.xfs: man page calrification for ftype defaults (Eric Sandeen)
 
-xfsprogs-4.8-0-rc1 (9 Sep 2016)
+xfsprogs-4.8.0-rc1 (9 Sep 2016)
 	- change contact emails to linux-xfs@vger.kernel.org
 	- libxfs: kernel sync up to 4.8-rc1
 	- Initial reverse mapping support (Darrick Wong)
