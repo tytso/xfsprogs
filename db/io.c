@@ -504,7 +504,7 @@ write_cur(void)
 	/* If we didn't write the crc automatically, re-check inode validity */
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
 	    skip_crc && iocur_top->ino_buf) {
-		iocur_top->ino_crc_ok = xfs_verify_cksum(iocur_top->data,
+		iocur_top->ino_crc_ok = libxfs_verify_cksum(iocur_top->data,
 						mp->m_sb.sb_inodesize,
 						XFS_DINODE_CRC_OFF);
 	}
