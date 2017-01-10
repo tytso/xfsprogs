@@ -2146,12 +2146,14 @@ xfs_dir2_node_replace(
 	state = xfs_da_state_alloc();
 	state->args = args;
 	state->mp = args->dp->i_mount;
+
 	/*
 	 * We have to save new inode number and ftype since
 	 * xfs_da3_node_lookup_int() is going to overwrite them
 	 */
 	inum = args->inumber;
 	ftype = args->filetype;
+
 	/*
 	 * Lookup the entry to change in the btree.
 	 */
