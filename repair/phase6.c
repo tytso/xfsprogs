@@ -434,12 +434,10 @@ bmap_next_offset(
 	int		whichfork)		/* data or attr fork */
 {
 	xfs_fileoff_t	bno;			/* current block */
-	int		eof;			/* hit end of file */
 	int		error;			/* error return value */
 	xfs_bmbt_irec_t got;			/* current extent value */
 	xfs_ifork_t	*ifp;			/* inode fork pointer */
-	xfs_extnum_t	lastx;			/* last extent used */
-	xfs_bmbt_irec_t prev;			/* previous extent value */
+	xfs_extnum_t	idx;			/* last extent used */
 
 	if (XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_BTREE &&
 	    XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_EXTENTS &&
@@ -454,9 +452,7 @@ bmap_next_offset(
 	    (error = -libxfs_iread_extents(tp, ip, whichfork)))
 		return error;
 	bno = *bnop + 1;
-	libxfs_bmap_search_extents(ip, bno, whichfork, &eof, &lastx,
-				   &got, &prev);
-	if (eof)
+	if (!libxfs_iext_lookup_extent(ip, ifp, bno, &idx, &got))
 		*bnop = NULLFILEOFF;
 	else
 		*bnop = got.br_startoff < bno ? bno : got.br_startoff;

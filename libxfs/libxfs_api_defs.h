@@ -67,6 +67,7 @@
 #define xfs_alloc_read_agf		libxfs_alloc_read_agf
 #define xfs_bmap_last_offset		libxfs_bmap_last_offset
 #define xfs_bmap_search_extents		libxfs_bmap_search_extents
+#define xfs_iext_lookup_extent		libxfs_iext_lookup_extent
 #define xfs_bmapi_write			libxfs_bmapi_write
 #define xfs_bmapi_read			libxfs_bmapi_read
 #define xfs_bunmapi			libxfs_bunmapi
