@@ -536,7 +536,7 @@ static inline bool xfs_sb_version_hassparseinodes(struct xfs_sb *sbp)
  * user-visible UUID to be changed on V5 filesystems which have a
  * filesystem UUID stamped into every piece of metadata.
  */
-static inline int xfs_sb_version_hasmetauuid(xfs_sb_t *sbp)
+static inline bool xfs_sb_version_hasmetauuid(struct xfs_sb *sbp)
 {
 	return (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_5) &&
 		(sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_META_UUID);
