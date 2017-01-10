@@ -73,8 +73,6 @@ void	xfs_inode_to_disk(struct xfs_inode *ip, struct xfs_dinode *to,
 void	xfs_inode_from_disk(struct xfs_inode *ip, struct xfs_dinode *from);
 void	xfs_log_dinode_to_disk(struct xfs_log_dinode *from,
 			       struct xfs_dinode *to);
-bool	xfs_dinode_verify(struct xfs_mount *mp, xfs_ino_t ino,
-			  struct xfs_dinode *dip);
 
 bool	xfs_dinode_good_version(struct xfs_mount *mp, __u8 version);
 

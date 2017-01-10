@@ -378,7 +378,7 @@ xfs_log_dinode_to_disk(
 	}
 }
 
-bool
+static bool
 xfs_dinode_verify(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
