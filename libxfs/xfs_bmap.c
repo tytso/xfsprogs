@@ -4897,6 +4897,8 @@ xfs_bmap_del_extent_delay(
 	error = xfs_trans_reserve_quota_nblks(NULL, ip,
 			-((long)del->br_blockcount), 0,
 			isrt ? XFS_QMOPT_RES_RTBLKS : XFS_QMOPT_RES_REGBLKS);
+	if (error)
+		return error;
 	ip->i_delayed_blks -= del->br_blockcount;
 
 	if (whichfork == XFS_COW_FORK)
