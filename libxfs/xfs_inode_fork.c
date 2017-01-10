@@ -772,6 +772,13 @@ xfs_idestroy_fork(
 	}
 }
 
+/* Count number of incore extents based on if_bytes */
+xfs_extnum_t
+xfs_iext_count(struct xfs_ifork *ifp)
+{
+	return ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+}
+
 /*
  * Convert in-core extents to on-disk form
  *
@@ -800,7 +807,7 @@ xfs_iextents_copy(
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL|XFS_ILOCK_SHARED));
 	ASSERT(ifp->if_bytes > 0);
 
-	nrecs = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nrecs = xfs_iext_count(ifp);
 	XFS_BMAP_TRACE_EXLIST(ip, nrecs, whichfork);
 	ASSERT(nrecs > 0);
 
@@ -938,7 +945,7 @@ xfs_iext_get_ext(
 	xfs_extnum_t	idx)		/* index of target extent */
 {
 	ASSERT(idx >= 0);
-	ASSERT(idx < ifp->if_bytes / sizeof(xfs_bmbt_rec_t));
+	ASSERT(idx < xfs_iext_count(ifp));
 
 	if ((ifp->if_flags & XFS_IFEXTIREC) && (idx == 0)) {
 		return ifp->if_u1.if_ext_irec->er_extbuf;
@@ -1014,7 +1021,7 @@ xfs_iext_add(
 	int		new_size;	/* size of extents after adding */
 	xfs_extnum_t	nextents;	/* number of extents in file */
 
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	ASSERT((idx >= 0) && (idx <= nextents));
 	byte_diff = ext_diff * sizeof(xfs_bmbt_rec_t);
 	new_size = ifp->if_bytes + byte_diff;
@@ -1238,7 +1245,7 @@ xfs_iext_remove(
 	trace_xfs_iext_remove(ip, idx, state, _RET_IP_);
 
 	ASSERT(ext_diff > 0);
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	new_size = (nextents - ext_diff) * sizeof(xfs_bmbt_rec_t);
 
 	if (new_size == 0) {
@@ -1267,7 +1274,7 @@ xfs_iext_remove_inline(
 
 	ASSERT(!(ifp->if_flags & XFS_IFEXTIREC));
 	ASSERT(idx < XFS_INLINE_EXTS);
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	ASSERT(((nextents - ext_diff) > 0) &&
 		(nextents - ext_diff) < XFS_INLINE_EXTS);
 
@@ -1306,7 +1313,7 @@ xfs_iext_remove_direct(
 	ASSERT(!(ifp->if_flags & XFS_IFEXTIREC));
 	new_size = ifp->if_bytes -
 		(ext_diff * sizeof(xfs_bmbt_rec_t));
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 
 	if (new_size == 0) {
 		xfs_iext_destroy(ifp);
@@ -1545,7 +1552,7 @@ xfs_iext_indirect_to_direct(
 	int		size;		/* size of file extents */
 
 	ASSERT(ifp->if_flags & XFS_IFEXTIREC);
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	ASSERT(nextents <= XFS_LINEAR_EXTS);
 	size = nextents * sizeof(xfs_bmbt_rec_t);
 
@@ -1619,7 +1626,7 @@ xfs_iext_bno_to_ext(
 	xfs_extnum_t	nextents;	/* number of file extents */
 	xfs_fileoff_t	startoff = 0;	/* start offset of extent */
 
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	if (nextents == 0) {
 		*idxp = 0;
 		return NULL;
@@ -1732,8 +1739,8 @@ xfs_iext_idx_to_irec(
 
 	ASSERT(ifp->if_flags & XFS_IFEXTIREC);
 	ASSERT(page_idx >= 0);
-	ASSERT(page_idx <= ifp->if_bytes / sizeof(xfs_bmbt_rec_t));
-	ASSERT(page_idx < ifp->if_bytes / sizeof(xfs_bmbt_rec_t) || realloc);
+	ASSERT(page_idx <= xfs_iext_count(ifp));
+	ASSERT(page_idx < xfs_iext_count(ifp) || realloc);
 
 	nlists = ifp->if_real_bytes / XFS_IEXT_BUFSZ;
 	erp_idx = 0;
@@ -1781,7 +1788,7 @@ xfs_iext_irec_init(
 	xfs_extnum_t	nextents;	/* number of extents in file */
 
 	ASSERT(!(ifp->if_flags & XFS_IFEXTIREC));
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 	ASSERT(nextents <= XFS_LINEAR_EXTS);
 
 	erp = kmem_alloc(sizeof(xfs_ext_irec_t), KM_NOFS);
@@ -1905,7 +1912,7 @@ xfs_iext_irec_compact(
 
 	ASSERT(ifp->if_flags & XFS_IFEXTIREC);
 	nlists = ifp->if_real_bytes / XFS_IEXT_BUFSZ;
-	nextents = ifp->if_bytes / (uint)sizeof(xfs_bmbt_rec_t);
+	nextents = xfs_iext_count(ifp);
 
 	if (nextents == 0) {
 		xfs_iext_destroy(ifp);
