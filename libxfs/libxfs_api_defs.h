@@ -88,7 +88,7 @@
 #define xfs_dir_replace			libxfs_dir_replace
 #define xfs_dir2_isblock		libxfs_dir2_isblock
 #define xfs_dir2_isleaf			libxfs_dir2_isleaf
-#define __xfs_dir2_data_freescan	libxfs_dir2_data_freescan
+#define xfs_dir2_data_freescan_int	libxfs_dir2_data_freescan_int
 #define xfs_dir2_data_log_entry		libxfs_dir2_data_log_entry
 #define xfs_dir2_data_log_header	libxfs_dir2_data_log_header
 #define xfs_dir2_data_make_free		libxfs_dir2_data_make_free

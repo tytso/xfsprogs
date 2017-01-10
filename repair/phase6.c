@@ -1883,7 +1883,8 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	}
 	*num_illegal += nbad;
 	if (needscan)
-		libxfs_dir2_data_freescan(mp->m_dir_geo, M_DIROPS(mp), d, &i);
+		libxfs_dir2_data_freescan_int(mp->m_dir_geo, M_DIROPS(mp),
+				d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
 	libxfs_defer_finish(&tp, &dfops, ip);

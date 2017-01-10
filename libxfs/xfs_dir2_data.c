@@ -502,7 +502,7 @@ xfs_dir2_data_freeremove(
  * Given a data block, reconstruct its bestfree map.
  */
 void
-__xfs_dir2_data_freescan(
+xfs_dir2_data_freescan_int(
 	struct xfs_da_geometry	*geo,
 	const struct xfs_dir_ops *ops,
 	struct xfs_dir2_data_hdr *hdr,
@@ -560,6 +560,16 @@ __xfs_dir2_data_freescan(
 			p += ops->data_entsize(dep->namelen);
 		}
 	}
+}
+
+void
+xfs_dir2_data_freescan(
+	struct xfs_inode	*dp,
+	struct xfs_dir2_data_hdr *hdr,
+	int			*loghead)
+{
+	return xfs_dir2_data_freescan_int(dp->i_mount->m_dir_geo, dp->d_ops,
+			hdr, loghead);
 }
 
 /*

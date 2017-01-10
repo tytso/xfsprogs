@@ -49,14 +49,6 @@
 #ifndef __LIBXFS_INTERNAL_XFS_H__
 #define __LIBXFS_INTERNAL_XFS_H__
 
-/*
- * Repair doesn't have a inode when it calls libxfs_dir2_data_freescan,
- * so we to work around this internally for now.
- */
-#define xfs_dir2_data_freescan(ip, hdr, loghead) \
-	__xfs_dir2_data_freescan((ip)->i_mount->m_dir_geo, \
-				 (ip)->d_ops, hdr, loghead)
-
 #include "libxfs_api_defs.h"
 #include "platform_defs.h"
 #include "xfs.h"
