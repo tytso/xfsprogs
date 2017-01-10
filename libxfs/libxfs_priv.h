@@ -521,4 +521,10 @@ bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 #define xfs_inode_set_cowblocks_tag(ip)
 #define xfs_inode_set_eofblocks_tag(ip)
 
+/* xfs_stats.h */
+#define XFS_STATS_CALC_INDEX(member)	0
+#define XFS_STATS_INC_OFF(mp, off)
+#define XFS_STATS_ADD_OFF(mp, off, val)
+
+
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */
