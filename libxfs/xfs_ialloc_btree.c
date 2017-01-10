@@ -225,8 +225,6 @@ xfs_inobt_verify(
 	switch (block->bb_magic) {
 	case cpu_to_be32(XFS_IBT_CRC_MAGIC):
 	case cpu_to_be32(XFS_FIBT_CRC_MAGIC):
-		if (!xfs_sb_version_hascrc(&mp->m_sb))
-			return false;
 		if (!xfs_btree_sblock_v5hdr_verify(bp))
 			return false;
 		/* fall through */
