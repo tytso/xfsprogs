@@ -110,9 +110,6 @@ static int
 init_check_command(
 	const cmdinfo_t	*ct)
 {
-	if (ct->flags & CMD_FLAG_ONESHOT)
-		return 1;
-
 	if (!file && !(ct->flags & CMD_NOFILE_OK)) {
 		fprintf(stderr, _("no files are open, try 'help open'\n"));
 		return 0;

@@ -48,6 +48,10 @@ static int
 check_command(
 	const cmdinfo_t	*ci)
 {
+	/* always run internal library supplied commands */
+	if (ci->flags & CMD_FLAG_LIBRARY)
+		return 1;
+
 	if (check_func)
 		return check_func(ci);
 	return 1;

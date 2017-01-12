@@ -27,6 +27,7 @@
  */
 #define CMD_FLAG_ONESHOT	(1<<31)
 #define CMD_FLAG_FOREIGN_OK	(1<<30)	/* command not restricted to XFS */
+#define CMD_FLAG_LIBRARY	(1<<29)	/* command provided by libxcmd */
 
 typedef int (*cfunc_t)(int argc, char **argv);
 typedef void (*helpfunc_t)(void);

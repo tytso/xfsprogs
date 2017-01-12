@@ -117,10 +117,6 @@ init_check_command(
 	if (!fs_path)
 		return 1;
 
-	/* Always run commands that are valid for all fs types. */
-	if (ct->flags & CMD_ALL_FSTYPES)
-		return 1;
-
 	/* If it's an XFS filesystem, always run the command. */
 	if (!(fs_path->fs_flags & FS_FOREIGN))
 		return 1;
