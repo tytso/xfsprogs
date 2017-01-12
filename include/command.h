@@ -50,12 +50,12 @@ extern int		ncmds;
 extern void		help_init(void);
 extern void		quit_init(void);
 
-typedef int (*argsfunc_t)(int index);
+typedef int (*iterfunc_t)(int index);
 typedef int (*checkfunc_t)(const cmdinfo_t *ci);
 
 extern void		add_command(const cmdinfo_t *ci);
 extern void		add_user_command(char *optarg);
-extern void		add_args_command(argsfunc_t af);
+extern void		add_command_iterator(iterfunc_t func);
 extern void		add_check_command(checkfunc_t cf);
 
 extern const cmdinfo_t	*find_command(const char *cmd);

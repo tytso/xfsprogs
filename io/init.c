@@ -91,8 +91,13 @@ init_commands(void)
 	cowextsize_init();
 }
 
+/*
+ * This allows xfs_io commands specified on the command line to be run on every
+ * open file in the file table. Commands that should not be iterated across all
+ * open files need to specify CMD_FLAG_ONESHOT in their command flags.
+ */
 static int
-init_args_command(
+filetable_iterator(
 	int	index)
 {
 	if (index >= filecount)
@@ -215,7 +220,7 @@ init(
 	}
 
 	init_commands();
-	add_args_command(init_args_command);
+	add_command_iterator(filetable_iterator);
 	add_check_command(init_check_command);
 }
 

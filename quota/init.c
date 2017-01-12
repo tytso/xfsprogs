@@ -75,8 +75,13 @@ init_commands(void)
 	state_init();
 }
 
+/*
+ * This function allows xfs_quota commands to iterate across all discovered
+ * quota enabled filesystems. Commands that should not iterate all filesystems
+ * should specify CMD_FLAG_ONESHOT in their command flags.
+ */
 static int
-init_args_command(
+filesystem_iterator(
 	int	index)
 {
 	if (index >= fs_count)
@@ -189,7 +194,7 @@ init(
 	free(projopts);
 
 	init_commands();
-	add_args_command(init_args_command);
+	add_command_iterator(filesystem_iterator);
 	add_check_command(init_check_command);
 
 	/*

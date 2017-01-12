@@ -23,7 +23,7 @@
 cmdinfo_t	*cmdtab;
 int		ncmds;
 
-static argsfunc_t	args_func;
+static iterfunc_t	iter_func;
 static checkfunc_t	check_func;
 static int		ncmdline;
 static char		**cmdline;
@@ -130,7 +130,7 @@ add_user_command(char *optarg)
  * so we abort straight away.
  */
 static int
-args_command(
+iterate_command(
 	const cmdinfo_t	*ct,
 	int		index)
 {
@@ -138,16 +138,16 @@ args_command(
 		return 0;
 	if (ct->flags & CMD_FLAG_ONESHOT)
 		return -1;
-	if (args_func)
-		return args_func(index);
+	if (iter_func)
+		return iter_func(index);
 	return 0;
 }
 
 void
-add_args_command(
-	argsfunc_t	af)
+add_command_iterator(
+	iterfunc_t	func)
 {
-	args_func = af;
+	iter_func = func;
 }
 
 void
@@ -171,7 +171,7 @@ command_loop(void)
 			ct = find_command(v[0]);
 			if (ct) {
 				j = 0;
-				while (!done && (j = args_command(ct, j)))
+				while (!done && (j = iterate_command(ct, j)))
 					done = command(ct, c, v);
 			} else
 				fprintf(stderr, _("command \"%s\" not found\n"),
