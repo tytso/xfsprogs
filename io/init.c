@@ -59,6 +59,7 @@ init_commands(void)
 	attr_init();
 	bmap_init();
 	copy_range_init();
+	encrypt_init();
 	fadvise_init();
 	file_init();
 	flink_init();
