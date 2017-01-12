@@ -25,8 +25,14 @@ int		ncmds;
 
 static iterfunc_t	iter_func;
 static checkfunc_t	check_func;
-static int		ncmdline;
-static char		**cmdline;
+
+struct cmdline {
+	char	*cmdline;
+	bool	iterate;
+};
+
+static int	ncmdline;
+struct cmdline	*cmdline;
 
 static int
 compare(const void *a, const void *b)
@@ -120,12 +126,27 @@ void
 add_user_command(char *optarg)
 {
 	ncmdline++;
-	cmdline = realloc(cmdline, sizeof(char*) * (ncmdline));
+	cmdline = realloc(cmdline, sizeof(struct cmdline) * (ncmdline));
 	if (!cmdline) {
 		perror("realloc");
 		exit(1);
 	}
-	cmdline[ncmdline-1] = optarg;
+	cmdline[ncmdline-1].cmdline = optarg;
+	cmdline[ncmdline-1].iterate = true;
+
+}
+
+void
+add_oneshot_user_command(char *optarg)
+{
+	ncmdline++;
+	cmdline = realloc(cmdline, sizeof(struct cmdline) * (ncmdline));
+	if (!cmdline) {
+		perror("realloc");
+		exit(1);
+	}
+	cmdline[ncmdline-1].cmdline = optarg;
+	cmdline[ncmdline-1].iterate = false;
 }
 
 /*
@@ -212,14 +233,14 @@ command_loop(void)
 
 	/* command line mode */
 	for (i = 0; !done && i < ncmdline; i++) {
-		input = strdup(cmdline[i]);
+		input = strdup(cmdline[i].cmdline);
 		if (!input) {
 			fprintf(stderr,
 				_("cannot strdup command '%s': %s\n"),
-				cmdline[i], strerror(errno));
+				cmdline[i].cmdline, strerror(errno));
 			exit(1);
 		}
-		done = process_input(input, true);
+		done = process_input(input, cmdline[i].iterate);
 	}
 	free(cmdline);
 	return;

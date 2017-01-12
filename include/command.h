@@ -56,6 +56,7 @@ typedef int (*checkfunc_t)(const cmdinfo_t *ci);
 
 extern void		add_command(const cmdinfo_t *ci);
 extern void		add_user_command(char *optarg);
+extern void		add_oneshot_user_command(char *optarg);
 extern void		add_command_iterator(iterfunc_t func);
 extern void		add_check_command(checkfunc_t cf);
 

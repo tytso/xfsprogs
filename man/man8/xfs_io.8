@@ -9,10 +9,13 @@ xfs_io \- debug the I/O path of an XFS filesystem
 .B \-c
 .I cmd
 ] ... [
+.B \-C
+.I cmd
+] ... [
 .B \-p
 .I prog
 ]
-.I file
+.I [ file ]
 .br
 .B xfs_io \-V
 .SH DESCRIPTION
@@ -25,14 +28,39 @@ These code paths include not only the obvious read/write/mmap interfaces
 for manipulating files, but also cover all of the XFS extensions (such
 as space preallocation, additional inode flags, etc).
 .SH OPTIONS
+.B xfs_io
+commands may be run interactively (the default) or as arguments on the
+command line.
+Interactive mode always runs commands on the current open file, whilst commands
+run from the command line may be repeated on all open files rather than just the current
+open file.
+In general, open file iteration will occur for commands that operate on file
+content or state. In contrast, commands that operate on filesystem or
+system-wide state will only be run on the current file regardless of how many
+files are currently open.
+Multiple arguments may be given on the command line and they are run in the
+sequence given. The program exits one all commands have
+been run.
 .TP 1.0i
 .BI \-c " cmd"
-.B xfs_io
-commands may be run interactively (the default) or as arguments on
-the command line. Multiple
+Run the specified command on all currently open files.
+To maintain compatibility with historical usage, commands that can not be run on
+all open files will still be run but only execute once on the current open file.
+Multiple
 .B \-c
-arguments may be given. The commands are run in the sequence given,
-then the program exits.
+arguments may be given and may be interleaved on the command line in any order
+with
+.B \-C
+commands.
+.TP
+.BI \-C " cmd"
+Run the specified command only on the current open file. 
+Multiple
+.B \-C
+arguments may be given and may be interleaved on the command line in any order
+with
+.B \-c
+commands.
 .TP
 .BI \-p " prog"
 Set the program name for prompts and some error messages,

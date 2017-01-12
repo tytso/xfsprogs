@@ -34,7 +34,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-		_("Usage: %s [-adfinrRstVx] [-m mode] [-p prog] [-c cmd]... file\n"),
+_("Usage: %s [-adfinrRstVx] [-m mode] [-p prog] [[-c|-C] cmd]... file\n"),
 		progname);
 	exit(1);
 }
@@ -146,13 +146,16 @@ init(
 	pagesize = getpagesize();
 	gettimeofday(&stopwatch, NULL);
 
-	while ((c = getopt(argc, argv, "ac:dFfim:p:nrRstTVx")) != EOF) {
+	while ((c = getopt(argc, argv, "ac:C:dFfim:p:nrRstTVx")) != EOF) {
 		switch (c) {
 		case 'a':
 			flags |= IO_APPEND;
 			break;
 		case 'c':
 			add_user_command(optarg);
+			break;
+		case 'C':
+			add_oneshot_user_command(optarg);
 			break;
 		case 'd':
 			flags |= IO_DIRECT;
