@@ -125,22 +125,30 @@ add_user_command(char *optarg)
 }
 
 /*
- * To detect one-shot commands, they will return a negative index. If we
- * get a negative index on entry, we've already run the one-shot command,
- * so we abort straight away.
+ * Run a command, iterating as necessary. Return 0 for success, non-zero
+ * if an error occurred. Errors terminate loop iteration immediately.
  */
 static int
 iterate_command(
 	const cmdinfo_t	*ct,
-	int		index)
+	int		argc,
+	char		**argv)
 {
-	if (index < 0)
+	int		error = 0;
+	int		j;
+
+	/* if there's nothing to iterate, we're done! */
+	if (!iter_func)
 		return 0;
-	if (ct->flags & CMD_FLAG_ONESHOT)
-		return -1;
-	if (iter_func)
-		return iter_func(index);
-	return 0;
+
+	for (j = iter_func(0); j; j = iter_func(j)) {
+		error = command(ct, argc, argv);
+		if (error)
+			break;
+
+	}
+
+	return error;
 }
 
 void
@@ -150,14 +158,55 @@ add_command_iterator(
 	iter_func = func;
 }
 
+static int
+process_input(
+	char		*input,
+	bool		iterate)
+{
+	char		**v;
+	const cmdinfo_t	*ct;
+	int		c = 0;
+	int		error = 0;
+
+	v = breakline(input, &c);
+	if (!c)
+		goto out;
+
+	ct = find_command(v[0]);
+	if (!ct) {
+		fprintf(stderr, _("command \"%s\" not found\n"), v[0]);
+		goto out;
+	}
+
+	/* oneshot commands don't iterate */
+	if (!iterate || (ct->flags & CMD_FLAG_ONESHOT))
+		error = command(ct, c, v);
+	else
+		error = iterate_command(ct, c, v);
+out:
+	doneline(input, v);
+	return error;
+}
+
 void
 command_loop(void)
 {
-	int		c, i, j = 0, done = 0;
-	char		*input;
-	char		**v;
-	const cmdinfo_t	*ct;
+	char	*input;
+	int	done = 0;
+	int	i;
 
+	if (!cmdline) {
+		/* interactive mode */
+		while (!done) {
+			input = fetchline();
+			if (!input)
+				break;
+			done = process_input(input, false);
+		}
+		return;
+	}
+
+	/* command line mode */
 	for (i = 0; !done && i < ncmdline; i++) {
 		input = strdup(cmdline[i]);
 		if (!input) {
@@ -166,37 +215,10 @@ command_loop(void)
 				cmdline[i], strerror(errno));
 			exit(1);
 		}
-		v = breakline(input, &c);
-		if (c) {
-			ct = find_command(v[0]);
-			if (ct) {
-				j = 0;
-				while (!done && (j = iterate_command(ct, j)))
-					done = command(ct, c, v);
-			} else
-				fprintf(stderr, _("command \"%s\" not found\n"),
-					v[0]);
-		}
-		doneline(input, v);
+		done = process_input(input, true);
 	}
-	if (cmdline) {
-		free(cmdline);
-		return;
-	}
-	while (!done) {
-		if ((input = fetchline()) == NULL)
-			break;
-		v = breakline(input, &c);
-		if (c) {
-			ct = find_command(v[0]);
-			if (ct)
-				done = command(ct, c, v);
-			else
-				fprintf(stderr, _("command \"%s\" not found\n"),
-					v[0]);
-		}
-		doneline(input, v);
-	}
+	free(cmdline);
+	return;
 }
 
 void
