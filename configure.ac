@@ -9,11 +9,21 @@ AC_PREFIX_DEFAULT(/usr)
 AC_PROG_LIBTOOL
 
 AC_PROG_CC
-if test $cross_compiling = no; then
-  BUILD_CC="$CC"
-  AC_SUBST(BUILD_CC)
-else
-  AC_CHECK_PROGS(BUILD_CC, gcc cc)
+AC_ARG_VAR(BUILD_CC, [C compiler for build tools])
+if test "${BUILD_CC+set}" != "set"; then
+  if test $cross_compiling = no; then
+    BUILD_CC="$CC"
+  else
+    AC_CHECK_PROGS(BUILD_CC, gcc cc)
+  fi
+fi
+AC_ARG_VAR(BUILD_CFLAGS, [C compiler flags for build tools])
+if test "${BUILD_CFLAGS+set}" != "set"; then
+  if test $cross_compiling = no; then
+    BUILD_CFLAGS="$CFLAGS"
+  else
+    BUILD_CFLAGS="-g -O2"
+  fi
 fi
 
 AC_ARG_ENABLE(shared,
