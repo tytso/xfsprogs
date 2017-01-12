@@ -269,7 +269,7 @@ xlog_recover_print_inode_core(
 	       di->di_size, (unsigned long long)di->di_nblocks,
 	       di->di_extsize, di->di_nextents, (int)di->di_anextents);
 	printf(_("		forkoff:%d  dmevmask:0x%x  dmstate:%d  flags:0x%x  "
-	     "gen:%d\n"),
+	     "gen:%u\n"),
 	       (int)di->di_forkoff, di->di_dmevmask, (int)di->di_dmstate,
 	       (int)di->di_flags, di->di_gen);
 	if (di->di_version == 3) {
