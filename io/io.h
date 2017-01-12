@@ -114,6 +114,7 @@ extern void		seek_init(void);
 extern void		shutdown_init(void);
 extern void		sync_init(void);
 extern void		truncate_init(void);
+extern void		utimes_init(void);
 
 #ifdef HAVE_FADVISE
 extern void		fadvise_init(void);

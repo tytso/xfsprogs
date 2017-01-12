@@ -9,9 +9,9 @@ LTCOMMAND = xfs_io
 LSRCFILES = xfs_bmap.sh xfs_freeze.sh xfs_mkfile.sh
 HFILES = init.h io.h
 CFILES = init.c \
-	attr.c bmap.c encrypt.c file.c freeze.c fsync.c getrusage.c imap.c   \
-	link.c mmap.c open.c parent.c pread.c prealloc.c pwrite.c seek.c     \
-	shutdown.c sync.c truncate.c reflink.c cowextsize.c
+	attr.c bmap.c cowextsize.c encrypt.c file.c freeze.c fsync.c \
+	getrusage.c imap.c link.c mmap.c open.c parent.c pread.c prealloc.c \
+	pwrite.c reflink.c seek.c shutdown.c sync.c truncate.c utimes.c
 
 LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBPTHREAD)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE)

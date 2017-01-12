@@ -327,6 +327,28 @@ timestr(
 }
 
 /*
+ * Convert from a pair of arbitrary user strings into a timespec.
+ */
+
+int
+timespec_from_string(
+	const char	* secs,
+	const char	* nsecs,
+	struct timespec	* ts)
+{
+	char* p;
+	if (!secs || !nsecs || !ts)
+		return 1;
+	ts->tv_sec = strtoull(secs, &p, 0);
+	if (*p)
+		return 1;
+	ts->tv_nsec = strtoull(nsecs, &p, 0);
+	if (*p)
+		return 1;
+	return 0;
+}
+
+/*
  * Convert from arbitrary user strings into a numeric ID.
  * If it's all numeric, we convert that inplace, else we do
  * the name lookup, and return the found identifier.

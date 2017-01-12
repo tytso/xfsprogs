@@ -59,8 +59,10 @@ init_commands(void)
 	attr_init();
 	bmap_init();
 	copy_range_init();
+	cowextsize_init();
 	encrypt_init();
 	fadvise_init();
+	fiemap_init();
 	file_init();
 	flink_init();
 	freeze_init();
@@ -69,7 +71,6 @@ init_commands(void)
 	help_init();
 	imap_init();
 	inject_init();
-	seek_init();
 	madvise_init();
 	mincore_init();
 	mmap_init();
@@ -77,18 +78,18 @@ init_commands(void)
 	parent_init();
 	pread_init();
 	prealloc_init();
-	fiemap_init();
 	pwrite_init();
 	quit_init();
 	readdir_init();
+	reflink_init();
 	resblks_init();
+	seek_init();
 	sendfile_init();
 	shutdown_init();
 	sync_init();
 	sync_range_init();
 	truncate_init();
-	reflink_init();
-	cowextsize_init();
+	utimes_init();
 }
 
 /*

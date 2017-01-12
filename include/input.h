@@ -48,6 +48,7 @@ extern uid_t	uid_from_string(char *user);
 extern gid_t	gid_from_string(char *group);
 extern prid_t	prid_from_string(char *project);
 extern bool	isdigits_only(const char *str);
+extern int	timespec_from_string(const char *sec, const char *nsec, struct timespec *ts);
 
 #define HAVE_FTW_H 1	/* TODO: configure me */
 
