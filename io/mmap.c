@@ -628,8 +628,8 @@ mremap_f(
 		switch (c) {
 		case 'f':
 			flags = MREMAP_FIXED|MREMAP_MAYMOVE;
-			new_addr = (void *)cvtnum(blocksize, sectsize,
-			                          optarg);
+			new_addr = (void *)(unsigned long)cvtnum(blocksize,
+			                          sectsize, optarg);
 			break;
 		case 'm':
 			flags = MREMAP_MAYMOVE;
