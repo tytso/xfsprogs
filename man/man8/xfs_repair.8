@@ -507,11 +507,17 @@ This message refers to a large directory.
 If the directory were small, the message would read "junking entry ...".
 .SH EXIT STATUS
 .B xfs_repair \-n
-(no modify node)
+(no modify mode)
 will return a status of 1 if filesystem corruption was detected and
 0 if no filesystem corruption was detected.
 .B xfs_repair
-run without the \-n option will always return a status code of 0.
+run without the \-n option will always return a status code of 0 if
+it completes without problems.  If a runtime error is encountered
+during operation, it will return a status of 1.  In this case,
+.B xfs_repair
+should be restarted.  If
+.B xfs_repair is unable
+to proceed due to a dirty log, it will return a status of 2.  See below.
 .SH DIRTY LOGS
 Due to the design of the XFS log, a dirty log can only be replayed 
 by the kernel, on a machine having the same CPU architecture as the
