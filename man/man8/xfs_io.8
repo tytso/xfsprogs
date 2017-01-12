@@ -528,7 +528,7 @@ both data and holes are displayed together or performing a recusively display.
 .TP
 .BI "reflink  [ \-C ] [ \-q ] src_file [src_offset dst_offset length]"
 On filesystems that support the
-.B XFS_IOC_CLONE_RANGE
+.B FICLONERANGE
 or
 .B BTRFS_IOC_CLONE_RANGE
 ioctls, map
@@ -557,7 +557,7 @@ Do not print timing statistics at all.
 .TP
 .BI "dedupe  [ \-C ] [ \-q ] src_file src_offset dst_offset length"
 On filesystems that support the
-.B XFS_IOC_FILE_EXTENT_SAME
+.B FIDEDUPERANGE
 or
 .B BTRFS_IOC_FILE_EXTENT_SAME
 ioctls, map

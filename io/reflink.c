@@ -306,9 +306,9 @@ reflink_init(void)
 	reflink_cmd.argmax = -1;
 	reflink_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	reflink_cmd.args =
-_("infile src_off dst_off len");
+_("infile [src_off dst_off len]");
 	reflink_cmd.oneline =
-		_("reflinks a number of bytes at a specified offset");
+		_("reflinks an entire file, or a number of bytes at a specified offset");
 	reflink_cmd.help = reflink_help;
 
 	add_command(&reflink_cmd);
