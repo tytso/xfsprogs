@@ -26,18 +26,19 @@ endif
 
 SRCDIR = $(PKG_NAME)-$(PKG_VERSION)
 SRCTAR = $(PKG_NAME)-$(PKG_VERSION).tar.gz
+SRCTARXZ = $(PKG_NAME)-$(PKG_VERSION).tar.xz
 
 CONFIGURE = aclocal.m4 configure config.guess config.sub install-sh ltmain.sh
 LSRCFILES = configure.ac release.sh README VERSION $(CONFIGURE)
 SRCTARINC = m4/libtool.m4 m4/lt~obsolete.m4 m4/ltoptions.m4 m4/ltsugar.m4 \
            m4/ltversion.m4 po/xfsprogs.pot .gitcensus $(CONFIGURE)
 LDIRT = config.log .ltdep .dep config.status config.cache confdefs.h \
-	conftest* built .census install.* install-dev.* *.gz \
+	conftest* built .census install.* install-dev.* *.gz *.xz \
 	autom4te.cache/* libtool include/builddefs include/platform_defs.h
 
 ifeq ($(HAVE_BUILDDEFS), yes)
 LDIRDIRT = $(SRCDIR)
-LDIRT += $(SRCTAR)
+LDIRT += $(SRCTAR) $(SRCTARXZ)
 endif
 
 # header install rules to populate include/xfs correctly
@@ -162,6 +163,11 @@ $(SRCDIR) : $(_FORCE) $(SRCTAR)
 
 $(SRCTAR) : default $(SRCTARINC) .gitcensus
 	$(Q)$(TAR) --transform "s,^,$(SRCDIR)/," -zcf $(SRCDIR).tar.gz  \
+	   `cat .gitcensus` $(SRCTARINC)
+	echo Wrote: $@
+
+$(SRCTARXZ) : default $(SRCTARINC) .gitcensus
+	$(Q)$(TAR) --transform "s,^,$(SRCDIR)/," -Jcf $(SRCDIR).tar.xz  \
 	   `cat .gitcensus` $(SRCTARINC)
 	echo Wrote: $@
 
