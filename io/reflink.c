@@ -302,7 +302,7 @@ reflink_init(void)
 	reflink_cmd.name = "reflink";
 	reflink_cmd.altname = "rl";
 	reflink_cmd.cfunc = reflink_f;
-	reflink_cmd.argmin = 4;
+	reflink_cmd.argmin = 1;
 	reflink_cmd.argmax = -1;
 	reflink_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	reflink_cmd.args =
