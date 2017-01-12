@@ -6,6 +6,7 @@ AC_CONFIG_SRCDIR([include/libxfs.h])
 AC_CONFIG_HEADER(include/platform_defs.h)
 AC_PREFIX_DEFAULT(/usr)
 
+AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
 AC_PROG_CC
