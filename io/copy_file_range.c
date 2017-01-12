@@ -49,8 +49,11 @@ copy_file_range(int fd, loff_t *src, loff_t *dst, size_t len)
 
 	do {
 		ret = syscall(__NR_copy_file_range, fd, src, file->fd, dst, len, 0);
-		if (ret == -1)
+		if (ret == -1) {
+			perror("copy_range");
 			return errno;
+		} else if (ret == 0)
+			break;
 		len -= ret;
 	} while (len > 0);
 
