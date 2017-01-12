@@ -304,7 +304,7 @@ reflink_init(void)
 	reflink_cmd.cfunc = reflink_f;
 	reflink_cmd.argmin = 1;
 	reflink_cmd.argmax = -1;
-	reflink_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	reflink_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
 	reflink_cmd.args =
 _("infile [src_off dst_off len]");
 	reflink_cmd.oneline =
@@ -318,7 +318,7 @@ _("infile [src_off dst_off len]");
 	dedupe_cmd.cfunc = dedupe_f;
 	dedupe_cmd.argmin = 4;
 	dedupe_cmd.argmax = -1;
-	dedupe_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	dedupe_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
 	dedupe_cmd.args =
 _("infile src_off dst_off len");
 	dedupe_cmd.oneline =

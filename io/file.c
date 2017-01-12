@@ -95,7 +95,7 @@ file_init(void)
 	file_cmd.cfunc = file_f;
 	file_cmd.argmin = 0;
 	file_cmd.argmax = 1;
-	file_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	file_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
 	file_cmd.oneline = _("set the current file");
 
 	print_cmd.name = "print";

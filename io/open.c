@@ -918,7 +918,8 @@ open_init(void)
 	open_cmd.cfunc = open_f;
 	open_cmd.argmin = 0;
 	open_cmd.argmax = -1;
-	open_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK | CMD_FOREIGN_OK;
+	open_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK |
+			 CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
 	open_cmd.args = _("[-acdrstxT] [-m mode] [path]");
 	open_cmd.oneline = _("open the file specified by path");
 	open_cmd.help = open_help;
@@ -936,7 +937,7 @@ open_init(void)
 	close_cmd.cfunc = close_f;
 	close_cmd.argmin = 0;
 	close_cmd.argmax = 0;
-	close_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	close_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
 	close_cmd.oneline = _("close the current open file");
 
 	statfs_cmd.name = "statfs";
@@ -980,7 +981,7 @@ open_init(void)
 	inode_cmd.args = _("[-nv] [num]");
 	inode_cmd.argmin = 0;
 	inode_cmd.argmax = 3;
-	inode_cmd.flags = CMD_NOMAP_OK;
+	inode_cmd.flags = CMD_NOMAP_OK | CMD_FLAG_ONESHOT;
 	inode_cmd.oneline =
 		_("Query inode number usage in the filesystem");
 	inode_cmd.help = inode_help;

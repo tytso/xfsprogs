@@ -163,7 +163,7 @@ inject_init(void)
 	inject_cmd.cfunc = inject_f;
 	inject_cmd.argmin = 0;
 	inject_cmd.argmax = -1;
-	inject_cmd.flags = CMD_NOMAP_OK;
+	inject_cmd.flags = CMD_NOMAP_OK | CMD_FLAG_ONESHOT;
 	inject_cmd.args = _("[tag ...]");
 	inject_cmd.oneline = _("inject errors into a filesystem");
 	inject_cmd.help = inject_help;
