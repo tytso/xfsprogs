@@ -778,7 +778,7 @@ report_init(void)
 	report_cmd.args = _("[-bir] [-gpu] [-ahnt] [-f file]");
 	report_cmd.oneline = _("report filesystem quota information");
 	report_cmd.help = report_help;
-	report_cmd.flags = CMD_FLAG_GLOBAL | CMD_FLAG_FOREIGN_OK;
+	report_cmd.flags = CMD_FLAG_ONESHOT | CMD_FLAG_FOREIGN_OK;
 
 	if (expert) {
 		add_command(&dump_cmd);

@@ -124,10 +124,20 @@ add_user_command(char *optarg)
 	cmdline[ncmdline-1] = optarg;
 }
 
+/*
+ * To detect one-shot commands, they will return a negative index. If we
+ * get a negative index on entry, we've already run the one-shot command,
+ * so we abort straight away.
+ */
 static int
 args_command(
-	int	index)
+	const cmdinfo_t	*ct,
+	int		index)
 {
+	if (index < 0)
+		return 0;
+	if (ct->flags & CMD_FLAG_ONESHOT)
+		return -1;
 	if (args_func)
 		return args_func(index);
 	return 0;
@@ -160,13 +170,9 @@ command_loop(void)
 		if (c) {
 			ct = find_command(v[0]);
 			if (ct) {
-				if (ct->flags & CMD_FLAG_GLOBAL)
+				j = 0;
+				while (!done && (j = args_command(ct, j)))
 					done = command(ct, c, v);
-				else {
-					j = 0;
-					while (!done && (j = args_command(j)))
-						done = command(ct, c, v);
-				}
 			} else
 				fprintf(stderr, _("command \"%s\" not found\n"),
 					v[0]);

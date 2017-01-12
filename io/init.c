@@ -105,7 +105,7 @@ static int
 init_check_command(
 	const cmdinfo_t	*ct)
 {
-	if (ct->flags & CMD_FLAG_GLOBAL)
+	if (ct->flags & CMD_FLAG_ONESHOT)
 		return 1;
 
 	if (!file && !(ct->flags & CMD_NOFILE_OK)) {

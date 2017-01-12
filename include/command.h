@@ -20,7 +20,12 @@
 
 #include <sys/time.h>
 
-#define CMD_FLAG_GLOBAL		(1<<31)	/* don't iterate "args" */
+/*
+ * A "oneshot" command ony runs once per command execution. It does
+ * not iterate the command args function callout and so can be used
+ * for functions like "help" that should only ever be run once.
+ */
+#define CMD_FLAG_ONESHOT	(1<<31)
 #define CMD_FLAG_FOREIGN_OK	(1<<30)	/* command not restricted to XFS */
 
 typedef int (*cfunc_t)(int argc, char **argv);

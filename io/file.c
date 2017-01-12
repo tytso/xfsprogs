@@ -104,7 +104,7 @@ file_init(void)
 	print_cmd.argmin = 0;
 	print_cmd.argmax = 0;
 	print_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK | CMD_FOREIGN_OK |
-				CMD_FLAG_GLOBAL;
+				CMD_FLAG_ONESHOT;
 	print_cmd.oneline = _("list current open files and memory mappings");
 
 	add_command(&file_cmd);
