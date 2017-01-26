@@ -395,20 +395,22 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 	/* sanity check ag count, size fields against data size field */
 
 	if (sb->sb_dblocks == 0 ||
-		sb->sb_dblocks >
-			((__uint64_t)sb->sb_agcount * sb->sb_agblocks) ||
-		sb->sb_dblocks <
-			((__uint64_t)(sb->sb_agcount - 1) * sb->sb_agblocks
-			+ XFS_MIN_AG_BLOCKS))
+		sb->sb_dblocks > XFS_MAX_DBLOCKS(sb) ||
+		sb->sb_dblocks < XFS_MIN_DBLOCKS(sb))
 		return(XR_BAD_FS_SIZE_DATA);
 
 	if (sb->sb_agblklog != (__uint8_t)libxfs_log2_roundup(sb->sb_agblocks))
 		return(XR_BAD_FS_SIZE_DATA);
 
-	if (sb->sb_inodesize < XFS_DINODE_MIN_SIZE ||
-		sb->sb_inodesize > XFS_DINODE_MAX_SIZE ||
-		sb->sb_inopblock != howmany(sb->sb_blocksize,sb->sb_inodesize))
-		return(XR_BAD_INO_SIZE_DATA);
+	if (sb->sb_inodesize < XFS_DINODE_MIN_SIZE                     ||
+	    sb->sb_inodesize > XFS_DINODE_MAX_SIZE                     ||
+	    sb->sb_inodelog < XFS_DINODE_MIN_LOG                       ||
+	    sb->sb_inodelog > XFS_DINODE_MAX_LOG                       ||
+	    sb->sb_inodesize != (1 << sb->sb_inodelog)                 ||
+	    sb->sb_logsunit > XLOG_MAX_RECORD_BSIZE                    ||
+	    sb->sb_inopblock != howmany(sb->sb_blocksize, sb->sb_inodesize) ||
+	    (sb->sb_blocklog - sb->sb_inodelog != sb->sb_inopblog))
+		return XR_BAD_INO_SIZE_DATA;
 
 	if (xfs_sb_version_hassector(sb))  {
 
@@ -492,7 +494,12 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 		if ((sb->sb_unit && !sb->sb_width) ||
 		    (sb->sb_width && sb->sb_unit && sb->sb_width % sb->sb_unit))
 			return(XR_BAD_SB_WIDTH);
-	}
+	} else if (sb->sb_unit || sb->sb_width)
+		return XR_BAD_SB_WIDTH;
+
+	/* Directory block log */
+	if (sb->sb_blocklog + sb->sb_dirblklog > XFS_MAX_BLOCKSIZE_LOG)
+		return XR_BAD_DIR_SIZE_DATA;
 
 	return(XR_OK);
 }

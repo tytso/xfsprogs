@@ -143,6 +143,8 @@ err_string(int err_code)
 			_("bad shared version number in superblock");
 		err_message[XR_BAD_CRC] =
 			_("bad CRC in superblock");
+		err_message[XR_BAD_DIR_SIZE_DATA] =
+			_("inconsistent directory geometry information");
 		done = 1;
 	}
 

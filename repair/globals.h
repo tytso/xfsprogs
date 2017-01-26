@@ -50,7 +50,8 @@
 #define XR_BAD_SB_WIDTH		18	/* bad stripe width */
 #define XR_BAD_SVN		19	/* bad shared version number */
 #define XR_BAD_CRC		20	/* Bad CRC */
-#define XR_BAD_ERR_CODE		21	/* Bad error code */
+#define XR_BAD_DIR_SIZE_DATA	21	/* Bad directory geometry */
+#define XR_BAD_ERR_CODE		22	/* Bad error code */
 
 /* XFS filesystem (il)legal values */
 
