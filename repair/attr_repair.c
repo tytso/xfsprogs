@@ -753,6 +753,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 	struct xfs_attr3_icleaf_hdr leafhdr;
 
 	da_bno = da_cursor->level[0].bno;
+	ino = da_cursor->ino;
 	/*
 	 * 0 is the root block and no block
 	 * pointer can point to the root block of the btree
@@ -764,7 +765,6 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		goto error_out;
 	}
 
-	ino = da_cursor->ino;
 	prev_bno = 0;
 
 	do {
