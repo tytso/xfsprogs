@@ -27,6 +27,7 @@
 #include "xfs_cksum.h"
 #include "xfs_trans.h"
 #include "xfs_ialloc.h"
+#include "xfs_dir2.h"
 
 /*
  * Check that none of the inode's in the buffer have a next
@@ -396,6 +397,8 @@ xfs_dinode_verify(
 		return false;
 
 	mode = be16_to_cpu(dip->di_mode);
+	if (mode && xfs_mode_to_ftype(mode) == XFS_DIR3_FT_UNKNOWN)
+		return false;
 
 	/* No zero-length symlinks/dirs. */
 	if ((S_ISLNK(mode) || S_ISDIR(mode)) && dip->di_size == 0)
