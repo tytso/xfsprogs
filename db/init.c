@@ -58,6 +58,7 @@ init(
 {
 	struct xfs_sb	*sbp;
 	struct xfs_buf	*bp;
+	unsigned int	agcount;
 	int		c;
 
 	setlocale(LC_ALL, "");
@@ -148,6 +149,7 @@ init(
 		}
 	}
 
+	agcount = sbp->sb_agcount;
 	mp = libxfs_mount(&xmount, sbp, x.ddev, x.logdev, x.rtdev,
 			  LIBXFS_MOUNT_DEBUGGER);
 	if (!mp) {
@@ -158,6 +160,10 @@ init(
 	}
 	mp->m_log = &xlog;
 	blkbb = 1 << mp->m_blkbb_log;
+
+	/* Did we limit a broken agcount in libxfs_mount? */
+	if (sbp->sb_agcount != agcount)
+		exitcode = 1;
 
 	/*
 	 * xfs_check needs corrected incore superblock values

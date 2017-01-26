@@ -2760,6 +2760,16 @@ metadump_f(
 		return 0;
 	}
 
+	/*
+	 * on load, we sanity-checked agcount and possibly set to 1
+	 * if it was corrupted and large.
+	 */
+	if (mp->m_sb.sb_agcount == 1 &&
+	    XFS_MAX_DBLOCKS(&mp->m_sb) < mp->m_sb.sb_dblocks) {
+		print_warning("truncated agcount, giving up");
+		return 0;
+	}
+
 	while ((c = getopt(argc, argv, "aegm:ow")) != EOF) {
 		switch (c) {
 			case 'a':

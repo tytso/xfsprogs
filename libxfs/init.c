@@ -817,6 +817,29 @@ libxfs_mount(
 			return NULL;
 	}
 
+	/*
+	 * libxfs_initialize_perag will allocate a perag structure for each ag.
+	 * If agcount is corrupted and insanely high, this will OOM the box.
+	 * If the agount seems (arbitrarily) high, try to read what would be
+	 * the last AG, and if that fails for a relatively high agcount, just
+	 * read the first one and let the user know to check the geometry.
+	 */
+	if (sbp->sb_agcount > 1000000) {
+		bp = libxfs_readbuf(mp->m_dev,
+				XFS_AG_DADDR(mp, sbp->sb_agcount - 1, 0), 1,
+				!(flags & LIBXFS_MOUNT_DEBUGGER), NULL);
+		if (bp->b_error) {
+			fprintf(stderr, _("%s: read of AG %u failed\n"),
+						progname, sbp->sb_agcount);
+			if (!(flags & LIBXFS_MOUNT_DEBUGGER))
+				return NULL;
+			fprintf(stderr, _("%s: limiting reads to AG 0\n"),
+								progname);
+			sbp->sb_agcount = 1;
+		}
+		libxfs_putbuf(bp);
+	}
+
 	error = libxfs_initialize_perag(mp, sbp->sb_agcount, &mp->m_maxagi);
 	if (error) {
 		fprintf(stderr, _("%s: perag init failed\n"),
