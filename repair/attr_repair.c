@@ -753,18 +753,23 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 	struct xfs_attr3_icleaf_hdr leafhdr;
 
 	da_bno = da_cursor->level[0].bno;
+	/*
+	 * 0 is the root block and no block
+	 * pointer can point to the root block of the btree
+	 */
+	if (da_bno == 0) {
+		do_warn(
+	_("btree cycle detected in attribute fork for inode %" PRIu64 "\n"),
+			ino);
+		goto error_out;
+	}
+
 	ino = da_cursor->ino;
 	prev_bno = 0;
 
 	do {
 		repair = 0;
 		dev_bno = blkmap_get(da_cursor->blkmap, da_bno);
-		/*
-		 * 0 is the root block and no block
-		 * pointer can point to the root block of the btree
-		 */
-		ASSERT(da_bno != 0);
-
 		if (dev_bno == NULLFSBLOCK) {
 			do_warn(
 	_("can't map block %u for attribute fork for inode %" PRIu64 "\n"),
