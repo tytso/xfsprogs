@@ -238,7 +238,7 @@ fp_dinode_fmt(
 	int			i;
 
 	for (i = 0, bitpos = bit; i < count; i++, bitpos += size) {
-		f = (xfs_dinode_fmt_t)getbitval(obj, bitpos, size, BVSIGNED);
+		f = (xfs_dinode_fmt_t)getbitval(obj, bitpos, size, BVUNSIGNED);
 		if (array)
 			dbprintf("%d:", i + base);
 		if (f < 0 || f >= dinode_fmt_name_size)
