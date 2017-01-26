@@ -129,10 +129,6 @@ ifeq ($(PKG_PLATFORM),darwin)
 PCFLAGS = $(GCCFLAGS)
 DEPENDFLAGS = -D__APPLE__ -D_DARWIN_FEATURE_64_BIT_INODE
 endif
-ifeq ($(PKG_PLATFORM),irix)
-PLDLIBS = -ldisk -lgen
-DEPENDFLAGS = -D__sgi__
-endif
 ifeq ($(PKG_PLATFORM),freebsd)
 PLDLIBS = -L/usr/local/lib -lintl
 PCFLAGS = -I/usr/local/include $(GCCFLAGS)

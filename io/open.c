@@ -712,11 +712,7 @@ statfs_f(
 	} else {
 		printf(_("statfs.f_bsize = %lld\n"), (long long) st.f_bsize);
 		printf(_("statfs.f_blocks = %lld\n"), (long long) st.f_blocks);
-#if defined(__sgi__)
-		printf(_("statfs.f_frsize = %lld\n"), (long long) st.f_frsize);
-#else
 		printf(_("statfs.f_bavail = %lld\n"), (long long) st.f_bavail);
-#endif
 		printf(_("statfs.f_files = %lld\n"), (long long) st.f_files);
 		printf(_("statfs.f_ffree = %lld\n"), (long long) st.f_ffree);
 	}
