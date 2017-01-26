@@ -189,7 +189,7 @@ AC_DEFUN([AC_HAVE_SYNCFS],
 #include <unistd.h>
     ], [
          syncfs(0);
-    ], have_sync_fs=yes
+    ], have_syncfs=yes
        AC_MSG_RESULT(yes),
        AC_MSG_RESULT(no))
     AC_SUBST(have_syncfs)
