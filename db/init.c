@@ -198,7 +198,6 @@ main(
 	char	**v;
 	int	start_iocur_sp;
 
-	pushfile(stdin);
 	init(argc, argv);
 	start_iocur_sp = iocur_sp;
 
@@ -213,6 +212,7 @@ main(
 		goto close_devices;
 	}
 
+	pushfile(stdin);
 	while (!done) {
 		if ((input = fetchline()) == NULL)
 			break;
