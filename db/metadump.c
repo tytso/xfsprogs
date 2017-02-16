@@ -1654,7 +1654,8 @@ process_attr_block(
 	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &hdr, leaf);
 
 	nentries = hdr.count;
-	if (nentries * sizeof(xfs_attr_leaf_entry_t) +
+	if (nentries == 0 ||
+	    nentries * sizeof(xfs_attr_leaf_entry_t) +
 			xfs_attr3_leaf_hdr_size(leaf) >
 				XFS_ATTR3_RMT_BUF_SPACE(mp, bs)) {
 		if (show_warnings)
