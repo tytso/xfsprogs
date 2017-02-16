@@ -38,6 +38,7 @@
 #include "xfs_rmap_btree.h"
 #include "xfs_btree.h"
 #include "xfs_refcount_btree.h"
+#include "xfs_ialloc_btree.h"
 
 /*
  * Per-AG Block Reservations
@@ -209,6 +210,9 @@ __xfs_ag_resv_init(
 	if (error) {
 		trace_xfs_ag_resv_init_error(pag->pag_mount, pag->pag_agno,
 				error, _RET_IP_);
+		xfs_warn(mp,
+"Per-AG reservation for AG %u failed.  Filesystem may run out of space.",
+				pag->pag_agno);
 		return error;
 	}
 
@@ -227,6 +231,8 @@ int
 xfs_ag_resv_init(
 	struct xfs_perag		*pag)
 {
+	struct xfs_mount		*mp = pag->pag_mount;
+	xfs_agnumber_t			agno = pag->pag_agno;
 	xfs_extlen_t			ask;
 	xfs_extlen_t			used;
 	int				error = 0;
@@ -235,23 +241,45 @@ xfs_ag_resv_init(
 	if (pag->pag_meta_resv.ar_asked == 0) {
 		ask = used = 0;
 
-		error = xfs_refcountbt_calc_reserves(pag->pag_mount,
-				pag->pag_agno, &ask, &used);
+		error = xfs_refcountbt_calc_reserves(mp, agno, &ask, &used);
+		if (error)
+			goto out;
+
+		error = xfs_finobt_calc_reserves(mp, agno, &ask, &used);
 		if (error)
 			goto out;
 
 		error = __xfs_ag_resv_init(pag, XFS_AG_RESV_METADATA,
 				ask, used);
-		if (error)
-			goto out;
+		if (error) {
+			/*
+			 * Because we didn't have per-AG reservations when the
+			 * finobt feature was added we might not be able to
+			 * reserve all needed blocks.  Warn and fall back to the
+			 * old and potentially buggy code in that case, but
+			 * ensure we do have the reservation for the refcountbt.
+			 */
+			ask = used = 0;
+
+			mp->m_inotbt_nores = true;
+
+			error = xfs_refcountbt_calc_reserves(mp, agno, &ask,
+					&used);
+			if (error)
+				goto out;
+
+			error = __xfs_ag_resv_init(pag, XFS_AG_RESV_METADATA,
+					ask, used);
+			if (error)
+				goto out;
+		}
 	}
 
 	/* Create the AGFL metadata reservation */
 	if (pag->pag_agfl_resv.ar_asked == 0) {
 		ask = used = 0;
 
-		error = xfs_rmapbt_calc_reserves(pag->pag_mount, pag->pag_agno,
-				&ask, &used);
+		error = xfs_rmapbt_calc_reserves(mp, agno, &ask, &used);
 		if (error)
 			goto out;
 
@@ -260,9 +288,16 @@ xfs_ag_resv_init(
 			goto out;
 	}
 
+#ifdef DEBUG
+	/* need to read in the AGF for the ASSERT below to work */
+	error = xfs_alloc_pagf_init(pag->pag_mount, NULL, pag->pag_agno, 0);
+	if (error)
+		return error;
+
 	ASSERT(xfs_perag_resv(pag, XFS_AG_RESV_METADATA)->ar_reserved +
 	       xfs_perag_resv(pag, XFS_AG_RESV_AGFL)->ar_reserved <=
 	       pag->pagf_freeblks + pag->pagf_flcount);
+#endif
 out:
 	return error;
 }

@@ -78,6 +78,7 @@ typedef struct xfs_mount {
 	uint			m_ag_max_usable; /* max space per AG */
 	struct radix_tree_root	m_perag_tree;
 	uint			m_flags;	/* global mount flags */
+	bool			m_inotbt_nores; /* no per-AG finobt resv. */
 	uint			m_qflags;	/* quota status flags */
 	uint			m_attroffset;	/* inode attribute offset */
 	int			m_ialloc_inos;	/* inodes in inode allocation */
